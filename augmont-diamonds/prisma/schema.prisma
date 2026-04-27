@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Required by @shopify/shopify-app-session-storage-prisma — do not remove fields
+model Session {
+  id                  String    @id
+  shop                String    @unique
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+
+  merchant            Merchant?
+
+  @@map("sessions")
+}
+
+model Merchant {
+  id            String  @id @default(cuid())
+  shopId        String  @unique
+  plan          String  @default("free")
+  isActive      Boolean @default(true)
+  widgetEnabled Boolean @default(false)
+
+  session       Session        @relation(fields: [shopId], references: [shop])
+  orders        Order[]
+  subscriptions Subscription[]
+
+  @@map("merchants")
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  shop           String
+  customerEmail  String
+  diamondId      String
+  diamondDetails Json
+  status         String   @default("pending")
+  shopifyOrderId String?
+  payalOrderId   String?
+  createdAt      DateTime @default(now())
+
+  merchant       Merchant @relation(fields: [shop], references: [shopId])
+
+  @@map("orders")
+}
+
+model Subscription {
+  id              String    @id @default(cuid())
+  shop            String
+  shopifyChargeId String    @unique
+  planName        String
+  status          String
+  trialEndsAt     DateTime?
+  billingOn       DateTime?
+  createdAt       DateTime  @default(now())
+
+  merchant        Merchant @relation(fields: [shop], references: [shopId])
+
+  @@map("subscriptions")
+}
