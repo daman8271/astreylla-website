@@ -8,7 +8,9 @@ import { errorHandler } from "./middleware/errorHandler.js";
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req, _res, buf) => { req.rawBody = buf; },
+}));
 
 // GET /health — confirms Express server is running
 app.get("/health", (req, res) => {
