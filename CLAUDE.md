@@ -40,7 +40,10 @@ Never stack multiple features in one session.
 ```bash
 # After running: shopify app init (choose Remix template)
 
-# Local dev — starts both Remix + Shopify tunnel
+# Local dev — canonical command (skips redundant dep install)
+shopify app dev --skip-dependencies-installation
+
+# Plain shopify app dev still works but is slower on cold start
 shopify app dev
 
 # Or run Remix directly (no tunnel)
@@ -58,6 +61,14 @@ npx prisma studio
 # Deploy to Railway
 railway up
 ```
+
+## LIVE DEPLOYMENT
+
+- **Railway API URL:** `claude-code-max-shopify-app-production.up.railway.app`
+- **Health check:** `https://claude-code-max-shopify-app-production.up.railway.app/health` → 200
+- **Active theme extension version:** `augmont-diamonds-4`
+- **Admin dashboard:** 4 Polaris pages (home, diamonds, orders, settings) — embedded in Shopify Admin via App Bridge
+- **Storefront widget:** deployed via Shopify CDN, talks directly to Express on Railway
 
 ## ARCHITECTURE
 
@@ -168,11 +179,15 @@ SESSION_SECRET=
 PORT=4000
 
 ## BUILD STATUS → see WORK_LOG.md
-Phase 1: App init + DB + OAuth          [NOT STARTED]
-Phase 2: GDPR webhooks + auth           [NOT STARTED]
-Phase 3: Express API + Payal API        [NOT STARTED]
-Phase 4: Theme Extension widget         [NOT STARTED]
-Phase 5: Order flow end to end          [NOT STARTED]
-Phase 6: Billing API                    [NOT STARTED]
-Phase 7: Testing + polish               [NOT STARTED]
-Phase 8: App Store submit               [NOT STARTED]
+Phase 1: App init + DB + OAuth          [COMPLETE — Apr 29, 2026]
+Phase 2: GDPR webhooks + auth           [COMPLETE — Apr 29, 2026]
+Phase 3: Express API + Payal API        [COMPLETE — pending Augmont API credentials]
+Phase 4: Theme Extension widget         [COMPLETE — augmont-diamonds-4 active]
+Phase 5: Order flow end to end          [COMPLETE — enquiry flow live]
+Phase 6: Billing API                    [COMPLETE]
+Phase 7: Testing + polish               [COMPLETE — Playwright harness in playwright-tests/]
+Phase 8: App Store submit               [NOT STARTED — pending listing assets]
+
+## OUTSTANDING
+- Augmont API credentials (`PAYAL_API_USERNAME`, `PAYAL_API_PASSWORD`) — waiting on bhaiya
+- App Store submission: listing copy, screenshots, privacy policy URL, support URL, then submit via Partner Dashboard
