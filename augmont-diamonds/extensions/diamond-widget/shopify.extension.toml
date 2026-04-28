@@ -1,0 +1,6 @@
+api_version = "2026-07"
+
+[[extensions]]
+name = "Diamond Browser"
+handle = "diamond-browser"
+type = "theme_app_extension"

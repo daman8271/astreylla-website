@@ -1,0 +1,59 @@
+<div
+  id="diamond-widget-root"
+  class="diamond-widget"
+  data-shop="{{ shop.permanent_domain }}"
+  data-api-url="{{ block.settings.api_url | escape }}"
+  data-per-page="{{ block.settings.diamonds_per_page }}"
+  data-show-filters="{{ block.settings.show_filters }}"
+  data-primary-color="{{ block.settings.primary_color | escape }}"
+></div>
+
+{{ 'diamond-widget.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'diamond-widget.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Diamond Browser",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Widget Title",
+      "default": "Browse Diamonds"
+    },
+    {
+      "type": "text",
+      "id": "api_url",
+      "label": "API Server URL",
+      "info": "Your Railway Express API base URL, e.g. https://your-app.railway.app",
+      "default": ""
+    },
+    {
+      "type": "range",
+      "id": "diamonds_per_page",
+      "label": "Diamonds per page",
+      "min": 4,
+      "max": 24,
+      "step": 4,
+      "default": 12
+    },
+    {
+      "type": "checkbox",
+      "id": "show_filters",
+      "label": "Show filter bar",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "primary_color",
+      "label": "Accent colour",
+      "default": "#b59a6f"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Diamond Browser"
+    }
+  ]
+}
+{% endschema %}
