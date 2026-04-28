@@ -165,8 +165,9 @@ File: `.env` (never commit) — template: `.env.example`
 | `SHOPIFY_SCOPES` | OAuth permission scopes requested | `read_products,write_orders` |
 | `DATABASE_URL` | Supabase connection string (pooled — for Prisma runtime) | `postgresql://...?pgbouncer=true` |
 | `DIRECT_URL` | Supabase direct connection string (for Prisma migrations) | `postgresql://...` |
-| `PAYAL_API_URL` | Base URL of Payal's existing API | TBD — get from bhaiya |
-| `PAYAL_API_KEY` | API key / token for Payal's API | TBD — get from bhaiya |
+| `PAYAL_API_URL` | Base URL of Augmont LGD API | `https://api.testlgd.augmont.com/api/v1` |
+| `PAYAL_API_USERNAME` | Augmont merchant login username | Get from Payal / bhaiya |
+| `PAYAL_API_PASSWORD` | Augmont merchant login password | Get from Payal / bhaiya |
 | `SESSION_SECRET` | Random secret for signing session cookies | Any long random string |
 | `PORT` | Port Express API listens on | `4000` |
 | `NODE_ENV` | Runtime environment | `development` / `production` |
@@ -245,19 +246,50 @@ File: `.env` (never commit) — template: `.env.example`
 
 ## 6. PAYAL'S API
 
-> **All values TBD — get from bhaiya before Phase 3.**
+**Provider:** LGD Merchant API by Augmont
+**Base URL:** `https://api.testlgd.augmont.com/api/v1`
 
-| Item | Value |
-|------|-------|
-| Base URL | TBD |
-| Auth method | TBD (API key header / Bearer token / Basic auth?) |
-| Auth header name | TBD |
-| Get all diamonds | TBD (endpoint + params) |
-| Get single diamond | TBD |
-| Create order | TBD (endpoint + request body) |
-| Order status check | TBD |
-| Rate limits | TBD |
-| Response format | TBD (JSON assumed) |
+### Authentication
+
+| Step | Detail |
+|------|--------|
+| Endpoint | `POST /merchant/login` |
+| Request body | `{ username, password }` |
+| Response | `{ token, expiresIn: "7d", defaultCurrency }` |
+| Token lifetime | 7 days — login once, store token, auto-refresh before expiry |
+| Usage | Send as `Authorization: Bearer <token>` on all subsequent requests |
+
+> Credentials (username + password) — get from Payal / bhaiya. Never commit to `.env.example`.
+
+### Endpoints we use
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/merchant/login` | Obtain JWT — must be called first |
+| `GET` | `/merchant/products` | Fetch diamond catalog (supports many filters — see below) |
+| `POST` | `/merchant/cart/add` | Add a diamond to cart |
+| `GET` | `/merchant/cart` | Get current cart contents |
+| `POST` | `/merchant/order/create` | Create an order from the cart |
+| `GET` | `/merchant/order/status` | Track order by `invoiceNumber` |
+
+### Product filter params (`GET /merchant/products`)
+
+| Param | Description |
+|-------|-------------|
+| `shape` | Diamond shape (Round, Princess, Oval, etc.) |
+| `minCarat` / `maxCarat` | Carat weight range |
+| `color` | Colour grade (D–Z) |
+| `clarity` | Clarity grade (IF, VVS1, VVS2, VS1, VS2, SI1, SI2…) |
+| `cut` | Cut grade (Excellent, Very Good, Good…) |
+| `certificate` | Certification body (GIA, IGI, etc.) |
+| `hasImage` | `true` / `false` — only return stones with images |
+| `minFinalPrice` / `maxFinalPrice` | Price range filter |
+
+### Token management (implementation notes for `services/payalApi.js`)
+- Call `/merchant/login` once at server start (or on first request)
+- Cache the JWT in memory (or DB) with its expiry timestamp
+- Before every API call, check if token expires within 10 minutes — if so, re-login
+- Never expose the JWT or credentials to the browser or Remix app
 
 ### Known constraints
 - Express API is the **only** service that talks to Payal's API
@@ -304,4 +336,4 @@ remix: npx remix-serve build/server/index.js
 
 ---
 
-*Last updated: Apr 28, 2026 — Session 2*
+*Last updated: Apr 28, 2026 — Session 3 (Augmont LGD API details added)*

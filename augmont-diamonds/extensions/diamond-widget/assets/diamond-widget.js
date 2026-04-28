@@ -24,6 +24,7 @@
 
   var state = { shape: '', minCarat: '', maxCarat: '', color: '', clarity: '', page: 1 };
   var currentDiamond = null;
+  var currentDiamondDetails = null;
 
   root.innerHTML =
     (showFilters ? buildFiltersHTML() : '') +
@@ -153,7 +154,7 @@
 
     root.addEventListener('click', function (e) {
       var btn = e.target.closest('.dw-card__enquire');
-      if (btn) openOverlay(btn.dataset.id, btn.dataset.spec);
+      if (btn) openOverlay(btn.dataset.id, btn.dataset.spec, btn.dataset);
     });
   }
 
@@ -172,8 +173,15 @@
 
   // ─── OVERLAY ──────────────────────────────────────────────────────────────
 
-  function openOverlay(id, spec) {
+  function openOverlay(id, spec, details) {
     currentDiamond = id;
+    currentDiamondDetails = {
+      shape:   (details && details.shape)   || '',
+      carat:   (details && details.carat)   || '',
+      color:   (details && details.color)   || '',
+      clarity: (details && details.clarity) || '',
+      price:   (details && details.price)   || ''
+    };
     overlay.querySelector('#dw-overlay-spec').textContent = spec || '';
     overlay.querySelector('#dw-overlay-thanks').hidden = true;
     overlay.querySelector('#dw-enquiry-form').hidden   = false;
@@ -187,25 +195,49 @@
     overlay.hidden = true;
     document.body.style.overflow = '';
     currentDiamond = null;
+    currentDiamondDetails = null;
   }
 
   function handleEnquirySubmit(e) {
     e.preventDefault();
-    var form  = e.target;
-    var name  = form.querySelector('#dw-enq-name').value.trim();
-    var email = form.querySelector('#dw-enq-email').value.trim();
+    var form    = e.target;
+    var name    = form.querySelector('#dw-enq-name').value.trim();
+    var email   = form.querySelector('#dw-enq-email').value.trim();
+    var message = form.querySelector('#dw-enq-message').value.trim();
     if (!name || !email) return;
 
-    // POST endpoint wired in Phase 5 — for now log and show confirmation
-    console.log('[diamond-widget] enquiry', {
-      diamondId: currentDiamond,
-      name: name,
-      email: email,
-      message: form.querySelector('#dw-enq-message').value.trim()
-    });
+    var submitBtn = form.querySelector('.dw-overlay__submit');
+    submitBtn.disabled    = true;
+    submitBtn.textContent = 'Sending…';
 
-    form.hidden = true;
-    overlay.querySelector('#dw-overlay-thanks').hidden = false;
+    var prevErr = form.querySelector('.dw-overlay__error');
+    if (prevErr) prevErr.parentNode.removeChild(prevErr);
+
+    fetch(apiUrl + '/api/public/enquiry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shop:           shop,
+        diamondId:      currentDiamond,
+        name:           name,
+        email:          email,
+        message:        message,
+        diamondDetails: currentDiamondDetails
+      })
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        form.hidden = true;
+        overlay.querySelector('#dw-overlay-thanks').hidden = false;
+      })
+      .catch(function () {
+        submitBtn.disabled    = false;
+        submitBtn.textContent = 'Send Enquiry';
+        var errEl = document.createElement('p');
+        errEl.className   = 'dw-overlay__error';
+        errEl.textContent = 'Something went wrong, please try again.';
+        form.insertBefore(errEl, submitBtn);
+      });
   }
 
   // ─── FETCH ────────────────────────────────────────────────────────────────
@@ -281,7 +313,15 @@
               '<div class="dw-card__spec-row"><dt>Clarity</dt><dd>' + clarity + '</dd></div>' +
             '</dl>' +
             (price ? '<p class="dw-card__price">₹ ' + formatPrice(price) + '</p>' : '') +
-            '<button class="dw-card__enquire" type="button" data-id="' + id + '" data-spec="' + spec + '">Enquire</button>' +
+            '<button class="dw-card__enquire" type="button"' +
+              ' data-id="' + id + '"' +
+              ' data-spec="' + spec + '"' +
+              ' data-shape="' + shape + '"' +
+              ' data-carat="' + carat + '"' +
+              ' data-color="' + color + '"' +
+              ' data-clarity="' + clarity + '"' +
+              ' data-price="' + (price || '') + '"' +
+            '>Enquire</button>' +
           '</div>' +
         '</article>'
       );

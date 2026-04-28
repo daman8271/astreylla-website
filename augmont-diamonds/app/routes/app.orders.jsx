@@ -1,9 +1,23 @@
+import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
-  return null;
+
+  const apiUrl = process.env.EXPRESS_API_URL ?? "http://localhost:4000";
+  const authHeader = request.headers.get("Authorization") ?? "";
+
+  try {
+    const res = await fetch(`${apiUrl}/api/orders`, {
+      headers: { Authorization: authHeader },
+    });
+    if (!res.ok) return { orders: [] };
+    const data = await res.json();
+    return { orders: data.orders ?? [] };
+  } catch {
+    return { orders: [] };
+  }
 };
 
 const STATUS_TONES = {
@@ -13,35 +27,8 @@ const STATUS_TONES = {
   cancelled: "critical",
 };
 
-const MOCK_ORDERS = [
-  {
-    id: "ORD-001",
-    customerEmail: "raj.jewellers@example.com",
-    diamondId: "DIA-4521",
-    status: "confirmed",
-    date: "2026-04-25",
-    payalOrderId: "PAY-89201",
-  },
-  {
-    id: "ORD-002",
-    customerEmail: "mehta.gems@example.com",
-    diamondId: "DIA-3310",
-    status: "pending",
-    date: "2026-04-27",
-    payalOrderId: "—",
-  },
-  {
-    id: "ORD-003",
-    customerEmail: "suresh.diamonds@example.com",
-    diamondId: "DIA-6072",
-    status: "shipped",
-    date: "2026-04-20",
-    payalOrderId: "PAY-88944",
-  },
-];
-
 export default function OrdersPage() {
-  const orders = MOCK_ORDERS;
+  const { orders } = useLoaderData();
 
   return (
     <s-page heading="Orders">
@@ -84,8 +71,10 @@ export default function OrdersPage() {
                       {order.status}
                     </s-badge>
                   </s-table-cell>
-                  <s-table-cell>{order.date}</s-table-cell>
-                  <s-table-cell>{order.payalOrderId}</s-table-cell>
+                  <s-table-cell>
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </s-table-cell>
+                  <s-table-cell>{order.payalOrderId ?? "—"}</s-table-cell>
                 </s-table-row>
               ))}
             </s-table-body>

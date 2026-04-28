@@ -1,5 +1,7 @@
 import express from "express";
-import diamondsRouter from "./routes/diamonds.js";
+import cors from "cors";
+import diamondsRouter, { handlePublicDiamonds } from "./routes/diamonds.js";
+import { handlePublicEnquiry } from "./routes/enquiry.js";
 import ordersRouter from "./routes/orders.js";
 import billingRouter from "./routes/billing.js";
 import gdprRouter from "./routes/gdpr.js";
@@ -7,6 +9,8 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+app.use(cors());
 
 app.use(express.json({
   verify: (req, _res, buf) => { req.rawBody = buf; },
@@ -23,6 +27,8 @@ app.get("/auth/callback", (req, res) => {
   res.json({ message: "auth callback placeholder" });
 });
 
+app.get("/api/public/diamonds", handlePublicDiamonds);
+app.post("/api/public/enquiry", handlePublicEnquiry);
 app.use("/api/diamonds", diamondsRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/webhooks/billing", billingRouter);
