@@ -1,4 +1,5 @@
 api_version = "2026-07"
+uid = "78fe6743-2560-12b5-b3b5-672e4da43ad8a745a8cc"
 
 [[extensions]]
 name = "Diamond Browser"
