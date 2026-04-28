@@ -27,6 +27,7 @@
   var currentDiamondDetails = null;
 
   root.innerHTML =
+    '<h2 class="dw-heading">Browse Our Diamond Collection</h2>' +
     (showFilters ? buildFiltersHTML() : '') +
     '<div class="dw-grid" id="dw-grid"></div>' +
     buildOverlayHTML();
@@ -43,6 +44,7 @@
   function buildFiltersHTML() {
     return (
       '<div class="dw-filters" role="search" aria-label="Filter diamonds">' +
+        '<span class="dw-filters__heading">Filter By:</span>' +
         '<div class="dw-filters__group">' +
           '<label class="dw-filters__label" for="dw-shape">Shape</label>' +
           '<select class="dw-filters__select" id="dw-shape">' +
@@ -243,7 +245,7 @@
   // ─── FETCH ────────────────────────────────────────────────────────────────
 
   function fetchDiamonds() {
-    renderSkeleton();
+    renderSpinner();
 
     var params = new URLSearchParams({ shop: shop, per_page: perPage, page: state.page });
     if (state.shape)    params.set('shape',     state.shape);
@@ -269,70 +271,105 @@
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
-  function renderSkeleton() {
-    grid.innerHTML = Array(6).fill(0).map(function () {
-      return (
-        '<article class="dw-card dw-card--skeleton" aria-hidden="true">' +
-          '<div class="dw-card__image dw-card__image--skel"></div>' +
-          '<div class="dw-card__body">' +
-            '<div class="dw-skel-line dw-skel-line--sm"></div>' +
-            '<div class="dw-skel-line"></div>' +
-            '<div class="dw-skel-line dw-skel-line--sm"></div>' +
-            '<div class="dw-skel-line dw-skel-line--price"></div>' +
-            '<div class="dw-skel-line dw-skel-line--btn"></div>' +
-          '</div>' +
-        '</article>'
-      );
-    }).join('');
+  function renderSpinner() {
+    grid.innerHTML =
+      '<div class="dw-loading" role="status" aria-live="polite" aria-busy="true">' +
+        '<div class="dw-spinner" aria-hidden="true"></div>' +
+        '<p class="dw-loading__msg">Loading diamonds…</p>' +
+      '</div>';
   }
 
   function renderCards(diamonds) {
-    grid.innerHTML = diamonds.map(function (d) {
-      var shape   = d.shape   || d.Shape   || 'Diamond';
-      var carat   = d.carat   || d.Carat   || '—';
-      var color   = d.color   || d.Color   || '—';
-      var clarity = d.clarity || d.Clarity || '—';
+    while (grid.firstChild) grid.removeChild(grid.firstChild);
+
+    diamonds.forEach(function (d) {
+      var shape   = String(d.shape   || d.Shape   || 'Diamond');
+      var carat   = String(d.carat   || d.Carat   || '—');
+      var color   = String(d.color   || d.Color   || '—');
+      var clarity = String(d.clarity || d.Clarity || '—');
       var price   = d.price   || d.Price   || d.rate  || null;
-      var image   = d.image   || d.image_url || d.img  || '';
-      var id      = d.id      || d.diamond_id || d.stock_no || '';
+      var image   = String(d.image   || d.image_url || d.img  || '');
+      var id      = String(d.id      || d.diamond_id || d.stock_no || '');
       var spec    = shape + ' · ' + carat + 'ct · ' + color + ' · ' + clarity;
 
-      return (
-        '<article class="dw-card">' +
-          '<div class="dw-card__image">' +
-            (image
-              ? '<img src="' + image + '" alt="' + shape + ' diamond ' + carat + 'ct ' + color + ' ' + clarity + '" loading="lazy" width="300" height="300">'
-              : '<div class="dw-card__img-placeholder" aria-hidden="true">' + diamondSVG() + '</div>'
-            ) +
-          '</div>' +
-          '<div class="dw-card__body">' +
-            '<p class="dw-card__shape">' + shape + '</p>' +
-            '<dl class="dw-card__specs">' +
-              '<div class="dw-card__spec-row"><dt>Carat</dt><dd>' + carat + '</dd></div>' +
-              '<div class="dw-card__spec-row"><dt>Colour</dt><dd>' + color + '</dd></div>' +
-              '<div class="dw-card__spec-row"><dt>Clarity</dt><dd>' + clarity + '</dd></div>' +
-            '</dl>' +
-            (price ? '<p class="dw-card__price">₹ ' + formatPrice(price) + '</p>' : '') +
-            '<button class="dw-card__enquire" type="button"' +
-              ' data-id="' + id + '"' +
-              ' data-spec="' + spec + '"' +
-              ' data-shape="' + shape + '"' +
-              ' data-carat="' + carat + '"' +
-              ' data-color="' + color + '"' +
-              ' data-clarity="' + clarity + '"' +
-              ' data-price="' + (price || '') + '"' +
-            '>Enquire</button>' +
-          '</div>' +
-        '</article>'
-      );
-    }).join('');
+      var article = document.createElement('article');
+      article.className = 'dw-card';
+
+      var imgWrap = document.createElement('div');
+      imgWrap.className = 'dw-card__image';
+      if (image) {
+        var img = document.createElement('img');
+        img.setAttribute('src', image);
+        img.setAttribute('alt', shape + ' diamond ' + carat + 'ct ' + color + ' ' + clarity);
+        img.setAttribute('loading', 'lazy');
+        img.setAttribute('width', '300');
+        img.setAttribute('height', '300');
+        imgWrap.appendChild(img);
+      } else {
+        var placeholder = document.createElement('div');
+        placeholder.className = 'dw-card__img-placeholder';
+        placeholder.setAttribute('aria-hidden', 'true');
+        var placeholderText = document.createElement('span');
+        placeholderText.className = 'dw-card__img-placeholder-text';
+        placeholderText.textContent = shape;
+        placeholder.appendChild(placeholderText);
+        imgWrap.appendChild(placeholder);
+      }
+      article.appendChild(imgWrap);
+
+      var body = document.createElement('div');
+      body.className = 'dw-card__body';
+
+      var shapePara = document.createElement('p');
+      shapePara.className = 'dw-card__shape';
+      shapePara.textContent = shape;
+      body.appendChild(shapePara);
+
+      var dl = document.createElement('dl');
+      dl.className = 'dw-card__specs';
+      [['Carat', carat], ['Colour', color], ['Clarity', clarity]].forEach(function (pair) {
+        var row = document.createElement('div');
+        row.className = 'dw-card__spec-row';
+        var dt = document.createElement('dt');
+        dt.textContent = pair[0];
+        var dd = document.createElement('dd');
+        dd.textContent = pair[1];
+        row.appendChild(dt);
+        row.appendChild(dd);
+        dl.appendChild(row);
+      });
+      body.appendChild(dl);
+
+      if (price) {
+        var pricePara = document.createElement('p');
+        pricePara.className = 'dw-card__price';
+        pricePara.textContent = '₹ ' + formatPrice(price);
+        body.appendChild(pricePara);
+      }
+
+      var btn = document.createElement('button');
+      btn.className = 'dw-card__enquire';
+      btn.type = 'button';
+      btn.setAttribute('data-id', id);
+      btn.setAttribute('data-spec', spec);
+      btn.setAttribute('data-shape', shape);
+      btn.setAttribute('data-carat', carat);
+      btn.setAttribute('data-color', color);
+      btn.setAttribute('data-clarity', clarity);
+      btn.setAttribute('data-price', price || '');
+      btn.textContent = 'Enquire';
+      body.appendChild(btn);
+
+      article.appendChild(body);
+      grid.appendChild(article);
+    });
   }
 
   function renderEmpty() {
     grid.innerHTML =
       '<div class="dw-empty">' +
         diamondSVG() +
-        '<p class="dw-empty__msg">No diamonds match your filters.</p>' +
+        '<p class="dw-empty__msg">No diamonds match your filters. Try adjusting your search.</p>' +
         '<button class="dw-empty__reset" type="button">Clear filters</button>' +
       '</div>';
     var btn = grid.querySelector('.dw-empty__reset');

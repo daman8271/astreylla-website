@@ -36,6 +36,28 @@
   box-sizing: inherit;
 }
 
+/* ─── HEADING ─────────────────────────────────────────────────────────────── */
+
+.dw-heading {
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--dw-text-1);
+  margin: 0 0 var(--space-xl);
+  text-align: center;
+  line-height: 1.15;
+}
+
+.dw-heading::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 1px;
+  margin: var(--space-md) auto 0;
+  background: var(--dw-accent);
+}
+
 /* ─── CONFIG ERROR ────────────────────────────────────────────────────────── */
 
 .dw-config-error {
@@ -57,6 +79,17 @@
   margin-bottom: var(--space-xl);
   padding-bottom: var(--space-lg);
   border-bottom: 1px solid var(--dw-border);
+}
+
+.dw-filters__heading {
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--dw-text-1);
+  align-self: center;
+  padding-bottom: 6px;
+  margin-right: var(--space-xs);
 }
 
 .dw-filters__group {
@@ -84,12 +117,13 @@
   -webkit-appearance: none;
   background: var(--dw-surface-card);
   border: 1px solid var(--dw-border);
+  border-radius: 8px;
   color: var(--dw-text-1);
   font-family: 'Jost', sans-serif;
   font-size: 0.875rem;
   padding: var(--space-sm) var(--space-md);
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   outline: none;
 }
 
@@ -103,6 +137,7 @@
 .dw-filters__select:focus,
 .dw-filters__input:focus {
   border-color: var(--dw-accent);
+  box-shadow: 0 0 0 3px oklch(68% 0.095 78 / 0.18);
 }
 
 .dw-filters__carat-range {
@@ -126,6 +161,7 @@
   align-self: flex-end;
   background: none;
   border: 1px solid var(--dw-border);
+  border-radius: 8px;
   color: var(--dw-text-2);
   font-family: 'Jost', sans-serif;
   font-size: 0.8125rem;
@@ -153,15 +189,18 @@
 .dw-card {
   background: var(--dw-surface-card);
   border: 1px solid var(--dw-border);
+  border-radius: 4px;
   box-shadow: 0 1px 4px oklch(0% 0 0 / 0.05);
   overflow: hidden;
   transition: transform 0.2s cubic-bezier(0.25, 0, 0, 1),
-              box-shadow 0.2s cubic-bezier(0.25, 0, 0, 1);
+              box-shadow 0.2s cubic-bezier(0.25, 0, 0, 1),
+              border-color 0.2s cubic-bezier(0.25, 0, 0, 1);
 }
 
 .dw-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px oklch(0% 0 0 / 0.09);
+  border-color: var(--dw-accent);
+  box-shadow: 0 8px 24px oklch(68% 0.095 78 / 0.18);
 }
 
 /* image */
@@ -192,6 +231,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(
+    135deg,
+    oklch(96% 0.005 80) 0%,
+    oklch(93% 0.008 80) 100%
+  );
+}
+
+.dw-card__img-placeholder-text {
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--dw-accent-dark);
+  text-align: center;
+  text-transform: capitalize;
 }
 
 .dw-card__img-placeholder .dw-diamond-icon {
@@ -249,78 +304,83 @@
 /* price */
 .dw-card__price {
   font-family: 'Bodoni Moda', Georgia, serif;
-  font-size: 1.25rem;
-  font-weight: 400;
+  font-size: 1.625rem;
+  font-weight: 600;
   color: var(--dw-text-1);
-  margin: var(--space-xs) 0 0;
-  letter-spacing: 0.01em;
+  margin: var(--space-sm) 0 var(--space-xs);
+  letter-spacing: 0.005em;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--dw-border);
 }
 
-/* enquire button — ghost, accent color, fills on hover */
+/* enquire button — primary CTA, gold filled */
 .dw-card__enquire {
-  margin-top: var(--space-sm);
-  background: transparent;
+  margin-top: var(--space-md);
+  background: var(--dw-accent);
   border: 1px solid var(--dw-accent);
-  color: var(--dw-accent);
+  border-radius: 6px;
+  color: oklch(99% 0.003 80);
   font-family: 'Jost', sans-serif;
   font-size: 0.8125rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: var(--space-sm) var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
   cursor: pointer;
   width: 100%;
-  transition: background 0.18s ease, color 0.18s ease;
+  box-shadow: 0 2px 6px oklch(68% 0.095 78 / 0.25);
+  transition: background 0.18s ease, border-color 0.18s ease,
+              box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .dw-card__enquire:hover,
 .dw-card__enquire:focus-visible {
-  background: var(--dw-accent);
-  color: oklch(99% 0.003 80);
+  background: var(--dw-accent-dark);
+  border-color: var(--dw-accent-dark);
+  box-shadow: 0 4px 12px oklch(68% 0.095 78 / 0.35);
+  transform: translateY(-1px);
   outline: none;
 }
 
-/* ─── SKELETON ────────────────────────────────────────────────────────────── */
-
-@keyframes dw-shimmer {
-  from { background-position: -600px 0; }
-  to   { background-position:  600px 0; }
+.dw-card__enquire:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px oklch(68% 0.095 78 / 0.25);
 }
 
-.dw-card--skeleton {
-  pointer-events: none;
-  box-shadow: none;
+/* ─── LOADING SPINNER ─────────────────────────────────────────────────────── */
+
+@keyframes dw-spin {
+  to { transform: rotate(360deg); }
 }
 
-.dw-card--skeleton:hover {
-  transform: none;
+.dw-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-2xl) var(--space-lg);
+  text-align: center;
 }
 
-.dw-card__image--skel,
-.dw-skel-line {
-  background: linear-gradient(
-    90deg,
-    var(--dw-skeleton)     0%,
-    var(--dw-skeleton-shim) 40%,
-    var(--dw-skeleton)     80%
-  );
-  background-size: 600px 100%;
-  animation: dw-shimmer 1.6s ease-in-out infinite;
+.dw-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2.5px solid var(--dw-border);
+  border-top-color: var(--dw-accent);
+  border-radius: 50%;
+  animation: dw-spin 0.8s linear infinite;
 }
 
-.dw-card__image--skel {
-  aspect-ratio: 1 / 1;
-  width: 100%;
+.dw-loading__msg {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dw-text-2);
+  margin: 0;
 }
-
-.dw-skel-line {
-  height: 14px;
-  border-radius: 2px;
-}
-
-.dw-skel-line--sm    { width: 55%; }
-.dw-skel-line--price { width: 40%; height: 20px; margin-top: var(--space-xs); }
-.dw-skel-line--btn   { width: 100%; height: 36px; margin-top: var(--space-sm); }
 
 /* ─── EMPTY STATE ─────────────────────────────────────────────────────────── */
 
