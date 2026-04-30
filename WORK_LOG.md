@@ -251,3 +251,92 @@ curl -s -X POST https://claude-code-max-shopify-app-production.up.railway.app/ap
 ```
 
 ---
+
+### Day 2 — Session 4 — April 30, 2026 — Three production fixes + critical infra bug
+
+**Phase:** Post-deploy production hardening
+
+**Built / fixed:**
+1. **Widget CDN re-deploy.** `shopify app deploy` was missed at end of Phase B — Shopify CDN was still serving Phase A widget (ENQUIRE buttons, ₹ symbol). Released `augmont-diamonds-5`, replacing `augmont-diamonds-4`.
+2. **Image fallback.** Augmont's `image_url` (`viewmydiamonds.com/?id=X&type=image`) returns an HTML viewer page (`text/html`, ~20 KB), not raw image bytes. The `<img>` tag fails to decode HTML → broken icon. Added `onerror` handler on every image (card grid + cart panel) that swaps in the gold-gradient placeholder with the diamond shape label. Graceful degradation; preserves images if Augmont ever fixes the URLs.
+3. **Currency formatter.** Replaced ad-hoc `cart.currency + ' ' + n.toFixed(2)` with `formatMoney(price, currency)` using `Intl.NumberFormat`. Renders `$43.43` for USD, `₹3,543` for INR, etc. — driven by the currency code Augmont returns. No symbols hardcoded anywhere.
+
+**CRITICAL INFRA BUG — Prisma + Supabase PgBouncer prepared-statement collision**
+
+After re-deploying the widget, storefront started showing "Unable to load diamonds. Please try again." Diagnosed in this order:
+
+| Step | Finding |
+|---|---|
+| `curl /api/public/diamonds` | HTTP **500** with `prepared statement "s6" already exists` (PostgreSQL code 42P05) |
+| `curl` with Origin header | Same 500 — **CORS is not the problem**, response includes `access-control-allow-origin: *` |
+| OPTIONS preflight | 204 with full CORS headers — preflight passes |
+| `server/index.js` | `app.use(cors())` default config — works |
+| `handlePublicDiamonds` | First Prisma call (`session.findUnique`) throws — never reaches Augmont |
+| Railway logs | `Datasource "db": ... at "aws-1-ap-southeast-1.pooler.supabase.com"` |
+| `DATABASE_URL` introspection | host `pooler.supabase.com`, port **6543** (PgBouncer), **searchParams: (none)** |
+
+**Root cause:** Port 6543 is Supabase's PgBouncer **transaction-pooling** endpoint. PgBouncer reuses backend Postgres connections across client connections after each transaction. Prisma uses prepared statements with sequential names (`s1`, `s2`, `s3`…). When PgBouncer hands a previously-used backend connection to a new Prisma client, the old `s6` is still cached on that backend → new client tries to prepare `s6` again → Postgres `42P05`. This is a **well-documented Prisma + Supabase pooled-connection gotcha**.
+
+Why it didn't surface immediately: when the server is fresh, Prisma owns a clean backend connection — no collision. Only after enough transactions for PgBouncer to recycle/multiplex does it start failing. Earlier curl tests (right after `railway up`) returned 25 diamonds; later requests started 500-ing.
+
+**The fix (env-var only, no code change):**
+
+Append `?pgbouncer=true&connection_limit=1` to runtime `DATABASE_URL`. The `pgbouncer=true` flag tells Prisma to disable prepared-statement caching, eliminating the collision. `connection_limit=1` keeps Prisma from layering its own connection pool on top of PgBouncer's pool.
+
+**Critical: leave `DIRECT_URL` unchanged.** `DIRECT_URL` is used by `prisma migrate` (and only migrations) — it goes direct to Postgres on port 5432, no PgBouncer. Migrations require real prepared statements; setting `pgbouncer=true` there would break `prisma migrate deploy`. The two URLs serve different purposes:
+- `DATABASE_URL` (port 6543, with `pgbouncer=true`) → runtime queries via pooler
+- `DIRECT_URL` (port 5432, no flags) → migrations via direct connection
+
+**Applied:**
+```
+DATABASE_URL = postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+DIRECT_URL   = postgresql://...pooler.supabase.com:5432/postgres   (unchanged)
+```
+
+`railway variables --set` triggers an auto-redeploy. After warm-up, 15 sequential bursts with Origin header all return 200 with full diamond JSON.
+
+**Reference:** https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections/pgbouncer
+
+**SECOND CRITICAL INFRA BUG — Dev-preview asset binding pinned in theme template**
+
+After the PgBouncer fix the API was healthy, but the storefront *still* showed Phase A widget (ENQUIRE buttons, ₹ symbol). Diagnosed:
+
+- `shopify app versions list` → `augmont-diamonds-5  ★ active` ✓ (release WAS live)
+- Authenticated through password gate, fetched storefront HTML, grepped for asset URLs:
+  ```
+  //cdn.shopify.com/extensions/{uid}/dev-9492c929-dfc8-4300-8cf7-675ab1d59bbb/assets/diamond-widget.js
+  ```
+  That `dev-` prefix is a **dev-server preview snapshot**, not a release.
+- Fetched the bundle bytes: 12 matches for `enquire`, 0 for `formatMoney` / `dw-cart-trigger` — confirmed Phase A code, frozen at the time of the original `shopify app dev` session (Apr 28).
+
+**Root cause:** When the Diamond Browser block was originally added to the theme via the dev-server preview UI, Shopify wrote the **dev-preview asset URL** into the theme template JSON. That URL is permanent until the block is removed/re-added — `shopify app deploy` releases new versions but does not rewrite theme templates that still point at dev URLs.
+
+**Fix:** `shopify app dev clean --store trial-shop-sqxnl71f.myshopify.com`
+
+Per `shopify help app dev clean`: "Stop the dev preview that was started with `shopify app dev`. **It restores the app's active version to the selected development store.**" Combined with re-binding the block in the Theme Editor (remove the stale block, add it back from the Apps section — it now binds to released v5 URL with no `dev-` prefix), the storefront started loading the v5 bundle.
+
+**Reference:** https://shopify.dev/docs/api/shopify-cli/app/app-dev-clean
+
+**Lesson learned:** Always run `shopify app dev clean` when ending a dev session, OR add theme blocks via the Theme Editor (Apps section) rather than via the dev-server preview UI — the latter creates a `dev-` URL binding that survives forever.
+
+**Files changed:**
+- `augmont-diamonds/extensions/diamond-widget/assets/diamond-widget.js` — `formatMoney()`, `buildPlaceholder()`, image `onerror` handlers, removed unused `formatPrice()`
+- `WORK_LOG.md` — Payal handoff doc + this entry
+- `PAYAL_HANDOFF.md` (new) — concise blocker summary for Payal/bhaiya
+- Railway env var `DATABASE_URL` — appended `?pgbouncer=true&connection_limit=1` (no code change, env-only)
+- Shopify CDN extension version: `augmont-diamonds-5` (released, active)
+- Theme `test-data` block re-bound to released v5 URL (was dev-preview snapshot)
+
+**Branch:** `fix/widget-image-fallback-and-currency` (pushed). PR open: https://github.com/daman8271/Claude-Code-Max-Shopify-app/pull/new/fix/widget-image-fallback-and-currency
+
+**Status:** Production widget fully functional. ADD TO CART buttons, $ prices, gold-gradient placeholder cards, cart icon + slide-in panel — all live on `augmont-diamonds-5`.
+
+**Next session:**
+1. Browser-test the storefront one more time (hard refresh — service workers may cache the old bundle).
+2. Merge fix branch.
+3. Phase B checkout still blocked on Augmont `auto_order_enabled` flag (see Payal handoff section above).
+
+**Blockers:**
+- `auto_order_enabled` Augmont flag (unchanged from Session 2).
+
+---
