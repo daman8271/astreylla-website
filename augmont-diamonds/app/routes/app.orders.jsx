@@ -53,30 +53,41 @@ export default function OrdersPage() {
             <s-table-header>
               <s-table-header-row>
                 <s-table-cell>Order ID</s-table-cell>
-                <s-table-cell>Customer Email</s-table-cell>
-                <s-table-cell>Diamond ID</s-table-cell>
+                <s-table-cell>Customer</s-table-cell>
+                <s-table-cell>Items</s-table-cell>
                 <s-table-cell>Status</s-table-cell>
                 <s-table-cell>Date</s-table-cell>
-                <s-table-cell>Payal Order ID</s-table-cell>
+                <s-table-cell>Augmont Invoice</s-table-cell>
               </s-table-header-row>
             </s-table-header>
             <s-table-body>
-              {orders.map((order) => (
-                <s-table-row key={order.id}>
-                  <s-table-cell>{order.id}</s-table-cell>
-                  <s-table-cell>{order.customerEmail}</s-table-cell>
-                  <s-table-cell>{order.diamondId}</s-table-cell>
-                  <s-table-cell>
-                    <s-badge tone={STATUS_TONES[order.status]}>
-                      {order.status}
-                    </s-badge>
-                  </s-table-cell>
-                  <s-table-cell>
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </s-table-cell>
-                  <s-table-cell>{order.payalOrderId ?? "—"}</s-table-cell>
-                </s-table-row>
-              ))}
+              {orders.map((order) => {
+                const itemCount = Array.isArray(order.cartItemIds)
+                  ? order.cartItemIds.length
+                  : (order.diamondId?.split(",").filter(Boolean).length || 1);
+                return (
+                  <s-table-row key={order.id}>
+                    <s-table-cell>{order.id}</s-table-cell>
+                    <s-table-cell>
+                      {order.customerName
+                        ? `${order.customerName} <${order.customerEmail}>`
+                        : order.customerEmail}
+                    </s-table-cell>
+                    <s-table-cell>{itemCount}</s-table-cell>
+                    <s-table-cell>
+                      <s-badge tone={STATUS_TONES[order.status]}>
+                        {order.status}
+                      </s-badge>
+                    </s-table-cell>
+                    <s-table-cell>
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </s-table-cell>
+                    <s-table-cell>
+                      {order.augmontInvoiceNumber ?? order.payalOrderId ?? "—"}
+                    </s-table-cell>
+                  </s-table-row>
+                );
+              })}
             </s-table-body>
           </s-table>
         )}

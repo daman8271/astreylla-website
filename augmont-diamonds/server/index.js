@@ -5,11 +5,14 @@ import { handlePublicEnquiry } from "./routes/enquiry.js";
 import ordersRouter from "./routes/orders.js";
 import billingRouter from "./routes/billing.js";
 import gdprRouter from "./routes/gdpr.js";
+import cartRouter, { handlePublicOrderCreate } from "./routes/cart.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { publicRateLimit } from "./middleware/rateLimit.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+app.set("trust proxy", 1);
 app.use(cors());
 
 app.use(express.json({
@@ -27,8 +30,13 @@ app.get("/auth/callback", (req, res) => {
   res.json({ message: "auth callback placeholder" });
 });
 
+// Public storefront endpoints — protected by IP rate limit.
+app.use("/api/public", publicRateLimit);
 app.get("/api/public/diamonds", handlePublicDiamonds);
 app.post("/api/public/enquiry", handlePublicEnquiry);
+app.use("/api/public/cart", cartRouter);
+app.post("/api/public/order/create", handlePublicOrderCreate);
+
 app.use("/api/diamonds", diamondsRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/webhooks/billing", billingRouter);

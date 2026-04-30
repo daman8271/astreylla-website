@@ -28,7 +28,7 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 
-  merchant            Merchant?
+  merchant Merchant?
 
   @@map("sessions")
 }
@@ -43,24 +43,49 @@ model Merchant {
   session       Session        @relation(fields: [shopId], references: [shop])
   orders        Order[]
   subscriptions Subscription[]
+  cartItems     CartItem[]
 
   @@map("merchants")
 }
 
 model Order {
-  id             String   @id @default(cuid())
-  shop           String
-  customerEmail  String
-  diamondId      String
-  diamondDetails Json
-  status         String   @default("pending")
-  shopifyOrderId String?
-  payalOrderId   String?
-  createdAt      DateTime @default(now())
+  id                   String    @id @default(cuid())
+  shop                 String
+  customerEmail        String
+  customerName         String?
+  diamondId            String
+  diamondDetails       Json
+  status               String    @default("pending")
+  shopifyOrderId       String?
+  payalOrderId         String?
+  augmontInvoiceNumber String?   @unique
+  augmontOrderId       String?
+  cartItemIds          Json?
+  orderNote            String?
+  statusLastChecked    DateTime?
+  createdAt            DateTime  @default(now())
 
-  merchant       Merchant @relation(fields: [shop], references: [shopId])
+  merchant Merchant @relation(fields: [shop], references: [shopId])
 
   @@map("orders")
+}
+
+model CartItem {
+  id                String   @id @default(cuid())
+  shop              String
+  sessionId         String
+  augmontCartItemId String?
+  diamondId         String
+  diamondDetails    Json
+  status            String   @default("active")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [shop], references: [shopId])
+
+  @@index([shop, sessionId, status])
+  @@index([augmontCartItemId])
+  @@map("cart_items")
 }
 
 model Subscription {
@@ -73,7 +98,7 @@ model Subscription {
   billingOn       DateTime?
   createdAt       DateTime  @default(now())
 
-  merchant        Merchant @relation(fields: [shop], references: [shopId])
+  merchant Merchant @relation(fields: [shop], references: [shopId])
 
   @@map("subscriptions")
 }
