@@ -384,8 +384,8 @@
   function openCheckout() {
     if (cart.items.length === 0) return;
     var summary = cart.items.length === 1
-      ? '1 diamond · ' + cart.currency + ' ' + cart.total.toFixed(2)
-      : cart.items.length + ' diamonds · ' + cart.currency + ' ' + cart.total.toFixed(2);
+      ? '1 diamond · ' + formatMoney(cart.total, cart.currency)
+      : cart.items.length + ' diamonds · ' + formatMoney(cart.total, cart.currency);
     root.querySelector('#dw-checkout-summary').textContent = summary;
     root.querySelector('#dw-checkout-form').hidden = false;
     root.querySelector('#dw-checkout-form').reset();
@@ -435,7 +435,13 @@
         var img = document.createElement('img');
         img.src = d.image_url; img.alt = (d.shape || 'Diamond') + ' ' + (d.carat || '') + 'ct';
         img.loading = 'lazy';
+        img.addEventListener('error', function () {
+          while (imgWrap.firstChild) imgWrap.removeChild(imgWrap.firstChild);
+          imgWrap.appendChild(buildPlaceholder(d.shape || 'Diamond'));
+        });
         imgWrap.appendChild(img);
+      } else {
+        imgWrap.appendChild(buildPlaceholder(d.shape || 'Diamond'));
       }
 
       var info = document.createElement('div');
@@ -448,7 +454,7 @@
       meta.textContent = (d.color || '—') + ' · ' + (d.clarity || '—');
       var price = document.createElement('p');
       price.className = 'dw-cart-item__price';
-      price.textContent = cart.currency + ' ' + Number(d.price || 0).toFixed(2);
+      price.textContent = formatMoney(d.price || 0, cart.currency);
       info.appendChild(title); info.appendChild(meta); info.appendChild(price);
 
       var rm = document.createElement('button');
@@ -466,7 +472,7 @@
 
     cartFooter.hidden = false;
     var sub = root.querySelector('#dw-cart-subtotal');
-    sub.textContent = cart.currency + ' ' + Number(cart.total).toFixed(2);
+    sub.textContent = formatMoney(cart.total, cart.currency);
   }
 
   function markCardsInCart() {
@@ -497,6 +503,32 @@
   }
 
   // ─── DIAMOND FETCH + CARDS ────────────────────────────────────────────────
+
+  function formatMoney(amount, currency) {
+    var n = Number(amount) || 0;
+    var ccy = (currency || 'USD').toUpperCase();
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: ccy,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(n);
+    } catch (e) {
+      return ccy + ' ' + n.toFixed(2);
+    }
+  }
+
+  function buildPlaceholder(shape) {
+    var placeholder = document.createElement('div');
+    placeholder.className = 'dw-card__img-placeholder';
+    placeholder.setAttribute('aria-hidden', 'true');
+    var phText = document.createElement('span');
+    phText.className = 'dw-card__img-placeholder-text';
+    phText.textContent = shape;
+    placeholder.appendChild(phText);
+    return placeholder;
+  }
 
   function fetchDiamonds() {
     renderSpinner();
@@ -548,16 +580,13 @@
         img.setAttribute('alt', shape + ' diamond ' + carat + 'ct ' + color + ' ' + clarity);
         img.setAttribute('loading', 'lazy');
         img.setAttribute('width', '300'); img.setAttribute('height', '300');
+        img.addEventListener('error', function () {
+          while (imgWrap.firstChild) imgWrap.removeChild(imgWrap.firstChild);
+          imgWrap.appendChild(buildPlaceholder(shape));
+        });
         imgWrap.appendChild(img);
       } else {
-        var placeholder = document.createElement('div');
-        placeholder.className = 'dw-card__img-placeholder';
-        placeholder.setAttribute('aria-hidden', 'true');
-        var phText = document.createElement('span');
-        phText.className = 'dw-card__img-placeholder-text';
-        phText.textContent = shape;
-        placeholder.appendChild(phText);
-        imgWrap.appendChild(placeholder);
+        imgWrap.appendChild(buildPlaceholder(shape));
       }
       article.appendChild(imgWrap);
 
@@ -583,7 +612,7 @@
       if (price) {
         var pricePara = document.createElement('p');
         pricePara.className = 'dw-card__price';
-        pricePara.textContent = (cart.currency || 'USD') + ' ' + formatPrice(price);
+        pricePara.textContent = formatMoney(price, cart.currency);
         body.appendChild(pricePara);
       }
 
@@ -618,8 +647,6 @@
       '</div>';
     grid.querySelector('.dw-error__retry').addEventListener('click', fetchDiamonds);
   }
-
-  function formatPrice(n) { return Number(n).toLocaleString('en-IN'); }
 
   function diamondSVG() {
     return (

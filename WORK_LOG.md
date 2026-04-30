@@ -197,3 +197,57 @@ DATE | PHASE | WHAT WAS BUILT | FILES CHANGED | WHAT'S NEXT | BLOCKERS
 
 **Blockers:**
 - `auto_order_enabled` Augmont flag.
+
+---
+
+### Day 2 — Session 3 — April 30, 2026 — Deploy + Payal handoff
+
+**Phase:** Deploy Phase B to production + document `auto_order_enabled` blocker
+
+**Done:**
+- `git pull origin main` — pulled merged PR #1 (Phase B cart + checkout, all 12 changed files)
+- `railway up` — deploy succeeded, build URL confirmed
+- `GET /health` → HTTP 200 `{"status":"ok"}` — production is live
+
+---
+
+## PAYAL / BHAIYA HANDOFF — `auto_order_enabled` flag
+
+### What is blocked
+`POST /api/public/order/create` returns **503** with message:
+> "Online checkout is not yet enabled. Please contact the store."
+
+The Augmont API `/merchant/order/create` returns **403** when called. This is not a code bug — it is a merchant account feature flag.
+
+### What needs to happen (one action, 2 minutes)
+
+1. Log into the Augmont **merchant portal** with Payal's credentials.
+2. Go to **Account Settings → API Permissions** (exact label may vary — look for "Auto Order" or "Order API").
+3. Enable **`auto_order_enabled`** (and confirm `cart_api_enabled` is also ON — it already is).
+4. Do the same on the **production** merchant account once UAT is confirmed.
+
+Augmont support can also enable this flag on request — email/call them with the merchant account ID.
+
+### What is already working (no flag needed)
+- `POST /api/public/cart/add` — adds diamond to Augmont cart → DB record ✓
+- `GET /api/public/cart` — returns cart items with prices + images ✓
+- `DELETE /api/public/cart/:id` — removes item from cart ✓
+- Widget: floating cart icon, slide-in panel, item count badge, Remove button ✓
+- Widget: checkout form renders, submits, shows graceful "not yet enabled" message ✓
+
+### What gets unlocked when the flag is ON
+- `POST /api/public/order/create` completes end-to-end
+- Augmont generates an invoice number → stored in our `orders` table as `augmontInvoiceNumber`
+- Admin orders page shows the invoice number immediately
+- Customer sees confirmation panel with invoice number in the widget
+
+### Smoke test to run after flag is enabled
+```bash
+# From any terminal — replace shop + sessionId as needed
+curl -s -X POST https://claude-code-max-shopify-app-production.up.railway.app/api/public/order/create \
+  -H "Content-Type: application/json" \
+  -d '{"shop":"trial-shop-sqxnl71f.myshopify.com","sessionId":"<uuid-from-localstorage>","customerName":"Test Buyer","customerEmail":"test@test.com"}'
+# Expected: 200 with invoiceNumber field
+```
+
+---
