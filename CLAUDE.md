@@ -35,6 +35,40 @@ Never stack multiple features in one session.
 7. Test what you built. Don't declare done without testing.
 8. If stuck — say so. Don't hallucinate a solution.
 
+## CRITICAL KNOWLEDGE — read this every session
+> Each rule below is a bug that already burned us. If you find yourself about to do the wrong thing, stop and re-read.
+
+### 1. Prisma + Supabase PgBouncer rule
+- **`DATABASE_URL`** points at Supabase's pooler (`pooler.supabase.com:6543`, transaction pooling). It **must** include `?pgbouncer=true&connection_limit=1`. Without `pgbouncer=true`, Prisma's prepared statements collide across recycled backend connections and every query starts returning `prepared statement "s6" already exists` (PG code `42P05`) once connections cycle.
+- **`DIRECT_URL`** points at the direct, non-pooled port (`5432`) and **must NOT** have those flags. `prisma migrate` runs through `DIRECT_URL` and needs real prepared statements.
+- Setting these via `railway variables --set` triggers a redeploy. Verify via `railway run -- node -e "console.log(new URL(process.env.DATABASE_URL).searchParams.toString())"`.
+- Symptom: API works fresh after `railway up` then 500s once warmed up. If you see that pattern, check the URL params first.
+
+### 2. `shopify app deploy` ≠ theme rebind
+- `shopify app deploy` releases a new app version to Shopify CDN. It **does not** rewrite theme blocks already bound to a previous (especially `dev-`) asset URL.
+- If you ever ran `shopify app dev` and added a block to a theme via the dev-server preview UI, the theme template JSON now hard-codes a `dev-{uuid}` asset URL. That URL is a frozen snapshot — `shopify app deploy` cannot move it.
+- **Always run `shopify app dev clean --store <shop>` when ending a dev session.** It "restores the app's active version to the selected development store."
+- **Add Theme Editor blocks via the Apps section, not via `shopify app dev` preview UI** — the latter creates a permanent dev-URL binding that survives forever.
+- If a storefront mysteriously shows old code despite a successful `shopify app deploy`: curl the storefront, grep for the asset URL, look for `dev-` in the path. If present, you need `app dev clean` + Theme Editor rebind, not another deploy.
+
+### 3. Augmont image URLs are HTML, not images
+- `image_url` from `/merchant/products` looks like `https://www.viewmydiamonds.com/?id={stockNum}&type=image` — that's an **HTML viewer page** (Content-Type: `text/html`, ~20 KB), not a JPEG/PNG.
+- An `<img src="...">` pointing at this fails to decode → broken image icon → alt text shown.
+- **Always wire an `onerror` handler** on the `<img>` that swaps to the gold-gradient placeholder with shape label. See `extensions/diamond-widget/assets/diamond-widget.js` (`buildPlaceholder()`).
+- These URLs are also slow (S3 + CloudFront miss on first hit per stone). Lazy-load with `loading="lazy"`.
+
+### 4. Currency formatting — never hardcode the symbol
+- Augmont returns a `currency` field on cart responses (`USD` for UAT, who knows for prod). The widget reads it.
+- Render with `Intl.NumberFormat('en-US', { style: 'currency', currency: ccy })` via the `formatMoney(amount, currency)` helper. Renders `$43.43` / `₹3,543` / `£99.50` correctly without any hardcoded symbol.
+- If you find yourself typing `'$' +` or `'₹' +`, stop and use `formatMoney()` instead.
+
+### 5. Augmont feature flags block end-to-end
+- Two server-side flags on Payal's Augmont merchant account gate functionality:
+  - `cart_api_enabled` (currently believed ON) — blocks `POST /merchant/cart/add`
+  - `auto_order_enabled` (currently OFF on UAT) — blocks `POST /merchant/order/create`
+- Server maps Augmont 403 → HTTP 503 with friendly user-facing message. Cart works, checkout shows "Online checkout is not yet enabled."
+- Don't waste cycles debugging the order flow until the flag is verified ON. See `PAYAL_HANDOFF.md` at repo root.
+
 ## COMMANDS
 
 ```bash
@@ -66,9 +100,10 @@ railway up
 
 - **Railway API URL:** `claude-code-max-shopify-app-production.up.railway.app`
 - **Health check:** `https://claude-code-max-shopify-app-production.up.railway.app/health` → 200
-- **Active theme extension version:** `augmont-diamonds-4`
+- **Active theme extension version:** `augmont-diamonds-5` (released May 1, 2026 — has cart + checkout + image fallback + currency formatter)
 - **Admin dashboard:** 4 Polaris pages (home, diamonds, orders, settings) — embedded in Shopify Admin via App Bridge
 - **Storefront widget:** deployed via Shopify CDN, talks directly to Express on Railway
+- **Test storefront:** `trial-shop-sqxnl71f.myshopify.com` (password: `aowaup`)
 
 ## ARCHITECTURE
 
@@ -181,13 +216,19 @@ PORT=4000
 ## BUILD STATUS → see WORK_LOG.md
 Phase 1: App init + DB + OAuth          [COMPLETE — Apr 29, 2026]
 Phase 2: GDPR webhooks + auth           [COMPLETE — Apr 29, 2026]
-Phase 3: Express API + Payal API        [COMPLETE — pending Augmont API credentials]
-Phase 4: Theme Extension widget         [COMPLETE — augmont-diamonds-4 active]
+Phase 3: Express API + Payal API        [COMPLETE — Apr 29, 2026]
+Phase 4: Theme Extension widget         [COMPLETE — augmont-diamonds-5 active]
 Phase 5: Order flow end to end          [COMPLETE — enquiry flow live]
 Phase 6: Billing API                    [COMPLETE]
 Phase 7: Testing + polish               [COMPLETE — Playwright harness in playwright-tests/]
+Phase A: Real Augmont LGD integration   [COMPLETE — Apr 30, 2026]
+Phase B: Cart + checkout                [COMPLETE — May 1, 2026 — browser-verified, ~$91.12 test order]
+Phase C: Security hardening (Codex)     [NOT STARTED — Day 3]
 Phase 8: App Store submit               [NOT STARTED — pending listing assets]
 
+Overall: ~95% complete. Deadline May 28, 2026 — 27 days of buffer.
+
 ## OUTSTANDING
-- Augmont API credentials (`PAYAL_API_USERNAME`, `PAYAL_API_PASSWORD`) — waiting on bhaiya
-- App Store submission: listing copy, screenshots, privacy policy URL, support URL, then submit via Partner Dashboard
+- Augmont `auto_order_enabled` flag — Payal needs to flip in merchant portal. See `PAYAL_HANDOFF.md`.
+- Phase C — Codex audit fixes (Day 3 scope).
+- App Store submission: listing copy, screenshots, privacy policy URL, support URL, then submit via Partner Dashboard.

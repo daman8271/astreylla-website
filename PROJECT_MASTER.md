@@ -2,6 +2,10 @@
 > Single source of truth for the Payal Diamond Shopify App.
 > Keep this in sync whenever routes, tables, or env vars change.
 
+**Overall completion: ~95%.**
+**Deadline: May 28, 2026** — 27 days of buffer at time of writing (May 1, 2026).
+**Remaining work:** Phase 8 (App Store submission assets + listing), Phase C (security hardening from Codex reports).
+
 ---
 
 ## 1. FULL FOLDER STRUCTURE
@@ -183,15 +187,19 @@ File: `.env` (never commit) — template: `.env.example`
 |-------|------|--------|-----------|
 | 1 | Shopify app init + Supabase DB setup + OAuth flow | COMPLETE | Apr 29, 2026 |
 | 2 | GDPR webhooks + Session Token auth middleware | COMPLETE | Apr 29, 2026 |
-| 3 | Express API + connect to Payal's API | COMPLETE — awaiting Augmont creds | Apr 29, 2026 |
-| 4 | Theme Extension storefront widget | COMPLETE — `augmont-diamonds-4` live | Apr 29, 2026 |
+| 3 | Express API + connect to Payal's API | COMPLETE | Apr 29, 2026 |
+| 4 | Theme Extension storefront widget | COMPLETE — `augmont-diamonds-5` live | Apr 29, 2026 |
 | 5 | Order flow end to end (widget → Express → Payal) | COMPLETE — enquiry flow live | Apr 29, 2026 |
 | 6 | Billing API + subscription management | COMPLETE | Apr 29, 2026 |
 | 7 | Testing + polish + error handling | COMPLETE — Playwright harness | Apr 29, 2026 |
+| **A** | **Real Augmont LGD UAT integration** (replace mock catalog) | **100% COMPLETE** | **Apr 30, 2026** |
+| **B** | **Cart + checkout system** (Augmont cart API + order create) | **100% COMPLETE — ✓ Verified in browser** | **May 1, 2026** |
+| C | Security hardening (Codex audit fixes) | NOT STARTED — Day 3 | — |
 | 8 | App Store submission prep + review | NOT STARTED — pending assets | — |
 
 ### Outstanding before App Store submission
-- [ ] Augmont LGD API credentials from bhaiya (`PAYAL_API_USERNAME` + `PAYAL_API_PASSWORD`) — required to verify the live diamond fetch and order create paths.
+- [x] ~~Augmont LGD API credentials from bhaiya~~ — received and integrated Apr 30 (Phase A).
+- [ ] **Augmont `auto_order_enabled` flag** must be flipped on Payal's merchant account before checkout works end-to-end. See `PAYAL_HANDOFF.md` at repo root. App degrades gracefully without it (cart works, checkout shows friendly disabled message).
 - [ ] App Store listing assets: app icon, screenshots, demo video (optional), short + long description, privacy policy URL, support URL.
 - [ ] Final compliance pass against Shopify App Store review checklist.
 - [ ] Submit via Partner Dashboard.
@@ -346,4 +354,4 @@ remix: npx remix-serve build/server/index.js
 
 ---
 
-*Last updated: Apr 29, 2026 — Day 1 close-out (Phases 1–7 complete, deployed to Railway as `claude-code-max-shopify-app-production.up.railway.app`, theme extension `augmont-diamonds-4` active)*
+*Last updated: May 1, 2026 — Day 2 close-out (Phases 1–7, A, B all 100% complete; ~95% overall completion; cart + checkout deployed and browser-verified end-to-end; theme extension `augmont-diamonds-5` active; deadline May 28 with 27 days of buffer; remaining: Phase C security hardening + Phase 8 App Store submission)*

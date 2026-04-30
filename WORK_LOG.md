@@ -340,3 +340,41 @@ Per `shopify help app dev clean`: "Stop the dev preview that was started with `s
 - `auto_order_enabled` Augmont flag (unchanged from Session 2).
 
 ---
+
+### Day 2 — Close-out — May 1, 2026 (3:30 AM IST)
+
+**Phase A: COMPLETE.** Real Augmont LGD UAT integration live. `/api/public/diamonds` returns 25 real stones with prices, images, videos.
+
+**Phase B: COMPLETE.** Cart + checkout system deployed to production, browser-verified end-to-end.
+- Storefront tested manually on `trial-shop-sqxnl71f.myshopify.com` (password `aowaup`).
+- Place-order flow exercised with **2 diamonds, total $91.12**, full UI states observed (idle → loading → added → in-cart, plus the slide-in cart panel + remove + checkout disabled-message path).
+- All four UI bugs from afternoon review are fixed and live (ENQUIRE→ADD TO CART, broken images→placeholder, ₹→$, dev-preview binding→released v5).
+
+**Bugs fixed today (in order discovered):**
+1. **Widget CDN out of sync** — `shopify app deploy` was missed at end of Phase B. Fix: re-deployed, released `augmont-diamonds-5`.
+2. **Augmont image URLs are HTML viewer pages** — `<img src="...">` decode failure. Fix: `onerror` handler swaps in gold-gradient placeholder (cards + cart panel).
+3. **Currency hardcoded as ₹** — Augmont returns USD with small dollar amounts. Fix: `formatMoney()` via `Intl.NumberFormat`, driven by API currency code.
+4. **Prisma + Supabase PgBouncer prepared-statement collision** (HTTP 500 on `/api/public/diamonds` after server warmed up). Fix: `?pgbouncer=true&connection_limit=1` on `DATABASE_URL` (DIRECT_URL untouched).
+5. **Theme template pinned to dev-preview asset URL** — `shopify app deploy` releases new versions but doesn't rewrite theme block bindings that point at `dev-` URLs from prior `shopify app dev` sessions. Fix: `shopify app dev clean --store ...` + re-bind block in Theme Editor.
+
+**Outstanding blockers (none stop development; all are external/optimization):**
+1. **`auto_order_enabled` Augmont flag (Payal action).** Documented in `PAYAL_HANDOFF.md` at repo root. Without it, checkout returns 503 with friendly message; cart fully works. Two-minute fix in Augmont merchant portal.
+2. **Augmont image URLs are slow** (`viewmydiamonds.com` viewer pages, ~20 KB each, S3 + CloudFront miss on first hit per diamond). Augmont API limitation — they don't expose raw image CDN URLs. Mitigated by lazy `loading="lazy"` + onerror placeholder; will revisit in Phase C if perf complaints.
+3. **Railway cold start** observed during stress test (first 2 of 15 requests returned 504 while pod warmed up). Fine for organic traffic, painful for any synthetic monitor or quiet-period buyer. Phase C optimization target — could move to Railway "always-on" tier or warm with a cron ping.
+
+**Tomorrow (Day 3, May 1, 2026):**
+- **Phase C: security fixes from Codex reports.** Open the Codex audit reports, triage findings, fix the high-severity items. Specific scope to be defined in the morning.
+
+**Files / artefacts produced today:**
+- Code: `extensions/diamond-widget/assets/diamond-widget.js` (rewrite), `server/services/payalApi.js` (real Augmont), `server/routes/cart.js` (new), `server/middleware/rateLimit.js` (new), `server/index.js` (rate-limit + cart wire-in), `prisma/schema.prisma` + new migration, `app/routes/app.orders.jsx`.
+- Docs: `WORK_LOG.md` (this entry + Day 2 Sessions 1-4), `PAYAL_HANDOFF.md` (new at repo root).
+- Infra: Railway env var `DATABASE_URL` updated with PgBouncer flags. Shopify CDN `augmont-diamonds-5` released + active. Theme `test-data` block re-bound off the dev-preview URL.
+
+**Open PRs:**
+- PR #4 — `fix/widget-image-fallback-and-currency` — open, waiting for manual merge via GitHub UI tomorrow.
+
+**Hours:** ~14 hours across the day. Sleep.
+
+**Phase tracker after Day 2:** Phases 1-7 ✓, A ✓, B ✓ (browser-verified). Phase 8 (App Store submission) and Phase C (security hardening) still ahead.
+
+---
