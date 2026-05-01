@@ -24,6 +24,20 @@ module.exports = {
   // Base config
   extends: ["eslint:recommended"],
 
+  rules: {
+    // Allow `_`-prefixed args/vars/caught errors to be unused — standard
+    // convention for "intentionally ignored" Express middleware signatures
+    // and React/Remix loader callbacks.
+    "no-unused-vars": [
+      "error",
+      {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+      },
+    ],
+  },
+
   overrides: [
     // React
     {
@@ -83,7 +97,9 @@ module.exports = {
         "vite.config.{js,ts}",
         ".graphqlrc.{js,ts}",
         "shopify.server.{js,ts}",
-        "**/*.server.{js,ts}",
+        "**/*.server.{js,jsx,ts,tsx}",
+        "server/**/*.{js,ts}",
+        "app/routes/**/*.{jsx,tsx}",
       ],
       env: {
         node: true,

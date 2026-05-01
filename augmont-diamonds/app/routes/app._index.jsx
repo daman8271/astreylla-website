@@ -11,7 +11,7 @@ export default function Dashboard() {
     <s-page heading="Augmont Diamonds">
       <s-banner tone="info" heading="Welcome to Augmont Diamonds">
         Jewellers install this app to let customers browse and order diamonds
-        directly from their store. Orders route to Payal's API automatically.
+        directly from their store. Orders route to Payal&apos;s API automatically.
       </s-banner>
 
       <s-section heading="Overview">

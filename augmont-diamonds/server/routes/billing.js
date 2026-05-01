@@ -5,7 +5,7 @@ const router = Router();
 // POST /webhooks/billing
 // Shopify sends billing events here (subscription activated, cancelled, etc.)
 // Must respond with 200 quickly — do heavy work async.
-router.post("/", async (req, res, next) => {
+router.post("/", async (req, res, _next) => {
   // TODO: verify webhook HMAC signature using SHOPIFY_API_SECRET
   // TODO: parse req.body for charge status (active / declined / cancelled)
   // TODO: update subscriptions table in DB accordingly

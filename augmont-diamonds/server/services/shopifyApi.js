@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
 // Send a customer data report back to Shopify (required by GDPR data_request webhook)
-export async function sendDataReport(shop, accessToken, reportPayload) {
+export async function sendDataReport(shop, _accessToken, _reportPayload) {
   // No identifying customer data stored beyond order email (by operational necessity).
   // Placeholder for future implementation if we begin storing additional PII.
   console.log(`[shopifyApi] data report requested for shop=${shop}`);

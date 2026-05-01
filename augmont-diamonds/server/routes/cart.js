@@ -146,8 +146,6 @@ router.get("/", async (req, res, next) => {
       return res.json({ items: [], currency: "USD", count: 0, total: 0 });
     }
 
-    const ourLineIds = new Set(ours.map((c) => c.augmontCartItemId).filter(Boolean));
-
     let augmont;
     try {
       augmont = await getCart();

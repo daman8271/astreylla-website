@@ -42,12 +42,12 @@ export default function SettingsPage() {
 
       <s-section slot="aside" heading="Help">
         <s-paragraph>
-          The Diamond Widget displays your catalog on the jeweller's storefront.
+          The Diamond Widget displays your catalog on the jeweller&apos;s storefront.
           Toggle it off to hide the widget without uninstalling the app.
         </s-paragraph>
         <s-paragraph>
-          Get your Payal API key from Payal's supplier portal. Without it,
-          diamond data and order routing won't work.
+          Get your Payal API key from Payal&apos;s supplier portal. Without it,
+          diamond data and order routing won&apos;t work.
         </s-paragraph>
       </s-section>
     </s-page>

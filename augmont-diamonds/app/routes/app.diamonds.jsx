@@ -90,11 +90,11 @@ export default function DiamondsPage() {
 
       <s-section slot="aside" heading="About the Catalog">
         <s-paragraph>
-          Diamond data is fetched live from Payal's API. Set your API key in{" "}
+          Diamond data is fetched live from Payal&apos;s API. Set your API key in{" "}
           <s-link href="/app/settings">Settings</s-link> to connect.
         </s-paragraph>
         <s-paragraph>
-          Jeweller's customers see this catalog on the storefront via the
+          Jeweller&apos;s customers see this catalog on the storefront via the
           Diamond Widget theme extension.
         </s-paragraph>
       </s-section>

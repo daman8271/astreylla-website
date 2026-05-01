@@ -17,7 +17,7 @@ function guardHmac(req, res) {
 // POST /webhooks/customers/redact
 // Shopify requests deletion of a customer's personal data.
 // We delete any orders rows tied to this customer email on this shop.
-router.post("/customers/redact", async (req, res, next) => {
+router.post("/customers/redact", async (req, res, _next) => {
   if (guardHmac(req, res)) return;
 
   const { shop_domain, customer } = req.body;
@@ -44,7 +44,7 @@ router.post("/customers/redact", async (req, res, next) => {
 // POST /webhooks/shop/redact
 // Shopify requests deletion of all data for an uninstalled shop.
 // Deletions are ordered by FK dependency: orders → subscriptions → merchants → sessions.
-router.post("/shop/redact", async (req, res, next) => {
+router.post("/shop/redact", async (req, res, _next) => {
   if (guardHmac(req, res)) return;
 
   const { shop_domain } = req.body;
@@ -73,7 +73,7 @@ router.post("/shop/redact", async (req, res, next) => {
 // POST /webhooks/customers/data_request
 // Shopify asks what customer data we hold.
 // We only store customer email on orders (operational necessity) — logged here for audit trail.
-router.post("/customers/data_request", async (req, res, next) => {
+router.post("/customers/data_request", async (req, res, _next) => {
   if (guardHmac(req, res)) return;
 
   const { shop_domain, customer, data_request } = req.body;
