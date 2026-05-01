@@ -10,7 +10,8 @@ export async function handlePublicEnquiry(req, res, next) {
       return res.status(400).json({ error: "shop, diamondId, name, and email are required" });
     }
 
-    const session = await prisma.session.findUnique({ where: { shop } });
+    // findFirst (not findUnique) — Session.shop is no longer @unique post-C2.
+    const session = await prisma.session.findFirst({ where: { shop } });
     if (!session) {
       return res.status(404).json({ error: "Shop not found" });
     }

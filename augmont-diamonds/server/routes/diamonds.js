@@ -14,7 +14,10 @@ export async function handlePublicDiamonds(req, res, next) {
       return res.status(400).json({ error: "shop query parameter is required" });
     }
 
-    const session = await prisma.session.findUnique({ where: { shop } });
+    // findFirst (not findUnique) because Session.shop is no longer @unique
+    // post-C2 — multiple sessions per shop are now allowed by the Shopify
+    // adapter. We just need any row to confirm the shop is authorized.
+    const session = await prisma.session.findFirst({ where: { shop } });
     if (!session) {
       return res.status(403).json({ error: "shop not authorized" });
     }

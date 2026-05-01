@@ -25,7 +25,8 @@ async function validateShop(shop) {
   if (!shop || typeof shop !== "string") {
     return { ok: false, status: 400, error: "shop is required" };
   }
-  const session = await prisma.session.findUnique({ where: { shop } });
+  // findFirst (not findUnique) — Session.shop is no longer @unique post-C2.
+  const session = await prisma.session.findFirst({ where: { shop } });
   if (!session) return { ok: false, status: 403, error: "shop not authorized" };
   await prisma.merchant.upsert({
     where:  { shopId: shop },
