@@ -25,7 +25,6 @@ Set all of these in your Railway service dashboard (Settings → Variables):
 | `SHOPIFY_API_KEY` | Shopify app client ID from Partner dashboard | `abc123...` |
 | `SHOPIFY_API_SECRET` | Shopify app client secret | `shpss_...` |
 | `SCOPES` | OAuth scopes — keep aligned with `shopify.app.toml [access_scopes].scopes` | `read_products` |
-| `SHOPIFY_SCOPES` | Legacy alias still read by `server/middleware/auth.js`; will be removed in Phase C/H1. Set to the same value as `SCOPES`. | `read_products` |
 | `SHOPIFY_APP_URL` | Public app URL on Railway | `https://<your-railway-domain>.up.railway.app` |
 | `SHOP_CUSTOM_DOMAIN` | Optional custom domain to allowlist for the session adapter | _(blank)_ |
 | `HOST` | Hostname used by the Shopify session-token verifier for `iss` claim validation | `<your-railway-domain>.up.railway.app` |

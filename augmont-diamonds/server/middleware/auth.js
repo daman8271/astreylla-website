@@ -5,7 +5,7 @@ import { shopifyApi, ApiVersion } from "@shopify/shopify-api";
 const shopify = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY || "",
   apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
-  scopes: (process.env.SHOPIFY_SCOPES || "read_products,write_orders").split(","),
+  scopes: (process.env.SCOPES || "read_products").split(","),
   hostName: process.env.HOST || "localhost",
   isEmbeddedApp: true,
   apiVersion: ApiVersion.April26,
