@@ -346,7 +346,7 @@ Per `shopify help app dev clean`: "Stop the dev preview that was started with `s
 **Phase A: COMPLETE.** Real Augmont LGD UAT integration live. `/api/public/diamonds` returns 25 real stones with prices, images, videos.
 
 **Phase B: COMPLETE.** Cart + checkout system deployed to production, browser-verified end-to-end.
-- Storefront tested manually on `trial-shop-sqxnl71f.myshopify.com` (password `aowaup`).
+- Storefront tested manually on `trial-shop-sqxnl71f.myshopify.com` (password redacted — see secure store).
 - Place-order flow exercised with **2 diamonds, total $91.12**, full UI states observed (idle → loading → added → in-cart, plus the slide-in cart panel + remove + checkout disabled-message path).
 - All four UI bugs from afternoon review are fixed and live (ENQUIRE→ADD TO CART, broken images→placeholder, ₹→$, dev-preview binding→released v5).
 
@@ -362,7 +362,7 @@ Per `shopify help app dev clean`: "Stop the dev preview that was started with `s
 2. **Augmont image URLs are slow** (`viewmydiamonds.com` viewer pages, ~20 KB each, S3 + CloudFront miss on first hit per diamond). Augmont API limitation — they don't expose raw image CDN URLs. Mitigated by lazy `loading="lazy"` + onerror placeholder; will revisit in Phase C if perf complaints.
 3. **Railway cold start** observed during stress test (first 2 of 15 requests returned 504 while pod warmed up). Fine for organic traffic, painful for any synthetic monitor or quiet-period buyer. Phase C optimization target — could move to Railway "always-on" tier or warm with a cron ping.
 
-**Tomorrow (Day 3, May 1, 2026):**
+**Next session (Day 3 — Phase C: security fixes from Codex reports):**
 - **Phase C: security fixes from Codex reports.** Open the Codex audit reports, triage findings, fix the high-severity items. Specific scope to be defined in the morning.
 
 **Files / artefacts produced today:**

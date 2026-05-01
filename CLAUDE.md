@@ -103,7 +103,7 @@ railway up
 - **Active theme extension version:** `augmont-diamonds-5` (released May 1, 2026 — has cart + checkout + image fallback + currency formatter)
 - **Admin dashboard:** 4 Polaris pages (home, diamonds, orders, settings) — embedded in Shopify Admin via App Bridge
 - **Storefront widget:** deployed via Shopify CDN, talks directly to Express on Railway
-- **Test storefront:** `trial-shop-sqxnl71f.myshopify.com` (password: `aowaup`)
+- **Test storefront:** `trial-shop-sqxnl71f.myshopify.com` (password: <stored in 1Password / .env.local>)
 
 ## ARCHITECTURE
 
