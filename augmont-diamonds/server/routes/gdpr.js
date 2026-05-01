@@ -81,8 +81,8 @@ router.post("/customers/data_request", async (req, res, _next) => {
   console.log(
     `[gdpr] customers/data_request id=${data_request?.id} shop=${shop_domain} email=${customer?.email}`
   );
-  // No action required: we hold customer email on orders only.
-  // If this changes, implement sendDataReport from shopifyApi.js here.
+  // No action required: we hold customer email on orders only. If this changes,
+  // implement a customer data report response here.
 
   res.sendStatus(200);
 });
