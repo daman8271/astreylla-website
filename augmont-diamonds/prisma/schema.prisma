@@ -8,10 +8,15 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Required by @shopify/shopify-app-session-storage-prisma — do not remove fields
+// Required by @shopify/shopify-app-session-storage-prisma — do not remove fields.
+// `shop` is intentionally NOT @unique — Shopify creates multiple sessions per
+// shop (offline + online + multiple users + refresh-token rotation). The
+// adapter's Prisma-recommended shape is a plain string with an index for
+// lookup performance. Merchant identity is keyed on Merchant.shopId @unique
+// instead, which is the canonical "one merchant per shop" handle.
 model Session {
   id                  String    @id
-  shop                String    @unique
+  shop                String
   state               String
   isOnline            Boolean   @default(false)
   scope               String?
@@ -28,11 +33,15 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 
-  merchant Merchant?
-
+  @@index([shop])
   @@map("sessions")
 }
 
+// Merchant ↔ Session is a soft join on shop string — code looks up each
+// table independently. Removing the FK to Session.shop unblocks the
+// Session.shop @unique drop above (multiple sessions per shop now allowed).
+// Merchant.shopId remains @unique so it stays the canonical FK target for
+// Order, Subscription, and CartItem.
 model Merchant {
   id            String  @id @default(cuid())
   shopId        String  @unique
@@ -40,7 +49,6 @@ model Merchant {
   isActive      Boolean @default(true)
   widgetEnabled Boolean @default(false)
 
-  session       Session        @relation(fields: [shopId], references: [shop])
   orders        Order[]
   subscriptions Subscription[]
   cartItems     CartItem[]
