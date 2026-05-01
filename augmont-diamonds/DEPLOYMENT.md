@@ -17,18 +17,26 @@ Two servers run as a single Railway service:
 
 Set all of these in your Railway service dashboard (Settings → Variables):
 
+> Source of truth: `.env.example`. Verify the list with
+> `grep -RhoE "process\.env\.[A-Z_][A-Z0-9_]*" app server | sort -u`.
+
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `SHOPIFY_API_KEY` | From Shopify Partner dashboard | `abc123...` |
-| `SHOPIFY_API_SECRET` | From Shopify Partner dashboard | `shpss_...` |
-| `SHOPIFY_SCOPES` | OAuth scopes required | `read_products,write_orders` |
-| `DATABASE_URL` | Supabase pooled connection URL | `postgresql://...?pgbouncer=true` |
-| `DIRECT_URL` | Supabase direct connection URL (for Prisma migrations) | `postgresql://...` |
-| `PAYAL_API_URL` | Base URL for Payal's diamond API | `https://api.payal.com` |
-| `PAYAL_API_KEY` | Auth key for Payal's API | `pk_live_...` |
-| `SESSION_SECRET` | Random secret for session signing (min 32 chars) | `openssl rand -hex 32` |
+| `SHOPIFY_API_KEY` | Shopify app client ID from Partner dashboard | `abc123...` |
+| `SHOPIFY_API_SECRET` | Shopify app client secret | `shpss_...` |
+| `SCOPES` | OAuth scopes — keep aligned with `shopify.app.toml [access_scopes].scopes` | `read_products` |
+| `SHOPIFY_SCOPES` | Legacy alias still read by `server/middleware/auth.js`; will be removed in Phase C/H1. Set to the same value as `SCOPES`. | `read_products` |
+| `SHOPIFY_APP_URL` | Public app URL on Railway | `https://<your-railway-domain>.up.railway.app` |
+| `SHOP_CUSTOM_DOMAIN` | Optional custom domain to allowlist for the session adapter | _(blank)_ |
+| `HOST` | Hostname used by the Shopify session-token verifier for `iss` claim validation | `<your-railway-domain>.up.railway.app` |
+| `DATABASE_URL` | Supabase **pooled** connection URL — MUST include `?pgbouncer=true&connection_limit=1` (see CLAUDE.md "Prisma + Supabase PgBouncer rule") | `postgresql://…pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1` |
+| `DIRECT_URL` | Supabase **direct** (non-pooled) URL for `prisma migrate` — MUST NOT include the pgbouncer flag | `postgresql://…pooler.supabase.com:5432/postgres` |
+| `AUGMONT_BASE_URL` | Augmont LGD API base URL | `https://api.uatlgd.augmont.com/api/v1` |
+| `PAYAL_API_USERNAME` | Augmont merchant login username | _(from Payal)_ |
+| `PAYAL_API_PASSWORD` | Augmont merchant login password | _(from Payal)_ |
+| `EXPRESS_API_URL` | Internal URL the Remix admin loaders use to call the Express API | `http://localhost:4000` |
 | `NODE_ENV` | Must be `production` on Railway | `production` |
-| `PORT` | Set automatically by Railway — do NOT set manually | — |
+| `PORT` | Set automatically by Railway — do NOT set manually | _(auto)_ |
 
 ## Build & Deploy Steps
 
