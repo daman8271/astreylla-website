@@ -190,7 +190,7 @@ File: `.env` (never commit) — template: `.env.example`
 | 3 | Express API + connect to Payal's API | COMPLETE | Apr 29, 2026 |
 | 4 | Theme Extension storefront widget | COMPLETE — `augmont-diamonds-5` live | Apr 29, 2026 |
 | 5 | Order flow end to end (widget → Express → Payal) | COMPLETE — enquiry flow live | Apr 29, 2026 |
-| 6 | Billing API + subscription management | COMPLETE | Apr 29, 2026 |
+| 6 | Billing API + subscription management | DEFERRED — app is free at launch (billing route removed in H3 to eliminate billing-webhook attack surface; can re-add post-App-Store-approval if monetization is added later) | — |
 | 7 | Testing + polish + error handling | COMPLETE — Playwright harness | Apr 29, 2026 |
 | **A** | **Real Augmont LGD UAT integration** (replace mock catalog) | **100% COMPLETE** | **Apr 30, 2026** |
 | **B** | **Cart + checkout system** (Augmont cart API + order create) | **100% COMPLETE — ✓ Verified in browser** | **May 1, 2026** |

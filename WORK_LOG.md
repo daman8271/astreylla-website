@@ -18,7 +18,7 @@ DATE | PHASE | WHAT WAS BUILT | FILES CHANGED | WHAT'S NEXT | BLOCKERS
 | 3 | Express API + connect Payal's API | COMPLETE (pending Augmont creds) | Apr 29, 2026 |
 | 4 | Theme Extension widget | COMPLETE | Apr 29, 2026 |
 | 5 | Order flow end to end | COMPLETE (enquiry flow live) | Apr 29, 2026 |
-| 6 | Billing API | COMPLETE | Apr 29, 2026 |
+| 6 | Billing API | DEFERRED — app is free at launch (billing route removed in H3 to eliminate billing-webhook attack surface; can re-add post-App-Store-approval if monetization is added later) | — |
 | 7 | Testing + polish | COMPLETE | Apr 29, 2026 |
 | 8 | App Store submission | NOT STARTED — pending assets | — |
 

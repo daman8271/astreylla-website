@@ -7,7 +7,6 @@ import * as remixBuild from "../build/server/index.js";
 import diamondsRouter, { handlePublicDiamonds } from "./routes/diamonds.js";
 import { handlePublicEnquiry } from "./routes/enquiry.js";
 import ordersRouter from "./routes/orders.js";
-import billingRouter from "./routes/billing.js";
 import gdprRouter from "./routes/gdpr.js";
 import cartRouter, { handlePublicOrderCreate } from "./routes/cart.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -35,12 +34,11 @@ const webhookJson = express.json({
 
 app.use("/api", apiJson);
 
-// /webhooks/* is split: billing/customers/shop are Express-owned (need rawBody
+// /webhooks/* is split: customers/shop are Express-owned (need rawBody
 // for HMAC); /webhooks/app/* are Remix routes that must not be JSON-parsed here
 // so that authenticate.webhook(request) can read the body itself.
 app.use((req, res, next) => {
   if (
-    req.path === "/webhooks/billing" ||
     req.path.startsWith("/webhooks/customers/") ||
     req.path.startsWith("/webhooks/shop/")
   ) {
@@ -62,7 +60,6 @@ app.post("/api/public/order/create", handlePublicOrderCreate);
 app.use("/api/diamonds", diamondsRouter);
 app.use("/api/orders", ordersRouter);
 
-app.use("/webhooks/billing", billingRouter);
 app.use("/webhooks", gdprRouter);
 
 // Static client bundles. Vite emits hashed JS/CSS into build/client/assets —
@@ -82,7 +79,6 @@ app.use(express.static(CLIENT_BUILD_DIR, { maxAge: "1h", index: false }));
 app.use((err, req, res, next) => {
   if (
     req.path.startsWith("/api") ||
-    req.path === "/webhooks/billing" ||
     req.path.startsWith("/webhooks/customers/") ||
     req.path.startsWith("/webhooks/shop/") ||
     req.path === "/health"
