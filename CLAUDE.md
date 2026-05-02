@@ -69,6 +69,16 @@ Never stack multiple features in one session.
 - Server maps Augmont 403 → HTTP 503 with friendly user-facing message. Cart works, checkout shows "Online checkout is not yet enabled."
 - Don't waste cycles debugging the order flow until the flag is verified ON. See `PAYAL_HANDOFF.md` at repo root.
 
+### 6. Preview env shares the production Supabase database
+- Both Railway environments (preview AND production) currently point at the SAME Supabase project — identical `DATABASE_URL` and `DIRECT_URL`, same pooler host (`aws-1-ap-southeast-1.pooler.supabase.com:6543`), same credentials, same data.
+- Confirmed May 3, 2026 via `railway variables --environment production --kv` vs `--environment preview --kv` (both returned identical URLs).
+- **Implication: preview is NOT a real staging tier.** Stress tests on preview hit prod data. `prisma migrate deploy` on preview applies to the production DB. Destructive queries on preview destroy production state.
+- **What to do:**
+  - Treat any infra-touching operation on preview as production-impacting.
+  - Don't `prisma migrate dev --create-only` then push through preview without confirming the migration is safe for production data.
+  - Don't run capacity tests against preview hoping to shield production — there's no shielding.
+  - When testing changes that need pool/connection isolation (e.g. raising `connection_limit`), there is currently no safe path; provision a dedicated preview Supabase project first (tracked in `PHASE_E_BACKLOG.md`).
+
 ## COMMANDS
 
 ```bash
