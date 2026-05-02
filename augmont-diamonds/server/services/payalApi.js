@@ -30,17 +30,60 @@ export class AugmontError extends Error {
   }
 }
 
+// ─── Upstream timeout (P2) ───────────────────────────────────────────────
+//
+// Why: Augmont UAT degraded periods (60-120s observed in May 2 prod browser
+// smoke) cause Railway's edge proxy to return 504 to clients with no chance
+// for our handlers to map to a friendly message. Bounding every Augmont
+// request at 10s lets us throw an UPSTREAM_TIMEOUT we can map to a 503 with
+// a proper user-facing message.
+//
+// AbortController is per-request (single-use). Both fetch + body-read are
+// inside the timer so a server that returns headers fast then hangs the body
+// is also caught. Returns { res, text } so the caller still has access to
+// status code + raw body.
+//
+// 401-retry path inside authedRequest creates a NEW fetchWithTimeout call
+// per leg, so each leg gets its own 10s budget (worst case 20s for refresh +
+// retry). That's correct — we don't want a fast token refresh penalised by
+// a slow original request's deadline.
+//
+// AUGMONT_TIMEOUT_MS env override is a tuning knob (also used by smoke
+// tests to reproduce abort behaviour quickly).
+const UPSTREAM_TIMEOUT_MS = Number(process.env.AUGMONT_TIMEOUT_MS) || 10_000;
+
+async function fetchWithTimeout(url, init = {}, timeoutMs = UPSTREAM_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    const text = await res.text();
+    return { res, text };
+  } catch (err) {
+    // Node's fetch throws AbortError (err.name); some stacks/codepaths report
+    // err.code === "ABORT_ERR". Check both for safety across Node versions.
+    if (err?.name === "AbortError" || err?.code === "ABORT_ERR") {
+      throw new AugmontError(`Augmont upstream timeout after ${timeoutMs}ms`, {
+        status: 504,
+        code: "UPSTREAM_TIMEOUT",
+      });
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // POST /merchant/login — returns JWT
 async function login() {
   assertConfig();
   const url = `${BASE_URL()}/merchant/login`;
-  const res = await fetch(url, {
+  const { res, text } = await fetchWithTimeout(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: USERNAME(), password: PASSWORD() }),
   });
 
-  const text = await res.text();
   let body;
   try { body = JSON.parse(text); } catch { body = { raw: text }; }
 
@@ -82,6 +125,9 @@ function buildQs(query) {
 
 // Authenticated request with one auto-retry on 401 (token refresh).
 // Throws AugmontError on non-2xx; returns parsed body on success.
+// Each fetchWithTimeout call gets its own 10s budget; 401-retry path can
+// therefore burn up to 20s in the worst case (10s original + 10s retry +
+// any login() time, which is also bounded).
 async function authedRequest(method, path, { query, body } = {}) {
   const url = `${BASE_URL()}${path}${buildQs(query)}`;
   const send = async (token) => {
@@ -93,19 +139,19 @@ async function authedRequest(method, path, { query, body } = {}) {
       },
     };
     if (body !== undefined) init.body = JSON.stringify(body);
-    return fetch(url, init);
+    return fetchWithTimeout(url, init);
   };
 
   let token = await getToken();
-  let res = await send(token);
+  let result = await send(token);
 
-  if (res.status === 401) {
+  if (result.res.status === 401) {
     tokenCache = { token: null, expiresAt: 0 };
     token = await login();
-    res = await send(token);
+    result = await send(token);
   }
 
-  const text = await res.text();
+  const { res, text } = result;
   let parsed;
   try { parsed = text ? JSON.parse(text) : {}; } catch { parsed = { raw: text }; }
 

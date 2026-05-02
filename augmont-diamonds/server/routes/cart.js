@@ -31,6 +31,14 @@ function validateSessionId(sessionId) {
 
 function userFacingError(err) {
   if (err instanceof AugmontError) {
+    // P2: upstream timeout — map BEFORE status checks (code is the contract,
+    // status is informational on UPSTREAM_TIMEOUT).
+    if (err.code === "UPSTREAM_TIMEOUT") {
+      return {
+        status: 503,
+        body: { error: "Your cart is temporarily unavailable. Please try again in a moment." },
+      };
+    }
     if (err.status === 403) {
       return { status: 503, body: { error: "Cart feature is not yet enabled. Please contact the store." } };
     }
@@ -274,6 +282,11 @@ export async function handlePublicOrderCreate(req, res, next) {
       });
     } catch (err) {
       if (err instanceof AugmontError) {
+        if (err.code === "UPSTREAM_TIMEOUT") {
+          return res.status(503).json({
+            error: "Checkout is temporarily unavailable. Please try again in a moment.",
+          });
+        }
         if (err.status === 403) {
           return res.status(503).json({
             error: "Online checkout is not yet enabled. Please contact the store to complete your order.",

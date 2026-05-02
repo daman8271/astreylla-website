@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifySessionToken } from "../middleware/auth.js";
-import { getDiamonds, getDiamondById } from "../services/payalApi.js";
+import { getDiamonds, getDiamondById, AugmontError } from "../services/payalApi.js";
 
 const router = Router();
 
@@ -20,6 +20,11 @@ export async function handlePublicDiamonds(req, res, next) {
     const diamonds = await getDiamonds(filters, { nocache: nocache === "1" });
     res.json({ diamonds });
   } catch (err) {
+    if (err instanceof AugmontError && err.code === "UPSTREAM_TIMEOUT") {
+      return res.status(503).json({
+        error: "The diamond catalog is temporarily unavailable. Please try again in a moment.",
+      });
+    }
     next(err);
   }
 }
