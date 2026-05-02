@@ -13,11 +13,55 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { publicRateLimit, publicRateLimitPerShop } from "./middleware/rateLimit.js";
 import { validateMerchantWidget } from "./middleware/validateMerchantWidget.js";
 
+// CORS allowlist for all routes (storefront /api/public/*, admin /api/*,
+// webhook /webhooks/*, auth /auth/*).
+//
+// Allowed:
+//   - any *.myshopify.com   (merchant storefronts)
+//   - explicit non-myshopify hostnames go in this Set (currently just
+//     admin.shopify.com for embedded admin)
+//
+// "No Origin" requests (server-to-server, curl, mobile WebViews, health
+// checks) are allowed because CORS is browser-only — non-browser callers
+// are gated by other middleware (rate limits, widget gate, HMAC). For
+// /webhooks/*, Shopify is server-to-server (no Origin) so CORS is a
+// no-op there; HMAC verification is the real auth boundary.
+//
+// Custom merchant storefront domains (e.g. payaldiamonds.com instead of
+// payaldiamonds.myshopify.com) are NOT allowlisted here. Phase E
+// follow-up: add a Merchant.allowedOrigins JSON column and check against
+// the per-shop list. Until then, custom-domain storefronts will be
+// CORS-blocked and surface as `[cors] blocked origin: ...` warnings in
+// Railway logs.
+const ALLOWED_HOSTNAMES = new Set(["admin.shopify.com"]);
+
+function corsOriginCheck(origin, callback) {
+  // No Origin header — server-to-server, curl, mobile WebViews, health
+  // checks. CORS is a browser-only policy; non-browser callers are gated
+  // by other middleware (rate limits, widget gate, HMAC).
+  if (!origin) return callback(null, true);
+
+  let parsed;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    console.warn(`[cors] invalid Origin header rejected: ${origin}`);
+    return callback(null, false);
+  }
+
+  const { hostname } = parsed;
+  if (hostname.endsWith(".myshopify.com")) return callback(null, true);
+  if (ALLOWED_HOSTNAMES.has(hostname)) return callback(null, true);
+
+  console.warn(`[cors] blocked origin: ${origin}`);
+  return callback(null, false);
+}
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.set("trust proxy", 1);
-app.use(cors());
+app.use(cors({ origin: corsOriginCheck }));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
