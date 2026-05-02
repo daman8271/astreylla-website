@@ -444,3 +444,87 @@ Per `shopify help app dev clean`: "Stop the dev preview that was started with `s
 - **Phase E priorities elevated:** Augmont response caching (Redis/in-memory with 5–15 min TTL) + DB `connection_limit` revisit + explicit 10 s upstream timeout to convert Railway 504 into a friendly 503. See `PHASE_E_BACKLOG.md` priority section for details.
 
 ---
+
+### Day 3 — Close-out — May 3, 2026 — Phase E priorities shipped to production
+
+**Phase:** Phase E — performance + privacy polish (PRIORITY items P1+P2 only; P3 deferred; CLEANUP C1–C6 deferred to next session).
+
+**Built / Shipped:**
+- **P1 — Augmont products SWR cache** (commit `e5ece82`). In-memory stale-while-revalidate cache (10-min TTL) over `payalApi.js#getDiamonds`. Module-scoped Map, sorted+stringified keys to avoid `{n:1}` vs `{n:"1"}` collisions, in-flight Promise dedup (thundering-herd-safe on cold miss AND background revalidation), 50-entry LRU cap (~2.5 MB worst case), 60s back-off on revalidate failure, **skip-empty** on every write path (never cache `[]` — anomaly, not real state), `?nocache=1` diagnostic bypass that doesn't pollute the cache, `AUGMONT_CACHE_TTL_MS` env override for tuning.
+- **P2 — Augmont upstream timeout (10 s) + friendly 503** (commit `227315c`). Per-request `AbortController` via new `fetchWithTimeout()` helper bounding both `login()` and `authedRequest.send()`. Returns `{res, text}` so body-read is bounded too (catches "headers fast, body hangs" upstream pattern). UPSTREAM_TIMEOUT mapped to friendly HTTP 503 in three route surfaces with distinct copy: catalog ("The diamond catalog is temporarily unavailable. Please try again in a moment."), cart ("Your cart is temporarily unavailable…"), checkout ("Checkout is temporarily unavailable…"). 401-retry path gives each leg its own 10s budget. `AUGMONT_TIMEOUT_MS` env override.
+
+**Deferred:**
+- **P3 — DB `connection_limit=1` revisit** (no commit). Originally HIGH PRIORITY tonight. Two prerequisites surfaced during the P3 design walkthrough that argued for deferral:
+  1. **E3 (Prisma client unification) is a hard prerequisite** — currently 2 Prisma instances (`server/services/prismaClient.js` + `app/db.server.js`); any `connection_limit=N` bump bumps actual peak to `2 × N`, defeating the intent.
+  2. **Preview env shares the production Supabase project** (new finding — see Discoveries) — cannot test infra-touching changes in isolation.
+- Sequencing: ship P1+P2 → observe how production handles next Augmont degradation with cache+timeout in place → revisit P3 with real data.
+
+**Discoveries:**
+- **Preview Railway env shares the production Supabase database.** Confirmed via `railway variables --kv` on both envs returning identical `DATABASE_URL` and `DIRECT_URL`. Documented in `CLAUDE.md` as critical-knowledge rule #6, plus a new finding section in `PHASE_E_BACKLOG.md` (commit `5a5efed`). Implication: preview is NOT a real staging tier; stress tests on preview affect prod data; `prisma migrate deploy` on preview applies to prod. Long-term fix tracked in backlog (provision dedicated preview Supabase project).
+- **Augmont UAT outage observed during deploy verification.** Different failure modes minute-to-minute: preview probe (~30 min before prod deploy) saw raw 502 from Augmont login (5-6 s); production probe minutes later saw upstream hang > 10 s. Both real failure shapes within one session — coverage win that verified P1 wire-up AND P2 timeout firing across two distinct upstream-failure modes.
+
+**Production smoke verification (post-deploy, single-shot sequential probes — no parallelism):**
+| Probe | HTTP | Time | Body |
+|---|---|---|---|
+| `/health` | 200 | 0.90s | `{"status":"ok"}` |
+| `/api/public/diamonds?shop=trial-shop-...` (cold) | 503 | 14.24s | `{"error":"The diamond catalog is temporarily unavailable. Please try again in a moment."}` |
+| same, ~8s later | 503 | 13.75s | same friendly copy |
+| same, ~16s later | 503 | 13.31s | same |
+| same with `?nocache=1` | 503 | 13.20s | same |
+
+Production Railway logs after smoke (proves cache wire-up):
+```
+[server] listening on :8080 (NODE_ENV=production)
+[cache] miss key=<root>
+[cache] miss key=<root>
+[cache] miss key=<root>
+[cache] bypass key=<root> reason=nocache
+```
+
+**Local smoke coverage (against deterministic mock Augmont, before deploys):**
+- P1: **23/23 assertions** across 6 scenarios (cold miss → fresh hit → bypass → concurrent burst dedup → stale-hit + background revalidate → skip-empty).
+- P2: **21/21 assertions** across 6 scenarios (normal call within timeout → slow upstream aborts at boundary → route maps to friendly 503 → P1+P2 stale-revalidate-fail synergy → 401-retry within budget → body-read also bounded).
+- **Total: 44/44 local assertions pass.**
+
+**Customer-facing impact tonight:**
+- Augmont UAT outage was already affecting buyers BEFORE tonight's deploy — production was returning opaque 502 with `Augmont login failed` body (the OLD code's behavior).
+- After tonight's deploy: same outage now surfaces as a friendly 503 with retryable copy. Buyers see "The diamond catalog is temporarily unavailable. Please try again in a moment." instead of an opaque error.
+- When Augmont recovers: P1 cache absorbs repeat traffic (high hit ratio expected once warm), P2 timeout bounds future slow periods at 10 s instead of Railway's ~60 s edge proxy timeout.
+
+**Files changed:**
+- Code: `augmont-diamonds/server/services/payalApi.js` (cache layer + fetchWithTimeout), `augmont-diamonds/server/routes/diamonds.js` (UPSTREAM_TIMEOUT mapping + ?nocache=1 wiring), `augmont-diamonds/server/routes/cart.js` (UPSTREAM_TIMEOUT in userFacingError + handlePublicOrderCreate).
+- Docs: `CLAUDE.md` (new rule #6), `PHASE_E_BACKLOG.md` (P1/P2 marked DONE, P3 marked DEFERRED with prereqs, new shared-DB section), `WORK_LOG.md` (this entry).
+
+**Commits (3 code/docs):**
+- `e5ece82` perf(cache): P1 — Augmont products SWR cache (10-min TTL)
+- `227315c` perf(timeout): P2 — Augmont upstream timeout (10s) + friendly 503
+- `5a5efed` docs: P1+P2 done, P3 deferred, shared preview/prod DB documented
+
+**Deploy timeline:**
+- Preview deploy via `railway up --ci` from repo root. Build succeeded. Preview smoke partial because Augmont was returning 502 fast (5-6 s) at that moment, so the cache-hit path was unreachable; cache-miss + bypass wire-up confirmed via Railway logs.
+- Production deploy initial attempt failed with upload timeout (transient network); user-approved retry. Retry: CLI lost GraphQL subscription mid-build but server-side build completed (`Healthcheck succeeded` in build logs). No second retry needed — verified deploy live by checking new build logs + observing cache log lines after smoke probes.
+
+**Outstanding (Phase E CLEANUP — deferred to next session, ~90 min total):**
+- C1 — M1 hash emails in `gdpr.js` logs (~15 min)
+- C2 — M2 sanitize errorHandler with requestId UUID (~15 min)
+- C3 — E3 unify Prisma client (~25 min) [PREREQUISITE for any future P3 connection_limit change]
+- C4 — `.env` cleanup (~10 min) [surfaced again tonight when local boot crashed without `SHOPIFY_APP_URL`]
+- C5 — Settings "API Status: Not Connected" (~15 min)
+- C6 — `/app/diamonds` static template → `/api/public/diamonds` (~20 min)
+
+**Outstanding (external blockers — unchanged from Day 3 morning):**
+- Augmont `auto_order_enabled` flag (Payal action) — see `PAYAL_HANDOFF.md`.
+- Augmont UAT stability (their backend nginx 502'd / hung throughout tonight's deploy verification).
+- App Store submission assets (Phase 8).
+
+**Hours:** ~3 hours of focused Phase E work this session.
+
+**Next session (Phase E CLEANUP):**
+1. C1 + C2 first — privacy/security highest value (PII logging + error-message sanitization).
+2. C3 (Prisma client unification) — unblocks future P3.
+3. C4–C6 — config + admin polish.
+4. Re-evaluate P3 (DB `connection_limit`) AFTER C3 lands AND we observe the next Augmont degradation event in production with P1+P2 in place.
+
+**Branch:** `phase-c-security-hardening` (9 commits ahead of C1 baseline; pushed to GitHub).
+
+---
