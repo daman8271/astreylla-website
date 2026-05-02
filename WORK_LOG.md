@@ -433,4 +433,14 @@ Per `shopify help app dev clean`: "Stop the dev preview that was started with `s
 
 **Status:** Phase C + Phase D security hardening shipped to production. Backend code is App-Store-submission-ready subject to manual storefront regression check. Single comprehensive PR (Phase G) deferred per long-standing plan.
 
+**Production verification — partial degradation (browser smoke, May 2, 2026 — post-deploy):**
+- Visited `https://trial-shop-sqxnl71f.myshopify.com` with DevTools Network tab open.
+- `/api/public/diamonds` → 504 Gateway Timeout after 1.2–1.9 min.
+- `/api/public/cart` → 504 Gateway Timeout after 2.1 min.
+- All static resources (CSS/JS/images/fonts) → 200 OK; widget renders correctly and shows the "Unable to load diamonds. Please try again." fallback with Retry button (graceful degradation as designed).
+- **Root cause:** Augmont UAT severely degraded (60–120+ s response times today — same volatile dependency seen during the preview E1 smoke and prod V4 verification). Railway edge proxy times out at ~60–100 s and returns 504 to the client.
+- **Concerning:** `/api/public/cart` also 504s, even though it has no Augmont upstream. Most likely the Prisma `connection_limit=1` Supabase pool is starving — a long-running diamonds request occupies the single connection, blocking subsequent cart requests behind it. This matches the DB-capacity finding from E1 smoke (commit `524aa60`) but escalates the impact: it now affects buyer experience in real prod traffic, not just synthetic abuse bursts.
+- **NOT a Phase D regression.** Phase D middleware is verified working on prod (V1/V2/V3 PASS, V5 cart PASS earlier in the session when the DB wasn't blocked). Rollback to C1 baseline would NOT fix this and would lose all Phase D security improvements.
+- **Phase E priorities elevated:** Augmont response caching (Redis/in-memory with 5–15 min TTL) + DB `connection_limit` revisit + explicit 10 s upstream timeout to convert Railway 504 into a friendly 503. See `PHASE_E_BACKLOG.md` priority section for details.
+
 ---

@@ -28,3 +28,9 @@
   per pod, OR add an Express keep-alive/socket cap to fail-fast when
   pool is saturated. Reference: this Phase D smoke run, deploy
   226e65be on preview env.
+
+## Phase E PRIORITY items (escalated from Phase D production browser smoke, May 2, 2026)
+
+- **(HIGH PRIORITY — NEW)** **Augmont response caching.** Add Redis or in-memory cache with 5–15 min TTL on `/merchant/products` responses to mitigate UAT slowness affecting the customer-facing storefront widget. Without this, any Augmont degradation directly degrades buyer experience (504 Gateway Timeout on `/api/public/diamonds`). Caching also helps with per-shop rate-limited bursty traffic patterns by serving most requests from cache.
+- **(HIGH PRIORITY — ESCALATED)** **DB `connection_limit=1` is too restrictive under real customer traffic.** Even non-Augmont endpoints (`/api/public/cart`) now time out behind the single starved Prisma connection when a long-running diamonds request is occupying it. Browser smoke on May 2, 2026 confirmed this affects buyer experience, not just synthetic abuse bursts. Investigate raising `connection_limit` cautiously (Supabase pooler has its own pool size limit per project tier). Likely a small bump (2–4) rather than full pool, since PgBouncer transaction-pooling caps backend reuse.
+- **(MEDIUM PRIORITY — NEW)** **Explicit 10 s timeout on Augmont upstream calls in `payalApi.js`.** Currently there is no upstream timeout; long-running calls block until the Railway edge proxy times out at ~60–100 s, returning a generic 504 to the client. With an explicit 10 s timeout, our handler can catch the upstream timeout and return a friendly 503 with "Catalog temporarily unavailable, please retry shortly" — same pattern as the existing Augmont-403→503 mapping for `auto_order_enabled`.
