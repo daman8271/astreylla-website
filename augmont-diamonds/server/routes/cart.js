@@ -11,29 +11,15 @@ import {
 
 const router = Router();
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+const MAX_CUSTOMER_NAME_LEN = 200;
+const MAX_ORDER_NOTE_LEN    = 2000;
 
 // Augmont cart line IDs are UUIDs; reject anything else as a hardening step.
 function isLikelyUuid(s) {
   return typeof s === "string" && UUID_RE.test(s);
-}
-
-// All public cart routes require shop + sessionId. Centralize the validation.
-// Also lazily provisions a Merchant row — the cart_items and orders FKs both
-// reference merchants.shopId, and merchant records aren't created during OAuth.
-async function validateShop(shop) {
-  if (!shop || typeof shop !== "string") {
-    return { ok: false, status: 400, error: "shop is required" };
-  }
-  // findFirst (not findUnique) — Session.shop is no longer @unique post-C2.
-  const session = await prisma.session.findFirst({ where: { shop } });
-  if (!session) return { ok: false, status: 403, error: "shop not authorized" };
-  await prisma.merchant.upsert({
-    where:  { shopId: shop },
-    update: {},
-    create: { shopId: shop },
-  });
-  return { ok: true };
 }
 
 function validateSessionId(sessionId) {
@@ -54,13 +40,16 @@ function userFacingError(err) {
   return null;
 }
 
+// Shop authorization + widget-enabled gate is done upstream in
+// validateMerchantWidget (server/index.js wires it at /api/public). The
+// handlers here can trust that req.body.shop / req.query.shop is a valid,
+// widget-enabled installed shop with a Merchant row guaranteed to exist.
+
 // POST /api/public/cart/add
 // Body: { shop, sessionId, productId }
 router.post("/add", async (req, res, next) => {
   try {
     const { shop, sessionId, productId } = req.body || {};
-    const v = await validateShop(shop);
-    if (!v.ok) return res.status(v.status).json({ error: v.error });
     if (!validateSessionId(sessionId)) {
       return res.status(400).json({ error: "valid sessionId is required" });
     }
@@ -133,8 +122,6 @@ router.post("/add", async (req, res, next) => {
 router.get("/", async (req, res, next) => {
   try {
     const { shop, sessionId } = req.query;
-    const v = await validateShop(shop);
-    if (!v.ok) return res.status(v.status).json({ error: v.error });
     if (!validateSessionId(sessionId)) {
       return res.status(400).json({ error: "valid sessionId is required" });
     }
@@ -206,8 +193,6 @@ router.delete("/:id", async (req, res, next) => {
   try {
     const { shop, sessionId } = req.query;
     const { id } = req.params;
-    const v = await validateShop(shop);
-    if (!v.ok) return res.status(v.status).json({ error: v.error });
     if (!validateSessionId(sessionId)) {
       return res.status(400).json({ error: "valid sessionId is required" });
     }
@@ -249,16 +234,25 @@ router.delete("/:id", async (req, res, next) => {
 export async function handlePublicOrderCreate(req, res, next) {
   try {
     const { shop, sessionId, customerEmail, customerName, orderNote } = req.body || {};
-    const v = await validateShop(shop);
-    if (!v.ok) return res.status(v.status).json({ error: v.error });
     if (!validateSessionId(sessionId)) {
       return res.status(400).json({ error: "valid sessionId is required" });
     }
-    if (!customerEmail || !customerName) {
-      return res.status(400).json({ error: "customerEmail and customerName are required" });
+    if (!customerEmail || typeof customerEmail !== "string" || !EMAIL_RE.test(customerEmail)) {
+      return res.status(400).json({ error: "valid customerEmail is required" });
     }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customerEmail)) {
-      return res.status(400).json({ error: "invalid email" });
+    if (
+      !customerName ||
+      typeof customerName !== "string" ||
+      customerName.length < 1 ||
+      customerName.length > MAX_CUSTOMER_NAME_LEN
+    ) {
+      return res.status(400).json({ error: "customerName is required (1–200 chars)" });
+    }
+    if (
+      orderNote != null &&
+      (typeof orderNote !== "string" || orderNote.length > MAX_ORDER_NOTE_LEN)
+    ) {
+      return res.status(400).json({ error: "orderNote must be a string (≤2000 chars)" });
     }
 
     const items = await prisma.cartItem.findMany({

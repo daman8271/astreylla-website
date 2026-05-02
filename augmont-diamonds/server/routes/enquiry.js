@@ -1,19 +1,36 @@
 import { Router } from "express";
 import prisma from "../services/prismaClient.js";
 
-// POST /api/public/enquiry — no JWT, public route
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const MAX_NAME_LEN              = 200;
+const MAX_MESSAGE_LEN           = 2000;
+const MAX_DIAMOND_ID_LEN        = 200;
+const MAX_DIAMOND_DETAILS_BYTES = 10 * 1024;
+
+// POST /api/public/enquiry — public route.
+// Shop authorization + widget-enabled check is done upstream in
+// validateMerchantWidget (server/index.js wires it at /api/public).
 export async function handlePublicEnquiry(req, res, next) {
   try {
-    const { shop, diamondId, name, email, message, diamondDetails } = req.body;
+    const { shop, diamondId, name, email, message, diamondDetails } = req.body || {};
 
-    if (!shop || !diamondId || !name || !email) {
-      return res.status(400).json({ error: "shop, diamondId, name, and email are required" });
+    if (!diamondId || typeof diamondId !== "string" || diamondId.length > MAX_DIAMOND_ID_LEN) {
+      return res.status(400).json({ error: "diamondId is required (≤200 chars)" });
     }
-
-    // findFirst (not findUnique) — Session.shop is no longer @unique post-C2.
-    const session = await prisma.session.findFirst({ where: { shop } });
-    if (!session) {
-      return res.status(404).json({ error: "Shop not found" });
+    if (!name || typeof name !== "string" || name.length < 1 || name.length > MAX_NAME_LEN) {
+      return res.status(400).json({ error: "name is required (1–200 chars)" });
+    }
+    if (!email || typeof email !== "string" || !EMAIL_RE.test(email)) {
+      return res.status(400).json({ error: "valid email is required" });
+    }
+    if (message != null && (typeof message !== "string" || message.length > MAX_MESSAGE_LEN)) {
+      return res.status(400).json({ error: "message must be a string (≤2000 chars)" });
+    }
+    if (diamondDetails != null) {
+      const detailsJson = JSON.stringify(diamondDetails);
+      if (detailsJson.length > MAX_DIAMOND_DETAILS_BYTES) {
+        return res.status(400).json({ error: "diamondDetails exceeds 10KB" });
+      }
     }
 
     const order = await prisma.order.create({

@@ -1,20 +1,88 @@
+import { useEffect, useState } from "react";
+import { useFetcher, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
+import db from "../db.server";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
-  return null;
+  const { session } = await authenticate.admin(request);
+  // Lazy-create the Merchant row so the Settings page works on a fresh
+  // install. OAuth doesn't create Merchants — only this loader and the
+  // Express-side validateMerchantWidget middleware do. Default
+  // widgetEnabled=false comes from the schema, which means a brand-new
+  // install is correctly gated until the merchant flips this toggle.
+  const merchant = await db.merchant.upsert({
+    where:  { shopId: session.shop },
+    update: {},
+    create: { shopId: session.shop },
+  });
+  return { widgetEnabled: merchant.widgetEnabled };
+};
+
+export const action = async ({ request }) => {
+  const { session } = await authenticate.admin(request);
+  const formData = await request.formData();
+  const widgetEnabled = formData.get("widgetEnabled") === "true";
+  const merchant = await db.merchant.upsert({
+    where:  { shopId: session.shop },
+    update: { widgetEnabled },
+    create: { shopId: session.shop, widgetEnabled },
+  });
+  return { ok: true, widgetEnabled: merchant.widgetEnabled };
 };
 
 export default function SettingsPage() {
+  const { widgetEnabled: initial } = useLoaderData();
+  const fetcher = useFetcher();
+  const [enabled, setEnabled] = useState(initial);
+
+  // Reflect the server's confirmed value back into local state once the
+  // action returns (handles concurrent edits and any normalization).
+  useEffect(() => {
+    if (fetcher.data && typeof fetcher.data.widgetEnabled === "boolean") {
+      setEnabled(fetcher.data.widgetEnabled);
+    }
+  }, [fetcher.data]);
+
+  const handleSwitchChange = (event) => {
+    // Polaris s-switch fires either a native change event with
+    // event.target.checked or a CustomEvent with detail.checked.
+    // Fall back to a plain toggle if neither is present.
+    const next =
+      typeof event?.target?.checked === "boolean" ? event.target.checked
+      : typeof event?.detail?.checked === "boolean" ? event.detail.checked
+      : !enabled;
+    setEnabled(next);
+  };
+
+  const handleSave = () => {
+    fetcher.submit(
+      { widgetEnabled: String(enabled) },
+      { method: "post" }
+    );
+  };
+
+  const isSaving = fetcher.state === "submitting";
+
   return (
     <s-page heading="Settings">
-      <s-button slot="primary-action">Save</s-button>
+      <s-button
+        slot="primary-action"
+        onClick={handleSave}
+        disabled={isSaving || undefined}
+      >
+        {isSaving ? "Saving…" : "Save"}
+      </s-button>
 
       <s-section heading="Widget Settings">
         <s-stack direction="block" gap="base">
-          <s-switch label="Enable Diamond Widget" checked />
+          <s-switch
+            label="Enable Diamond Widget"
+            checked={enabled || undefined}
+            onChange={handleSwitchChange}
+          />
 
+          {/* Placeholder controls — not yet persisted. Phase E. */}
           <s-number-field
             label="Diamonds Per Page"
             value="12"
@@ -28,6 +96,7 @@ export default function SettingsPage() {
 
       <s-section heading="API Configuration">
         <s-stack direction="block" gap="base">
+          {/* Placeholder — not yet persisted. Phase E. */}
           <s-password-field
             label="Payal API Key"
             placeholder="Enter your Payal API key"

@@ -1,27 +1,18 @@
 import { Router } from "express";
 import { verifySessionToken } from "../middleware/auth.js";
-import prisma from "../services/prismaClient.js";
 import { getDiamonds, getDiamondById } from "../services/payalApi.js";
 
 const router = Router();
 
-// GET /api/public/diamonds — no JWT, requires ?shop= query param
+// GET /api/public/diamonds — no JWT, requires ?shop= query param.
 // Called directly from the Theme Extension widget in the buyer's browser.
+// Shop authorization + widget-enabled check is done upstream in
+// validateMerchantWidget (server/index.js wires it at /api/public).
 export async function handlePublicDiamonds(req, res, next) {
   try {
-    const { shop, ...filters } = req.query;
-    if (!shop) {
-      return res.status(400).json({ error: "shop query parameter is required" });
-    }
-
-    // findFirst (not findUnique) because Session.shop is no longer @unique
-    // post-C2 — multiple sessions per shop are now allowed by the Shopify
-    // adapter. We just need any row to confirm the shop is authorized.
-    const session = await prisma.session.findFirst({ where: { shop } });
-    if (!session) {
-      return res.status(403).json({ error: "shop not authorized" });
-    }
-
+    // Strip shop from filters before forwarding to Augmont — it's not a
+    // catalog filter, it's the auth context already validated upstream.
+    const { shop: _shop, ...filters } = req.query;
     const diamonds = await getDiamonds(filters);
     res.json({ diamonds });
   } catch (err) {

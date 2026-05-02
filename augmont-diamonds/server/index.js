@@ -10,7 +10,8 @@ import ordersRouter from "./routes/orders.js";
 import gdprRouter from "./routes/gdpr.js";
 import cartRouter, { handlePublicOrderCreate } from "./routes/cart.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import { publicRateLimit } from "./middleware/rateLimit.js";
+import { publicRateLimit, publicRateLimitPerShop } from "./middleware/rateLimit.js";
+import { validateMerchantWidget } from "./middleware/validateMerchantWidget.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -51,7 +52,16 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Layered guards on every /api/public/* route:
+//   1. publicRateLimit         — per-IP cap (defends one-source flooding)
+//   2. publicRateLimitPerShop  — per-shop cap (defends rotating-IP attacks
+//      that target one merchant; reads shop from body or query)
+//   3. validateMerchantWidget  — confirms shop has a Session and the
+//      merchant has explicitly enabled the widget (DB hit, runs only after
+//      both rate-limits pass so spam doesn't burn DB)
 app.use("/api/public", publicRateLimit);
+app.use("/api/public", publicRateLimitPerShop);
+app.use("/api/public", validateMerchantWidget);
 app.get("/api/public/diamonds", handlePublicDiamonds);
 app.post("/api/public/enquiry", handlePublicEnquiry);
 app.use("/api/public/cart", cartRouter);
