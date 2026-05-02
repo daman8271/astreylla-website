@@ -157,7 +157,66 @@ function normalizeDiamond(p) {
   };
 }
 
-export async function getDiamonds(filters = {}) {
+// ─── Products cache (stale-while-revalidate over Augmont /merchant/products)
+//
+// Why: Augmont UAT latency is volatile (60-120s degraded periods observed in
+// prod browser smoke May 2, 2026). Without caching, every buyer pageview blocks
+// on Augmont — and a slow Augmont call also starves the single Prisma pool
+// connection, cascading into 504s on unrelated cart endpoints.
+//
+// Strategy:
+//   - Fixed 10-min TTL (entries refresh on any catalog change Payal makes).
+//   - Stale-while-revalidate: stale entries are served instantly, refreshed in
+//     background. Buyers never wait on a stale revalidation.
+//   - In-flight Promise dedup: thundering-herd-safe on cold miss AND background
+//     revalidation.
+//   - Skip-empty: never cache an empty array (Augmont returning [] is an
+//     anomaly, not a real "no diamonds" state — caching it would lock buyers
+//     out for 10 min).
+//   - LRU cap at 50 entries. Math: ~50 KB/entry × 50 = 2.5 MB worst case.
+//   - 60s back-off when revalidation fails or returns empty.
+//   - ?nocache=1 bypass for diagnostics — skips both read AND write.
+//
+// AUGMONT_CACHE_TTL_MS env override is a tuning knob (also used by smoke
+// tests to reproduce the stale-hit path quickly).
+const CACHE_TTL_MS = Number(process.env.AUGMONT_CACHE_TTL_MS) || 10 * 60 * 1000;
+const CACHE_REVALIDATE_BACKOFF_MS = 60 * 1000;
+const CACHE_MAX_ENTRIES = 50;
+
+// Map<key, { data, fetchedAt, expiresAt, inFlight }>
+const productsCache = new Map();
+
+function buildCacheKey(filters) {
+  if (!filters || typeof filters !== "object") return "";
+  // Coerce all values to strings to avoid {minCarat:1} and {minCarat:"1"}
+  // landing on different cache keys.
+  const entries = Object.entries(filters)
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
+    .map(([k, v]) => [k, String(v)])
+    .sort(([a], [b]) => a.localeCompare(b));
+  if (!entries.length) return "";
+  return new URLSearchParams(entries).toString();
+}
+
+function evictOldestIfNeeded() {
+  if (productsCache.size < CACHE_MAX_ENTRIES) return;
+  let oldestKey = null;
+  let oldestAt = Infinity;
+  for (const [k, v] of productsCache) {
+    // Skip entries still being filled by an initial fetch — they have no
+    // fetchedAt yet and shouldn't be evicted before they ever served data.
+    if (v.fetchedAt > 0 && v.fetchedAt < oldestAt) {
+      oldestAt = v.fetchedAt;
+      oldestKey = k;
+    }
+  }
+  if (oldestKey !== null) {
+    productsCache.delete(oldestKey);
+    console.log(`[cache] evict key=${oldestKey || "<root>"} ageMs=${Date.now() - oldestAt}`);
+  }
+}
+
+async function fetchAndNormalizeProducts(filters) {
   const body = await authedRequest("GET", "/merchant/products", { query: filters });
   const list =
     body?.data?.products ||
@@ -168,6 +227,92 @@ export async function getDiamonds(filters = {}) {
     (Array.isArray(body) ? body : []);
   const arr = Array.isArray(list) ? list : [];
   return arr.map(normalizeDiamond).filter(Boolean);
+}
+
+export async function getDiamonds(filters = {}, opts = {}) {
+  const { nocache = false } = opts;
+  const key = buildCacheKey(filters);
+  const keyLabel = key || "<root>";
+
+  if (nocache) {
+    console.log(`[cache] bypass key=${keyLabel} reason=nocache`);
+    return fetchAndNormalizeProducts(filters);
+  }
+
+  const now = Date.now();
+  const entry = productsCache.get(key);
+
+  // FRESH HIT
+  if (entry && entry.data && now < entry.expiresAt) {
+    console.log(`[cache] hit key=${keyLabel} ageMs=${now - entry.fetchedAt}`);
+    return entry.data;
+  }
+
+  // STALE HIT — return stale data, refresh in background (fire-and-forget)
+  if (entry && entry.data && now >= entry.expiresAt) {
+    console.log(`[cache] stale-hit key=${keyLabel} ageMs=${now - entry.fetchedAt} revalidating`);
+    if (!entry.inFlight) {
+      entry.inFlight = (async () => {
+        const startMs = Date.now();
+        try {
+          const fresh = await fetchAndNormalizeProducts(filters);
+          if (fresh && fresh.length > 0) {
+            entry.data = fresh;
+            entry.fetchedAt = Date.now();
+            entry.expiresAt = entry.fetchedAt + CACHE_TTL_MS;
+            console.log(`[cache] revalidate-ok key=${keyLabel} latencyMs=${Date.now() - startMs}`);
+          } else {
+            // Don't replace stale data with empty; back off briefly.
+            entry.expiresAt = Date.now() + CACHE_REVALIDATE_BACKOFF_MS;
+            console.log(`[cache] skip-empty key=${keyLabel} (revalidation returned empty; keeping stale data, back-off ${CACHE_REVALIDATE_BACKOFF_MS}ms)`);
+          }
+        } catch (err) {
+          entry.expiresAt = Date.now() + CACHE_REVALIDATE_BACKOFF_MS;
+          console.log(`[cache] revalidate-fail key=${keyLabel} error=${err.message}`);
+        } finally {
+          entry.inFlight = null;
+        }
+      })();
+    }
+    return entry.data;
+  }
+
+  // DEDUP — concurrent caller saw a placeholder entry being filled by an
+  // earlier cold-miss originator. Await the same Promise.
+  if (entry && entry.inFlight) {
+    console.log(`[cache] dedup key=${keyLabel}`);
+    return entry.inFlight;
+  }
+
+  // COLD MISS — originator path. Set placeholder so concurrent callers dedup.
+  console.log(`[cache] miss key=${keyLabel}`);
+  const fetchPromise = fetchAndNormalizeProducts(filters);
+  productsCache.set(key, {
+    data: null,
+    fetchedAt: 0,
+    expiresAt: 0,
+    inFlight: fetchPromise,
+  });
+
+  try {
+    const fresh = await fetchPromise;
+    if (fresh && fresh.length > 0) {
+      evictOldestIfNeeded();
+      productsCache.set(key, {
+        data: fresh,
+        fetchedAt: Date.now(),
+        expiresAt: Date.now() + CACHE_TTL_MS,
+        inFlight: null,
+      });
+    } else {
+      console.log(`[cache] skip-empty key=${keyLabel} (initial fetch returned empty; not caching)`);
+      productsCache.delete(key);
+    }
+    return fresh;
+  } catch (err) {
+    productsCache.delete(key);
+    throw err;
+  }
 }
 
 export async function getDiamondById(id) {

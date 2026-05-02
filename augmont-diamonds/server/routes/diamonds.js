@@ -8,12 +8,16 @@ const router = Router();
 // Called directly from the Theme Extension widget in the buyer's browser.
 // Shop authorization + widget-enabled check is done upstream in
 // validateMerchantWidget (server/index.js wires it at /api/public).
+//
+// ?nocache=1 bypasses the in-memory products cache (diagnostic only — does
+// not pollute the cache with a possibly-different request).
 export async function handlePublicDiamonds(req, res, next) {
   try {
-    // Strip shop from filters before forwarding to Augmont — it's not a
-    // catalog filter, it's the auth context already validated upstream.
-    const { shop: _shop, ...filters } = req.query;
-    const diamonds = await getDiamonds(filters);
+    // Strip shop + nocache from filters before forwarding to Augmont — they
+    // are not catalog filters: shop is the auth context (validated upstream),
+    // nocache is a cache directive consumed here.
+    const { shop: _shop, nocache, ...filters } = req.query;
+    const diamonds = await getDiamonds(filters, { nocache: nocache === "1" });
     res.json({ diamonds });
   } catch (err) {
     next(err);
