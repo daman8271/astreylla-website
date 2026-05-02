@@ -378,3 +378,59 @@ Per `shopify help app dev clean`: "Stop the dev preview that was started with `s
 **Phase tracker after Day 2:** Phases 1-7 ✓, A ✓, B ✓ (browser-verified). Phase 8 (App Store submission) and Phase C (security hardening) still ahead.
 
 ---
+
+### Day 3 — May 2, 2026 — Phase D shipped to production
+
+**Phase:** Phase D — Security hardening (5 fixes from PHASE_C_EXECUTION_PLAN.md §5)
+
+**Built:**
+- **N1** (`9618962`) — Removed empty POST `/api/orders` stub that hung forever. Buyer create-order lives in `cart.js`; admin endpoint was never used.
+- **H3** (`57175f6`) — Deleted `/webhooks/billing` route entirely + marked Phase 6 deferred. App is free at launch; eliminates billing-webhook attack surface (the route was a TODO with no HMAC and no idempotency).
+- **H2** (`4de2dc7`) — Public route abuse controls. NEW `validateMerchantWidget.js` middleware enforces `Merchant.widgetEnabled=true` (defaults to false). Refactored `rateLimit.js` to a `makeSlidingWindowLimiter` factory; added per-shop limiter (120 req/min) alongside the per-IP limiter (60 req/min). 5 input validators added in `enquiry.js`; cart `customerName` + `orderNote` tightened. Settings page rewritten with loader + action so admins can toggle `widgetEnabled` (was a static stub previously). Pre-deploy step: one-time `prisma.merchant.upsert` set `widgetEnabled=true` on `trial-shop-sqxnl71f.myshopify.com` before flipping prod traffic.
+- **N5** (`774b507`) — CORS allowlist replacing wildcard `cors()`. Function-based origin check: `*.myshopify.com` + `admin.shopify.com`. Custom merchant domains deferred to Phase E. Clear `[cors] blocked origin: X` warning logged on deny so debugging is easy in Railway logs.
+- **N7** — Verified-only, no commit needed. C1's path-scoped `apiJson({limit:"1mb"})` and `webhookJson({limit:"1mb"})` already cover all body parsers; smoke battery confirmed 2MB POST → 413.
+
+**Doc commits:**
+- `e5f0fc3` — `PHASE_E_BACKLOG.md` initial seed (Phase E scope from PHASE_C_EXECUTION_PLAN §6 + new Phase D findings).
+- `524aa60` — Appended DB capacity finding from E1 smoke (connection_limit=1 saturates at ~30 concurrent).
+
+**Deploy timeline:**
+- Preview deploy `226e65be-2213-4909-b6aa-dc6365b39a4c` via `railway up --environment preview` from repo root. First attempt from inside `augmont-diamonds/` failed with the nixpacks "snapshot did not contain the 'augmont-diamonds' source directory" error — same lesson as C1 retry yesterday. Repo-root invocation succeeds because dashboard `rootDirectory: /augmont-diamonds` then correctly finds the app subfolder inside the upload.
+- Production deploy `1e658cdf-a879-48ce-a750-b4100c6e5265` via the same repo-root pattern. Docker layers cached from the preview build → production build was fast (~45s vs typical 3–5 min).
+
+**Smoke battery on preview (14/14 PASS):**
+- A1–A4 (CORS allowlist): allowed origins echoed correctly with `vary: Origin`; blocked origins receive no header (browser refuses); subdomain attack `sneaky.myshopify.com.attacker.com` correctly resolves to `attacker.com` via `URL.hostname` and is blocked.
+- B1–B3 (widget gate): widget-enabled trial-shop returns 25 diamonds; unknown shop blocked at gate step 2 with "shop not authorized" (security-correct: doesn't leak shop existence); missing shop param returns 400.
+- C1–C2 (removed routes): POST `/api/orders` and POST `/webhooks/billing` both 404 (Remix React Router catch-all).
+- D1–D3 (regression): /health 200; GDPR webhook 401 (HMAC fail, route exists, NOT 404); cart endpoint returns empty JSON for fake sessionId.
+- E1 (per-IP rate limit): `5 × 429` at both `-P 65` and `-P 30` parallelism = exact mathematical prediction (`hits.length > 60` trips on requests 61–65 of any fresh-window burst). Same shape across runs proves the limiter mechanism is verified — math doesn't lie.
+- F1 (body size limit): 2MB POST → 413, `apiJson` 1mb cap enforced.
+
+**Production verification:**
+- V1 /health (no Origin): 200 ✓
+- V2 /health with attacker Origin: 200 + NO `access-control-allow-origin` header ✓ — N5 live on prod
+- V3 /health with trial-shop Origin: 200 + `access-control-allow-origin: https://trial-shop-sqxnl71f.myshopify.com` ✓
+- V4 /api/public/diamonds: deferred (Augmont upstream timed out at 60s — same volatile dependency noted in PAYAL_HANDOFF.md and CLAUDE.md §3; NOT a Phase D regression). Will be naturally exercised on the storefront when Augmont latency improves.
+- V5 /api/public/cart on prod: 200 + empty cart JSON ✓ — proves widget gate works on prod and DB connectivity is fine without depending on Augmont.
+
+**Phase E backlog populated with 3 new findings (in addition to existing items from §6):**
+1. Content-length pre-check middleware on Remix catch-all routes (`/app/*`, `/webhooks/app/*`). Currently safe due to `authenticate.admin/webhook` running before body reads, but defense-in-depth for unbounded Remix-side body reads.
+2. Custom merchant storefront domains for CORS (e.g. `payaldiamonds.com`). Add `Merchant.allowedOrigins` JSON column and check against per-shop list.
+3. DB connection-pool ceiling under burst (~30 concurrent saturates `connection_limit=1`). Investigate raising `connection_limit` cautiously OR add a semaphore middleware ahead of DB calls OR add Express keep-alive/socket cap to fail-fast under saturation.
+
+**Branch state:**
+- `phase-c-security-hardening`: 6 commits ahead of `f797264` (C1 baseline)
+  - 4 code commits: `9618962`, `57175f6`, `4de2dc7`, `774b507`
+  - 2 doc commits: `e5f0fc3`, `524aa60`
+- All pushed to GitHub: https://github.com/daman8271/Claude-Code-Max-Shopify-app/tree/phase-c-security-hardening
+
+**Outstanding (post-this-session):**
+- Browser-based Add to Cart end-to-end test on `trial-shop-sqxnl71f.myshopify.com` storefront — user's manual verification.
+- `/api/public/diamonds` Augmont integration on prod — will be naturally exercised by the browser test once Augmont latency normalizes.
+- `auto_order_enabled` Augmont flag — unchanged blocker from Phase B; checkout returns 503 with friendly message, cart works fine. See `PAYAL_HANDOFF.md`.
+- Phase E security/polish work per `PHASE_E_BACKLOG.md`.
+- App Store submission (Phase 8): listing assets, screenshots, copy, privacy policy URL.
+
+**Status:** Phase C + Phase D security hardening shipped to production. Backend code is App-Store-submission-ready subject to manual storefront regression check. Single comprehensive PR (Phase G) deferred per long-standing plan.
+
+---

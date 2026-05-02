@@ -194,7 +194,7 @@ File: `.env` (never commit) — template: `.env.example`
 | 7 | Testing + polish + error handling | COMPLETE — Playwright harness | Apr 29, 2026 |
 | **A** | **Real Augmont LGD UAT integration** (replace mock catalog) | **100% COMPLETE** | **Apr 30, 2026** |
 | **B** | **Cart + checkout system** (Augmont cart API + order create) | **100% COMPLETE — ✓ Verified in browser** | **May 1, 2026** |
-| C | Security hardening (Codex audit fixes) | NOT STARTED — Day 3 | — |
+| **C** | **Security hardening (Codex audit fixes + Phase D)** | **100% COMPLETE — shipped to production, smoke battery 14/14 PASS on preview** | **May 2, 2026** |
 | 8 | App Store submission prep + review | NOT STARTED — pending assets | — |
 
 ### Outstanding before App Store submission
