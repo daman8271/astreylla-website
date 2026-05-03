@@ -242,3 +242,48 @@ Overall: ~95% complete. Deadline May 28, 2026 — 27 days of buffer.
 - Augmont `auto_order_enabled` flag — Payal needs to flip in merchant portal. See `PAYAL_HANDOFF.md`.
 - Phase C — Codex audit fixes (Day 3 scope).
 - App Store submission: listing copy, screenshots, privacy policy URL, support URL, then submit via Partner Dashboard.
+
+## LESSONS LEARNED — read every session
+> Consolidated discoveries from Phases C, D, E. Each item is a mistake we
+> already made or narrowly avoided. Read this list before starting work
+> so the same mistakes don't repeat.
+
+### Testing & Verification
+1. **Test behaviors, not implementation details.** Prisma 6 minifies its runtime, so `instance.constructor.name === "PrismaClient"` returns `"r"`. Use `typeof instance.session === "object"` instead — behavioral checks survive library upgrades and minification.
+2. **Reference identity tests are the gold standard for singleton verification.** `const a = (await import(...)).default; const b = (await import(...)).default; assert(a === b)` is more valuable than 50 indirect tests.
+3. **Tier your smoke tests:** Tier A pure unit (no HTTP), Tier B isolated HTTP harness, Tier C real-server regression. Each tier isolates a different failure mode.
+4. **Grep before deleting env vars.** Always run a catch-all substring grep across `server/` and `app/` before removing any environment variable. Past sessions almost deleted `SHOPIFY_APP_URL` which was used via `||` fallback.
+
+### Deployment & Infrastructure
+5. **Always run `shopify app dev clean` after `shopify app dev` sessions.** Otherwise theme blocks bind to a `dev-{uuid}` asset URL that survives forever. Symptom: `shopify app deploy` succeeds but storefront still shows old code.
+6. **Add Theme Editor blocks via the Apps section, NOT via `shopify app dev` preview UI.** The latter creates a permanent dev-URL binding.
+7. **Railway `railway up --ci` may hit GraphQL subscription timeouts.** The CLI loses connection but server-side build often completes. Verify by probing `/health` + checking logs for new code markers — don't blindly retry.
+8. **Railway deploy must run from REPO ROOT, not `augmont-diamonds/`.** Railway `rootDirectory` config expects the subfolder structure.
+9. **Preview env shares the production Supabase project (bug #6).** Any infra-touching change to preview affects production data. No isolation for testing P3-class changes until a dedicated preview Supabase project is provisioned.
+
+### Augmont API Behavior
+10. **Augmont UAT is unreliable.** 60-120s response times are common. Total outages happen. Design for it: P1 cache + P2 timeout + friendly 503 fallback.
+11. **Augmont returns viewer-page URLs, not raw images.** `viewmydiamonds.com/?id=X&type=image` is HTML, not JPEG. Always wire an `onerror` placeholder.
+12. **Augmont `auto_order_enabled` flag must be enabled on Payal's merchant portal** for checkout to work end-to-end. Cart works without it; checkout returns 403 → mapped to friendly 503.
+13. **Production Augmont catalog has 700K+ diamonds vs UAT's 25.** Pagination is mandatory before production migration. Don't render full catalog in any UI.
+
+### Database (Prisma + Supabase)
+14. **`DATABASE_URL` needs `?pgbouncer=true&connection_limit=1`.** Without `pgbouncer=true`, Prisma's prepared statements collide across recycled PgBouncer connections (PG code 42P05).
+15. **`DIRECT_URL` stays clean (no pgbouncer flag).** It's used by `prisma migrate` which needs real prepared statements.
+16. **Single Prisma client via `global.__prismaSingleton`** — both `server/services/prismaClient.js` and `app/db.server.js`. Vite inlines bundled imports, so the ESM module cache can't dedupe. `globalThis` is the canonical Prisma+Remix pattern.
+
+### Workflow Discipline
+17. **One commit per fix.** Don't bundle drive-by improvements into unrelated commits. Note them, ship them later.
+18. **Design plan required for medium/high risk items.** Speed mode (skip design plan) is OK for simple UI wires but never for infra/security changes.
+19. **`prisma migrate deploy` runs on every Railway boot.** Means migrations execute against the same prod DB whether you deploy to preview or production. Treat any destructive migration as production-impacting.
+20. **`.env.example` was silently gitignored** until C4 fixed it with `!.env.example` negation. Always check `git check-ignore -v <file>` for any file that should be tracked but seems missing.
+
+### Communication
+21. **When a safety gate fires on something cosmetic (e.g., bad assertion), STOP and explain.** User decides: proceed, fix the test, or rollback. Never silently bypass a gate.
+22. **Approval gates between every commit.** Show diff, smoke results, commit message — wait for "commit" approval. Even in speed mode.
+
+### Specific Pitfalls to Avoid
+23. **Never log raw customer emails** — hash with SHA-256 prefix + `.toLowerCase().trim()` normalization.
+24. **Never echo `err.message` in 5xx production responses** — opaque `"Something went wrong"` + `requestId` only.
+25. **Never ping Augmont on Settings page load** — env-var presence check is sufficient. Live ping is a 60-120s footgun.
+26. **Never assume meeting/conversation context is in transcript by default.** User has to paste recording/notes manually.
