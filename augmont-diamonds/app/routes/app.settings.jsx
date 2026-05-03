@@ -16,7 +16,15 @@ export const loader = async ({ request }) => {
     update: {},
     create: { shopId: session.shop },
   });
-  return { widgetEnabled: merchant.widgetEnabled };
+  // Augmont API "connected" = both credentials present and non-empty.
+  // We do NOT make a live Augmont call here — Augmont UAT can hang
+  // 60-120s during degraded periods, and admins shouldn't experience
+  // that on every Settings page load. A future "Test Connection" button
+  // can perform the live probe on demand.
+  const apiConnected = Boolean(
+    process.env.PAYAL_API_USERNAME && process.env.PAYAL_API_PASSWORD
+  );
+  return { widgetEnabled: merchant.widgetEnabled, apiConnected };
 };
 
 export const action = async ({ request }) => {
@@ -32,7 +40,7 @@ export const action = async ({ request }) => {
 };
 
 export default function SettingsPage() {
-  const { widgetEnabled: initial } = useLoaderData();
+  const { widgetEnabled: initial, apiConnected } = useLoaderData();
   const fetcher = useFetcher();
   const [enabled, setEnabled] = useState(initial);
 
@@ -104,7 +112,9 @@ export default function SettingsPage() {
 
           <s-stack direction="inline" gap="tight">
             <s-text>API Status:</s-text>
-            <s-badge tone="warning">Not Connected</s-badge>
+            <s-badge tone={apiConnected ? "success" : "critical"}>
+              {apiConnected ? "Connected" : "Not Connected"}
+            </s-badge>
           </s-stack>
         </s-stack>
       </s-section>
