@@ -528,3 +528,111 @@ Production Railway logs after smoke (proves cache wire-up):
 **Branch:** `phase-c-security-hardening` (9 commits ahead of C1 baseline; pushed to GitHub).
 
 ---
+
+### Day 4 — Close-out — May 4, 2026 — Phase E CLEANUP complete (C1–C6 shipped)
+
+**Phase:** Phase E — cleanup pass (privacy/security/config polish + admin UI wire-up). All 6 cleanup items shipped to production.
+
+**Built / Shipped (in order, single commit each, design-reviewed where the user flagged medium risk):**
+
+| # | Commit | Item | Risk | Surface |
+|---|---|---|---|---|
+| C1 | `6ef8255` | Hash customer emails in GDPR webhook logs (SHA-256 prefix, .toLowerCase().trim() normalization, `<none>` sentinel) | LOW | `server/routes/gdpr.js` only |
+| C2 | `571ea04` | Sanitize errorHandler — opaque `"Something went wrong"` on 5xx in prod, echoes msg on 4xx, requestId UUID per request, X-Request-Id header on EVERY response, two-line grep-friendly log format | LOW | `server/middleware/errorHandler.js` rewritten + new `server/middleware/requestId.js` + 1-line mount in `server/index.js` |
+| C4 | `acaefba` | `.env` cleanup — added SHOPIFY_APP_URL/HOST/EXPRESS_API_URL/SHOP_CUSTOM_DOMAIN; removed PAYAL_API_KEY/PAYAL_API_URL/SHOPIFY_SCOPES/SESSION_SECRET (verified ZERO refs in code). `.env.example` rewrite (3-section structure with Railway/manual annotations). `.gitignore` patch `!.env.example` to fix pre-existing repo bug where the template was silently ignored. | LOW | `.env`, `.env.example`, `.gitignore` |
+| C3 | `8a1860d` | Unify Prisma client — both `server/services/prismaClient.js` and `app/db.server.js` now share `global.__prismaSingleton`. Vite inlining of app/db.server.js into the Remix bundle is what prevented Node's ESM cache from deduping; globalThis is the canonical workaround per Prisma's own docs. Logs `[prisma] singleton initialized (pid=...)` exactly once per Node process — operators can grep this. | MEDIUM | 2 factory files, ZERO importer changes (9 importers verified untouched) |
+| C5 | `3d353a1` | Settings page API status indicator — env-var-presence approach (`Boolean(PAYAL_API_USERNAME && PAYAL_API_PASSWORD)`). NO live Augmont ping at page load (Augmont's 60-120s degraded periods would tank Settings UX). | LOW | `app/routes/app.settings.jsx` only |
+| C6 | `4f19a22` | `/app/diamonds` admin page wired to `/api/public/diamonds` with full state-machine (ok / widget-disabled / upstream-unavailable / error / fetch-failed) and Polaris s-table render. formatPrice/formatCarat via Intl.NumberFormat. | LOW | `app/routes/app.diamonds.jsx` rewritten |
+
+**Total: 6 cleanup commits + 0 importer changes. Gross blast radius minimized; behavior changes are precisely scoped.**
+
+**Bugs caught and fixed during cleanup (forensic finds, not on the original list):**
+1. **`.env.example` was silently `.gitignore`d** — the `.env.*` pattern matched the template. PROJECT_MASTER.md and CLAUDE.md both refer to it as "the committed template" but `git ls-files | grep ^.env` returned empty. Fixed in C4 by adding `!.env.example` negation pattern. The C4 commit is the FIRST time `.env.example` has actually been tracked by git.
+2. **Local `node --env-file=.env server/index.js` was crashing** without an inline `SHOPIFY_APP_URL=...` flag. Surfaced last night during P1+P2 smoke. Fixed in C4 by adding the missing keys to `.env`.
+3. **The "Payal API Key" placeholder password field on Settings is misleading** — we use `PAYAL_API_USERNAME` + `PAYAL_API_PASSWORD`, not a "key". Flagged in C5 commit message; left untouched for strict scope. Easy follow-up.
+4. **Tier 1 reference-identity test on C3 reported 2 failures** that turned out to be assertion bugs (checked `constructor?.name === "PrismaClient"` — but Prisma 6 internally minifies its runtime so `constructor.name` is `"r"`). User decision: corrected the test to use behavioral assertions (`typeof a.session === "object"`) instead of cosmetic constructor.name. Re-ran clean. Important lesson: never test on third-party library implementation details that may be minified/mangled.
+
+**Bug #6 (shared preview/prod Supabase project) — already documented in CLAUDE.md from Day 3 close-out.** Did NOT touch infrastructure. P3 (DB `connection_limit` revisit) remains DEFERRED pending isolated preview environment provisioning.
+
+**Smoke verification (layered: every commit's test exercised the previous commits' wiring):**
+
+| Commit | Smoke covered (incremental + regression) |
+|---|---|
+| C1 | 6/6 HTTP probes — log-line format regex match, normalization correlation, `<none>` sentinel, HMAC-guard regression, deleteMany still uses raw email |
+| C2 | 72/72 across 3 tiers — pure unit (40) + isolated HTTP harness (26) + real-server regression (6) including AUGMONT_TIMEOUT_MS=1 → 503 friendly (P2 INTACT verification), bad HMAC → 401 (C1 HMAC guard intact) |
+| C4 | Boot test confirmed `node --env-file=.env server/index.js` no longer needs inline `SHOPIFY_APP_URL` workaround |
+| C3 | 11/11 across 4 tiers — singleton reference identity (7) + real-server probes (4) + singleton-init counter == 1 at boot AND after all probes (no leakage) + lint+typecheck. C1 emailHash regression + C2 X-Request-Id regression both observed PASS in the Tier 2 logs |
+| C5 | Logic verification across 4 env-var states (both set, username empty, password empty, both unset) + boot test + /app/settings 410 with Shopify auth-handling HTML (route compiles, no crash). C2 + C3 regressions PASS |
+| C6 | State-machine smoke organically exercised the upstream-unavailable branch (Augmont was down — 503), widget-disabled branch (fake shop → 403), error branch (no shop param → 400). C2 + C3 regressions PASS, [prisma] init still == 1 |
+
+**Production smoke (post-deploy, NODE_ENV=production):**
+
+| Probe | Status | Notes |
+|---|---|---|
+| `/health` (a) | 200 + `x-request-id: 2781cba6-...` | C2 wire confirmed on prod |
+| `/api/public/diamonds?shop=trial-shop-...` cold (b) | 503 @ 13.21s | Friendly P2 copy |
+| same +10s (c1) | 503 @ 19.22s | Hit P2's 401-retry budget (10s + 10s) — exact P2 design contract under upstream-401 conditions |
+| same +10s (c2) | 503 @ 13.75s | Friendly P2 |
+| same `?nocache=1` (d) | 503 @ 13.40s | P1 bypass wired |
+| `/health` second time (e) | 200 + DIFFERENT `x-request-id: e9be9970-...` | UUID freshness ✓ |
+
+**Production log markers (verified counts):**
+- `[prisma] singleton initialized (pid=12)` — appears EXACTLY 1 time → **C3 verified on real Railway production**
+- `[cache] miss` — 3 (matches probes b/c1/c2)
+- `[cache] bypass` — 1 (matches probe d)
+- `[cache] hit` — 0 (Augmont down → skip-empty rule kept cache empty, exactly as designed)
+- `[error] requestId=` — **0** (zero unhandled errors during smoke)
+- `[server] listening on :8080 (NODE_ENV=production)` — 1 (single container boot, no flapping)
+- `No pending migrations to apply` — 1 (single `prisma migrate deploy` execution at boot)
+
+**Layered verification — all prior phases' wiring still working through C1+C2+C3:**
+- P1 cache log lines visible (`[cache] miss/bypass`)
+- P2 friendly 503 copy visible (and bounded at ~13-20s including 401-retry path)
+- C1 emailHash format observed in prior local tests (`emailHash=c1351061c118` for `alice@test.com`)
+- C2 X-Request-Id on every response (UUID per request, fresh)
+- C3 singleton init counter STAYS at 1 across all production traffic during smoke
+
+**Customer-facing impact:**
+- Buyers + admins now get a unique X-Request-Id on every response — when something goes wrong, support can triangulate via `railway logs --environment production | grep "requestId=<uuid>"` and pull the structured `[error]` summary line + the multi-line `[error.detail]` stack that follows.
+- Production 5xx responses no longer echo `err.message` — DB host, Prisma table names, Augmont upstream identifiers, and stack file paths are no longer leaked. Critical for App Store review.
+- GDPR webhook logs no longer contain raw customer emails — `emailHash=<12-hex>` is correlated by SHA-256 of normalized email so audit trails work without storing PII.
+
+**Files changed:**
+- Code: `server/routes/gdpr.js` (C1), `server/middleware/errorHandler.js` (C2 rewrite), `server/middleware/requestId.js` (C2 new), `server/index.js` (C2 mount), `server/services/prismaClient.js` (C3), `app/db.server.js` (C3), `app/routes/app.settings.jsx` (C5), `app/routes/app.diamonds.jsx` (C6 rewrite).
+- Config: `.env` (C4 — local only, gitignored), `.env.example` (C4 — first commit), `.gitignore` (C4 — `!.env.example` exception).
+- Docs: `WORK_LOG.md` (this entry).
+
+**Commits (6 cleanup + 1 docs = 7):**
+- `6ef8255` fix(security): C1 — hash customer emails in GDPR webhook logs
+- `571ea04` fix(security): C2 — sanitize errorHandler with requestId + opaque prod 5xx
+- `acaefba` chore(config): C4 — .env cleanup + start tracking .env.example
+- `8a1860d` fix(infra): C3 — unify Prisma client to a single shared instance
+- `3d353a1` feat(admin): C5 — Settings API status reflects env-var presence
+- `4f19a22` feat(admin): C6 — wire /app/diamonds to live Augmont catalog
+- (this commit) docs: Phase E cleanup complete — Day 4 close-out
+
+**Deploy timeline:**
+- Preview deploy via `railway up --ci` from repo root. Healthcheck succeeded; smoke battery 4 probes (matched preview/prod parity). Cache log lines + singleton-init line observed exactly as designed.
+- Production deploy via `railway up --ci` from repo root. CLI hit a `backboard.railway.com/graphql/v2` subscription timeout mid-deploy (same transient pattern from last night's prod deploy retry per WORK_LOG). Server-side build completed regardless — verified live via fresh probe headers (`x-request-id` present), `[prisma] singleton initialized` log line visible, single-container boot (one `prisma migrate deploy` execution, one `[server] listening`). NO retry needed; no destructive recovery actions taken.
+
+**Outstanding (carried into Phase F):**
+- **Phase F (Augmont production catalog migration) — tomorrow.** Production catalog has 700K+ diamonds vs the ~25 we've been testing against on UAT. Pagination work needed: `/merchant/products` likely needs page params; widget UI needs infinite-scroll or pagination controls; SWR cache may need per-page keying (already supported — `buildCacheKey` already sorts query params, so `?page=N` keys distinctly). Augmont API contract for pagination needs confirmation before scoping.
+- **Augmont `auto_order_enabled` flag (Payal action)** — unchanged from Phase B. Cart works, checkout shows friendly disabled message. See `PAYAL_HANDOFF.md`.
+- **Augmont UAT stability** — sustained outage observed throughout deploy verification. P2's friendly 503 + P1's skip-empty handle it gracefully. No code changes needed.
+- **App Store submission assets (Phase 8)** — listing copy, screenshots, privacy policy URL, support URL.
+- **Out-of-scope C5/C6 cleanup items flagged but not fixed:** misleading "Payal API Key" password placeholder field on Settings, matching aside-text "Get your Payal API key from Payal's supplier portal" copy, two unrelated placeholder controls (Diamonds Per Page, Primary Color). Easy follow-up commit.
+- **DB `connection_limit` revisit (P3)** — still DEFERRED. C3 unblocked the prerequisite (1 instance now, not 2). Re-evaluate after observing Augmont recovery + first real load with P1 cache hot.
+- **Preview env still shares production Supabase project** — bug #6 in CLAUDE.md. Provisioning a dedicated preview Supabase project tracked in `PHASE_E_BACKLOG.md`.
+
+**Hours:** ~5 hours of focused Phase E cleanup work this session.
+
+**Branch:** `phase-c-security-hardening` (15 commits ahead of C1 baseline; pushed to GitHub).
+
+**Next session (Phase F — Augmont production catalog migration):**
+1. Get production Augmont credentials from Payal (separate from UAT).
+2. Discover production catalog size + pagination contract.
+3. Design pagination + caching strategy (per-page SWR? infinite scroll? page navigation?).
+4. Implement + smoke against UAT first (mock 700K via fixture if needed), then prod.
+5. Re-evaluate DB `connection_limit` (P3) once P1 cache shows realistic hit ratios under prod traffic.
+
+---
