@@ -1,8 +1,19 @@
+import { createHash } from "node:crypto";
 import { Router } from "express";
 import { verifyWebhookHmac } from "../services/shopifyApi.js";
 import prisma from "../services/prismaClient.js";
 
 const router = Router();
+
+// SHA-256 prefix of normalized email for audit logs — never log raw PII.
+// Lowercase+trim so "Alice@Test.com " correlates with "alice@test.com" in logs.
+function hashEmail(email) {
+  if (!email) return "<none>";
+  return createHash("sha256")
+    .update(String(email).toLowerCase().trim())
+    .digest("hex")
+    .slice(0, 12);
+}
 
 function guardHmac(req, res) {
   const hmac = req.headers["x-shopify-hmac-sha256"];
@@ -23,7 +34,7 @@ router.post("/customers/redact", async (req, res, _next) => {
   const { shop_domain, customer } = req.body;
   const email = customer?.email;
 
-  console.log(`[gdpr] customers/redact shop=${shop_domain} email=${email}`);
+  console.log(`[gdpr] customers/redact shop=${shop_domain} emailHash=${hashEmail(email)}`);
 
   try {
     if (email && shop_domain) {
@@ -79,7 +90,7 @@ router.post("/customers/data_request", async (req, res, _next) => {
   const { shop_domain, customer, data_request } = req.body;
 
   console.log(
-    `[gdpr] customers/data_request id=${data_request?.id} shop=${shop_domain} email=${customer?.email}`
+    `[gdpr] customers/data_request id=${data_request?.id} shop=${shop_domain} emailHash=${hashEmail(customer?.email)}`
   );
   // No action required: we hold customer email on orders only. If this changes,
   // implement a customer data report response here.
