@@ -10,6 +10,7 @@ import ordersRouter from "./routes/orders.js";
 import gdprRouter from "./routes/gdpr.js";
 import cartRouter, { handlePublicOrderCreate } from "./routes/cart.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { requestId } from "./middleware/requestId.js";
 import { publicRateLimit, publicRateLimitPerShop } from "./middleware/rateLimit.js";
 import { validateMerchantWidget } from "./middleware/validateMerchantWidget.js";
 
@@ -61,6 +62,11 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.set("trust proxy", 1);
+// First middleware after trust-proxy: stamp every request with a UUID and
+// echo it back as X-Request-Id. Runs before cors/body-parsers/routes so even
+// rejected requests (cors, rate-limit, validation, body-parse fail) get a
+// correlation id customers can quote in support.
+app.use(requestId);
 app.use(cors({ origin: corsOriginCheck }));
 
 const __filename = fileURLToPath(import.meta.url);
