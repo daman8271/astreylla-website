@@ -35,8 +35,15 @@ export class AugmontError extends Error {
 // Why: Augmont UAT degraded periods (60-120s observed in May 2 prod browser
 // smoke) cause Railway's edge proxy to return 504 to clients with no chance
 // for our handlers to map to a friendly message. Bounding every Augmont
-// request at 10s lets us throw an UPSTREAM_TIMEOUT we can map to a 503 with
-// a proper user-facing message.
+// request (default 30s) lets us throw an UPSTREAM_TIMEOUT we can map to a
+// 503 with a proper user-facing message.
+//
+// Default raised 10s → 30s on May 4, 2026 (Phase F1). Prod /merchant/products
+// without a filter takes ~21s (full-catalog scan); 10s would truncate that
+// path. The right long-term fix is enforcing filters at the widget layer
+// (F6), but until then the bumped default keeps unfiltered admin/diagnostic
+// calls from spuriously timing out. Cost: a truly hung upstream burns up to
+// 30s of a single Prisma pool slot instead of 10s.
 //
 // AbortController is per-request (single-use). Both fetch + body-read are
 // inside the timer so a server that returns headers fast then hangs the body
@@ -44,13 +51,13 @@ export class AugmontError extends Error {
 // status code + raw body.
 //
 // 401-retry path inside authedRequest creates a NEW fetchWithTimeout call
-// per leg, so each leg gets its own 10s budget (worst case 20s for refresh +
-// retry). That's correct — we don't want a fast token refresh penalised by
-// a slow original request's deadline.
+// per leg, so each leg gets its own budget (worst case 60s for refresh +
+// retry at the new default). That's correct — we don't want a fast token
+// refresh penalised by a slow original request's deadline.
 //
 // AUGMONT_TIMEOUT_MS env override is a tuning knob (also used by smoke
 // tests to reproduce abort behaviour quickly).
-const UPSTREAM_TIMEOUT_MS = Number(process.env.AUGMONT_TIMEOUT_MS) || 10_000;
+const UPSTREAM_TIMEOUT_MS = Number(process.env.AUGMONT_TIMEOUT_MS) || 30_000;
 
 async function fetchWithTimeout(url, init = {}, timeoutMs = UPSTREAM_TIMEOUT_MS) {
   const controller = new AbortController();
@@ -169,6 +176,28 @@ async function authedRequest(method, path, { query, body } = {}) {
 }
 
 // ─── Diamonds ────────────────────────────────────────────────────────────
+//
+// Augmont API behaviour for /merchant/products (production, observed
+// May 4, 2026 — Phase F1):
+//   - Without any filter: returns a fixed 25-stone "sample" set (likely
+//     featured / top-of-list), latency ~21s. The same sample is returned
+//     regardless of ?page=N — pagination is ignored without a filter.
+//   - With at least one filter (e.g. ?shape=Round): returns a matching
+//     subset of 25 per page, latency 2–13s. Pagination works:
+//     ?shape=Round&page=2 yields a different subset than page=1.
+//   - Default ordering is non-deterministic (same filter call returns a
+//     slightly different first-id between calls) — implications for
+//     cache stability and pagination consistency under SWR revalidation.
+//   - Pagination shape: pagination: { from, to, pageSize, currentPage,
+//     hasMore }. The top-level `total` is the per-page count, NOT the
+//     catalog total. Counting the full catalog requires a separate
+//     contract (pending from Augmont/Ravi as of May 4, 2026).
+//   - `diamondImage` values are PARTIAL (e.g. "?id=ABC&type=image" — no
+//     scheme/host). CDN base-URL prefix pending from Augmont; until then
+//     the storefront's onerror placeholder absorbs the broken images.
+//
+// Implication for callers: storefront widget should always send at least
+// one filter to avoid the 21s slow path + same-25-stones experience.
 
 function normalizeDiamond(p) {
   if (!p || typeof p !== "object") return null;
@@ -264,13 +293,16 @@ function evictOldestIfNeeded() {
 
 async function fetchAndNormalizeProducts(filters) {
   const body = await authedRequest("GET", "/merchant/products", { query: filters });
+  // Augmont response shapes observed:
+  //   prod: { data: [...products], pagination, total, currencyCode, message }
+  //   UAT:  { data: { products: [...products] }, pagination }
+  // Prod's `data` is the array directly (no .products), so the first lookup
+  // yields undefined and we fall through to body.data.
   const list =
-    body?.data?.products ||
-    body?.data ||
-    body?.result?.data?.products ||
-    body?.result?.data ||
-    body?.products ||
-    (Array.isArray(body) ? body : []);
+    body?.data?.products ??
+    body?.data ??
+    body?.products ??
+    [];
   const arr = Array.isArray(list) ? list : [];
   return arr.map(normalizeDiamond).filter(Boolean);
 }
