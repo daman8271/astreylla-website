@@ -756,3 +756,109 @@ Production Railway logs after smoke (proves cache wire-up):
 - Ravi pending → start F6 (widget polish + filter UI) or F7 (billing toggle scaffolding) in parallel — both unblocked.
 
 ---
+
+### Day 5 — Late evening — May 5, 2026 — Phase F1.5: prod Augmont swap + Railway redeploy regression recovery
+
+**Phase:** F1.5 — production Augmont credentials swap, post-swap regression detection, force-redeploy from `phase-c-security-hardening` HEAD to restore Phase E baseline + ship today's F1 code.
+
+**Pre-flight discovery — `count=true` contract:**
+- Production catalog count: **675,327 diamonds** (verified via `?count=true` parameter — returns total in `count` field at top level).
+- Pagination contract: **`?from=N&to=M&count=true|false`** (NOT `?page=N`). Top-level `total` field is per-page count; `count` is full catalog total.
+- Image URLs: full HTTPS URLs (`https://www.viewmydiamonds.com/?id=...`) returned with `from/to` or filtered queries; partial paths only without filters.
+- Latency observed across the session: ~600 ms login, 2–17 s filtered (Augmont prod is variable; tonight pushed up to 17.3 s for a single-filter query), 21 s+ unfiltered.
+
+**Step 1 — Batched Railway env-var swap (atomic, single deploy, no broken intermediate state):**
+- Single `railway variables --set` call with all three keys (`AUGMONT_BASE_URL`, `PAYAL_API_USERNAME`, `PAYAL_API_PASSWORD`) → exactly one Railway redeploy triggered.
+- Verification (presence checks, no values to chat): all 3 prod identifiers present, 0 UAT identifiers remaining.
+- 9 protected keys (`DATABASE_URL`, `DIRECT_URL`, `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `HOST`, `SHOPIFY_APP_URL`, `SCOPES`, `SHOPIFY_SCOPES`, `SESSION_SECRET`) untouched. Total var count unchanged 23 → 23.
+- Preview env explicitly verified untouched (still UAT — `uatlgd` and `LGD_UAT` identifiers present, prod identifiers absent).
+
+**Step 2 — Detected regression: Phase D era code on production (deploy `09dbce11`):**
+
+After the env-var swap deploy completed, smoke probes revealed:
+- `/health` response **lacked `X-Request-Id`** header — proves C2's `requestId` middleware NOT running.
+- Deploy logs showed pre-C2 boot line `Express API running on port 8080` (last in code at commit `f797264`) instead of `[server] listening on :${PORT}` from C2 (`571ea04`).
+- Deploy logs lacked `[prisma] singleton initialized` from C3 (`8a1860d`).
+- BUT `/api/public/diamonds?shop=fake-shop-99999.myshopify.com` returned 403 — confirming H2's `validateMerchantWidget` (`4de2dc7`) WAS deployed.
+- Conclusion: production was running a snapshot somewhere between H2 (May 2) and Phase E C1 (May 3) — predating Phase E cleanup entirely.
+
+**Step 3 — Diagnosed root cause:**
+- `git rev-list origin/main..origin/phase-c-security-hardening` → **35 commits ahead**.
+- `main` HEAD `0381335` (Merge PR #4, May 1) does NOT contain Phase C/D/E/F.
+- Day 4 close-out had deployed C1–C6 via `railway up --ci` — a manual snapshot upload from `phase-c-security-hardening` HEAD that effectively overrode Railway's auto-deploy source.
+- Today's env-var change triggered Railway's standard redeploy mechanism, which rebuilt from the **service's configured Git source** rather than the prior `railway up` snapshot. The configured source was on `phase-c-security-hardening` but pinned at an earlier commit (between H2 and Phase E C1). The env-var-change rebuild silently reverted Day 4's manual override.
+
+**Step 4 — Force-redeployed via `railway up --ci` from REPO ROOT:**
+- New deployment: `26b6e157-ace5-4fb6-bb0f-b3b897c04657`.
+- Upload: 94 s. Build + deploy + healthcheck: ~6 min more (Railway incident still affecting build queue). Total: 7 m 46 s.
+- Final state: SUCCESS. Old deployment `09dbce11` cleanly REMOVED.
+- Per CLAUDE.md lesson #7, CLI lost the GraphQL log subscription mid-build (`Failed to stream build logs`) but server-side build completed regardless. Verified post-completion via deployment list status.
+
+**Step 5 — Post-deploy verification (all green):**
+
+| Check | Result |
+|---|---|
+| `[server] listening on :8080 (NODE_ENV=production)` | exactly 1 ✓ (C2 marker present) |
+| `[prisma] singleton initialized (pid=12)` | exactly 1 ✓ (C3 — no flapping) |
+| Old `Express API running on port 8080` | 0 ✓ (regression marker gone) |
+| `/health` includes `X-Request-Id` | ✓ (C2 middleware live) |
+| Three subsequent `/health` calls — fresh UUIDs (`d4c1ad05…`, `7803d86f…`, `9b584c00…`) | ✓ (per-request generation, not cached) |
+| `vary: Origin` on responses | ✓ (N5 CORS allowlist live) |
+| `/api/public/diamonds?shop=…&shape=Round` cold | HTTP 200, **17.31 s**, 25 normalized diamonds, full HTTPS image URLs |
+| Same probe warm (5 s later) | HTTP 200, 3.55 s, byte-identical body |
+| Same probe (~80 s later) | HTTP 200, 3.66 s, byte-identical body |
+| `[cache] miss key=shape=Round` | 1 ✓ (P1 cold) |
+| `[cache] hit key=shape=Round ageMs=8615 / 78284` | 2 ✓ (P1 warm pattern verified) |
+| `[error] requestId=` markers | 0 ✓ |
+| `Augmont login failed` lines | 0 ✓ |
+
+**Key validation — F1's 30 s timeout already preventing real failures in production:**
+
+The cold filtered query took **17.3 s** under tonight's variable Augmont prod load. On the previous deploy with the OLD 10 s timeout default (which is what env-var-change deploy reverted to), this query would have spuriously emitted a friendly 503 to the buyer. F1's bumped 30 s default absorbed it cleanly. **A concrete user-facing regression prevented in production within hours of the F1 code landing.** This single observation alone validates the F1 timeout bump.
+
+**First diamond from cold prod probe (sample, public catalog data):**
+```
+id:            963888c2-957e-43cc-99c6-ba30a90f51b0
+stockNum:      QG7F5XFIRP
+shape:         round, color: F, clarity: SI1
+carat: 3.31    cut: Excellent  polish: Excellent  symmetry: Excellent
+lab: No-cert
+finalPrice: 202.57   pricePerCarat: 61.2
+image_url: https://www.viewmydiamonds.com/?id=QG7F5XFIRP&type=image
+```
+
+**Production state at end of session:**
+- Code: `phase-c-security-hardening` HEAD (`678a31a`) — C1–C6 + F1 + all prior security commits live.
+- Deployment: `26b6e157` SUCCESS, single container.
+- Augmont integration: prod credentials live, 675K-diamond catalog accessible.
+- P1 SWR cache: warm and serving hits.
+- F1 30 s upstream timeout: active and already absorbing slow Augmont queries.
+- Preview env: untouched (still UAT).
+
+**Files changed (this session):**
+- (Earlier) `augmont-diamonds/server/services/payalApi.js` — F1 normalizer simplification + 30 s timeout (commit `678a31a`).
+- (Earlier) `augmont-diamonds/.env.example` — F1 timeout default annotation (commit `678a31a`).
+- (This entry) `WORK_LOG.md` — this entry.
+- (This entry) `CLAUDE.md` — new lesson learned #27 (Railway env-var change deploy gotcha).
+
+**Outstanding (carrying forward):**
+- **Railway service source ref alignment** — to prevent recurrence, configure the Railway dashboard's Git source to track `phase-c-security-hardening` HEAD (or merge to `main` and track that). One-time fix.
+- **F5** — server pagination implementation against prod catalog (`?from=N&to=M` page walk + count-aware UI controls).
+- **F6** — widget filter UI is now elevated to a hard prerequisite for prod storefront rollout: without filter UI, organic buyers will hit the unfiltered 21 s slow path.
+- **F7** — owner-only billing toggle scaffolding (free-for-6-months with switch, per Day 5 morning meeting).
+- **F8** — Estrella branding swap (after Tuesday delivery).
+- **F9** — app ownership transfer (before App Store submission).
+- Augmont CDN base URL for partial image paths — pending Ravi response (not blocking for filtered-query path; full URLs come back when filters are present).
+- DB `connection_limit` revisit (P3) — still deferred.
+- Preview env shares prod Supabase project — bug #6, still tracked.
+
+**Branch:** `phase-c-security-hardening` (HEAD `678a31a`, +35 commits ahead of `main`).
+
+**Hours:** ~6 hours this session (env-var planning + batched swap + regression diagnosis + force-redeploy + verification + docs).
+
+**Next session (Day 6):**
+1. **First**: align Railway dashboard Git source ref so future env-var changes don't revert code state.
+2. F5 — server pagination implementation.
+3. F6 — widget filter UI scaffolding (hard prerequisite for prod storefront).
+
+---
