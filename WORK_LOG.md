@@ -693,3 +693,66 @@ Production Railway logs after smoke (proves cache wire-up):
 3. After both: F3 mockup-for-signoff → F4 redesign begins.
 
 ---
+
+### Day 5 — Afternoon — May 4, 2026 — Phase F1 pre-flight (filters + pagination discovery, no swap yet)
+
+**Phase:** F1 — pre-flight credential + API-contract discovery against prod Augmont. Railway env-var swap **deferred** pending Ravi response on remaining items. **Zero code changes today.**
+
+**Why pre-flight first:** Per the F1 design plan (this morning), validate credentials + understand API contract before touching Railway production env. Agent sandbox blocked the curl battery (production creds → external endpoint → not pre-trusted), so the user ran the probes on their local terminal and reported results back.
+
+**Pre-flight curl battery (user-run, sanitized to chat):**
+
+| Probe | HTTP | Latency | Notes |
+|---|---|---|---|
+| `POST /merchant/login` | 200 | 0.55 s | JWT returned, 261 chars, JWT-shaped (2 dots) |
+| `GET /merchant/products` (no filters) | 200 | 21.0 s | Returns 25-stone "sample" set (NOT full catalog) |
+| `GET /merchant/products?shape=Round` | 200 | ~10 s | Different 25 stones; `firstId` varies from baseline |
+| `GET /merchant/products?color=G` | 200 | 2.9 s | Different again |
+| `GET /merchant/products?shape=Round&color=G&minCarat=0.5&page=2` | 200 | 2.6 s | Pagination yields different `firstId` from page 1 |
+| Same query repeated | 200 | — | Slightly different `firstId` between identical calls (suggests shuffled / non-deterministic default ordering) |
+
+**Key insights from prod Augmont:**
+1. **Filters are mandatory for meaningful catalog access.** Unfiltered requests return a fixed-size 25-stone sample (likely featured / top-of-list), NOT the 700K+ catalog. The "broken pagination" we feared during planning was actually the unfiltered-call sample being served regardless of `page=N`.
+2. **Pagination only works once at least one filter is applied.** Page 2 of an unfiltered call returns the same sample.
+3. **Latency correlates strongly with filter specificity.** Augmont presumably indexes the filtered fields; broad/unfiltered queries do full scans (21 s vs <3 s with a single filter).
+4. **`total` field is per-page, not catalog total.** Counting the full catalog requires a separate contract — not yet known.
+5. **Default ordering appears non-deterministic.** Same filter query returns slightly different `firstId` between calls — has implications for cache stability + pagination consistency.
+
+**Code implications (for the eventual F1 + F5 + F6 work — NOT applied yet):**
+- `payalApi.js` normalizer already handles both `body.data.products` and `body.data` (array fallback). Confirm against prod response shape during the swap; possible minor tweak.
+- `/api/public/diamonds` endpoint already accepts query filters via `req.query` and strips `shop`/`nocache` — should work as-is for prod once env vars swap.
+- **Storefront widget needs filter UI as a hard prerequisite for F1's prod rollout** (shape buttons, carat slider, color/clarity selects, price range). If the widget today issues an unfiltered request, it lands in the 21 s slow path + 25-stone sample — incompatible with a prod buyer experience. This nominally lives in F6 but blocks F1 from going live.
+- **`AUGMONT_TIMEOUT_MS` (currently 10 s) is below the 21 s unfiltered latency.** Better fix is "always send a filter" at the widget layer rather than bumping the timeout — bumping just shifts the slow path onto buyers + the single Prisma pool connection.
+- **Cache key strategy already sorts query params** (`buildCacheKey` in `payalApi.js`) — per-filter caching works out of the box. Per-page caching also works since `page=N` is just another sorted param.
+- **Non-deterministic ordering means stale cache + a new request can disagree on page boundaries** (page 2 of stale cache vs page 2 of revalidate may return different stones). Pagination consistency needs a server-side stable sort key. Question for Ravi.
+- **Image URL prefix is missing.** `diamondImage` values like `"?id=3TQOO20VQ3&type=image"` are relative — need a CDN base-URL prefix to render. Until Ravi confirms, the existing `onerror` placeholder fallback (CLAUDE.md rule #3) keeps the widget from breaking, but images won't load.
+- F5 (pagination) is mostly scaffolding work once the count contract is known — widget infinite-scroll or page-nav controls + page-param wiring.
+
+**Pending from Ravi (Augmont contact):**
+- CDN base-URL prefix for `diamondImage` (without it, images don't render).
+- Total catalog count contract — separate endpoint? Header? Special filter?
+- Required vs optional filter parameters — is "always send a filter" the official guidance, or are there combinations that unlock unfiltered scans?
+- Rate limits — meeting said "none" but need confirmation under prod traffic patterns.
+- Recommended approach for "show all" use cases (admin dashboard view of full catalog).
+- Stable ordering / sort key for pagination consistency.
+
+**F1 status:** **PARKED.** Credentials validated, API contract partially mapped. Railway env-var swap deferred until:
+1. Ravi clarifies the open items above (the CDN prefix is hard-blocking for image rendering; the count contract is hard-blocking for sensible UX).
+2. Widget filter UI is in place (or at minimum, the widget defaults to a filtered query so the 21 s slow path isn't the buyer's first experience).
+
+**Files changed:**
+- `WORK_LOG.md` — this entry. No code changes.
+
+**Outstanding (carrying forward):**
+- F1 swap pending Ravi clarifications.
+- F6 (widget UI/UX polish, including filter UI) and F7 (billing toggle scaffolding) can start in parallel — neither needs prod creds.
+- F2/F3 (Nivoda research → admin redesign mockup for sign-off) — Track B, manual user task.
+- All prior outstanding items unchanged (`auto_order_enabled` reclassified non-blocker, App Store assets, P3 deferred, etc.).
+
+**Branch:** `phase-c-security-hardening`. No code commits this session.
+
+**Next session:** Either
+- Ravi has responded → resume F1 swap + any necessary code adjustments (image URL prefix concat in normalizer, response-shape tweak if needed).
+- Ravi pending → start F6 (widget polish + filter UI) or F7 (billing toggle scaffolding) in parallel — both unblocked.
+
+---
