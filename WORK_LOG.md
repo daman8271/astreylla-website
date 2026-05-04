@@ -636,3 +636,60 @@ Production Railway logs after smoke (proves cache wire-up):
 5. Re-evaluate DB `connection_limit` (P3) once P1 cache shows realistic hit ratios under prod traffic.
 
 ---
+
+### Day 5 — Morning — May 4, 2026 — Project owner meeting findings (no code)
+
+**Phase:** Documentation pass — capture meeting outcomes that re-shape Phase F scope and clarify long-standing blockers. **Zero code today.**
+
+**Meeting context:** Project owner (Payal) reviewed current state and direction. Several open items resolved or re-scoped. Implementation pauses until prod credentials land (Track A) and Nivoda layout sign-off is in (Track B).
+
+**RESOLVED FROM PRIOR BLOCKERS**
+- **`auto_order_enabled` flag is NOT a critical blocker.** Some vendors prefer a cart-review-with-customer flow (manual review before order creation) — both flows are valid product behavior. Cart works; checkout's friendly disabled message is acceptable for vendors who want manual review. `PAYAL_HANDOFF.md` still applies for vendors who DO want auto-order, but this is no longer a launch blocker.
+- **Image URL issue (HTML viewer pages instead of raw images) is a DEMO API artifact only.** Production Augmont API is expected to return proper image URLs. The `onerror` placeholder fallback (CLAUDE.md rule #3) stays in code as defensive programming. Verify after F1 lands.
+- **API rate limits: NONE** — confirmed by Ravi (Augmont side). Our in-memory rate limiter (60/IP/min, 120/shop/min) is for our own abuse protection, not an upstream constraint.
+- **Hosting: Stay on Railway for now.** VPS migration deferred indefinitely. Removes a previously-floating "should we move?" decision.
+
+**NEW REQUIREMENTS FROM MEETING**
+- **Branding: "Estrella" (US subsidiary), NOT "Augmont".** App will be published under Estrella. Full branding info (logo, colors, tagline, copy) lands Tuesday. Code identifiers (`augmont-diamonds` folder, `AUGMONT_*` env vars, upstream API references) stay technical — only user-facing copy flips to Estrella.
+- **Admin dashboard direction: Copy Nivoda's admin dashboard layout exactly.** No specific layout requirements from owner — Nivoda is the reference. Implication: don't burn code time iterating our existing 4 Polaris pages until we have Nivoda screenshots + owner sign-off on the proposed redesign.
+- **Pricing: FREE for 6 months. After that, configurable toggle in admin enables billing.** Build the toggle scaffolding NOW (disabled state, owner-only visibility); wire to Shopify Billing API only when toggle flips. Phase 6 status updates: not removed permanently — scaffolding to be re-added.
+- **Storefront widget is the PRIMARY product value; admin is secondary.** Owner emphasized: *"first thing first, vendors can extend our theme."* Implication: widget UI/UX polish moves up in priority over admin redesign.
+
+**PENDING DELIVERIES (external)**
+- **Production Augmont credentials: TODAY (by evening).** Unblocks F1.
+- **Estrella branding info: Tuesday.** Unblocks F8.
+- **Final policy/legal info: last meeting before publish.** Privacy policy, ToS, support copy.
+- **App ownership transfer: at end before publish.** Code lives in Daman's Shopify Partner account today; transfers to Payal's account before App Store submission.
+
+**Phase F backlog (re-shaped — full detail in PHASE_E_BACKLOG.md)**
+- F1 — Prod Augmont credentials swap (UAT → prod env vars; verify 700K catalog).
+- F2 — Sign up Nivoda 30-day trial; screenshot admin dashboard; document layout patterns. *(manual user task, no code)*
+- F3 — Send Nivoda-style admin mockups to project owner for sign-off **BEFORE** writing any code.
+- F4 — Redesign 4 admin pages to match Nivoda layout — only after F3 sign-off.
+- F5 — Catalog pagination (700K-scale). Pairs with F1.
+- F6 — Storefront widget UI/UX polish pass *(NEW — primary product value per owner)*.
+- F7 — Owner-only billing toggle scaffolding *(free state now, switchable later)*.
+- F8 — Estrella branding swap (after Tuesday delivery).
+- F9 — App ownership transfer to Payal's Shopify Partner account.
+
+**No code today.** Implementation waits for: (Track A) prod creds, (Track B) Nivoda research + owner sign-off.
+
+**Files changed:**
+- `WORK_LOG.md` — this entry.
+- `PHASE_E_BACKLOG.md` — Phase E marked COMPLETE; Phase F items F1–F9 added; resolved-blocker statuses updated.
+
+**Outstanding (with meeting clarifications):**
+- ~~Augmont `auto_order_enabled` flag~~ — re-classified: optional per-vendor preference, not a launch blocker.
+- ~~"Are storefront images broken?"~~ — re-classified: demo API artifact; prod expected to return proper URLs. Verify after F1.
+- App Store submission (Phase 8) — listing assets, screenshots, privacy policy URL — happens after F1–F9 complete + ownership transfer (F9).
+- DB `connection_limit` revisit (P3) — still deferred. Re-evaluate after prod traffic + P1 cache hit ratios visible.
+- Preview env shares prod Supabase project — bug #6 in CLAUDE.md, still tracked.
+
+**Branch:** `phase-c-security-hardening`. Phase G integration PR strategy still TBD; defer until F1 lands and we know whether we're merging into main pre- or post-redesign.
+
+**Next session:**
+1. **TRACK A (passive):** when prod Augmont credentials arrive, F1 swap.
+2. **TRACK B (active, manual):** Nivoda sign-up + admin dashboard screenshots + documented layout (no code).
+3. After both: F3 mockup-for-signoff → F4 redesign begins.
+
+---
