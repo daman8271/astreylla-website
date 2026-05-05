@@ -4,11 +4,14 @@
   var root = document.getElementById('diamond-widget-root');
   if (!root) return;
 
-  var shop      = root.dataset.shop    || '';
-  var apiUrl    = (root.dataset.apiUrl || '').replace(/\/$/, '');
-  var perPage   = parseInt(root.dataset.perPage, 10) || 12;
-  var showFilters = root.dataset.showFilters === 'true';
+  var shop         = root.dataset.shop    || '';
+  var apiUrl       = (root.dataset.apiUrl || '').replace(/\/$/, '');
+  var perPage      = parseInt(root.dataset.perPage, 10) || 24;
+  var showFilters  = root.dataset.showFilters === 'true';
   var primaryColor = root.dataset.primaryColor || '';
+
+  if (perPage < 4)  perPage = 4;
+  if (perPage > 50) perPage = 50;
 
   if (primaryColor) {
     root.style.setProperty('--dw-accent', primaryColor);
@@ -40,83 +43,151 @@
   }
   var sessionId = getSessionId();
 
-  // ─── STATE ────────────────────────────────────────────────────────────────
-  var state = { shape: '', minCarat: '', maxCarat: '', color: '', clarity: '', page: 1 };
-  var cart  = { items: [], count: 0, total: 0, currency: 'USD' };
-  var diamondIdsInCart = new Set();
+  // ─── CONSTANTS ────────────────────────────────────────────────────────────
+  var SHAPES   = ['Round', 'Princess', 'Cushion', 'Oval', 'Pear', 'Emerald', 'Marquise', 'Heart', 'Asscher', 'Radiant'];
+  var COLORS   = ['D', 'E', 'F', 'G', 'H', 'I', 'J'];
+  var CLARITIES = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
+  var CUTS     = ['Excellent', 'Very Good', 'Good', 'Fair'];
+  var SORTS    = [
+    { value: 'price_asc',  label: 'Price: low to high' },
+    { value: 'price_desc', label: 'Price: high to low' },
+    { value: 'carat_asc',  label: 'Carat: low to high' },
+    { value: 'carat_desc', label: 'Carat: high to low' }
+  ];
+  var CARAT_MIN = 0.25;
+  var CARAT_MAX = 5.0;
+  var CARAT_STEP = 0.05;
+  var PRICE_MIN_DEFAULT = 0;
+  var PRICE_MAX_DEFAULT = 50000;
+  var PRICE_STEP = 50;
+  // URL query-param prefix to avoid collisions with merchant theme params.
+  var URL_PREFIX = 'd_';
 
-  // ─── DOM ──────────────────────────────────────────────────────────────────
+  // ─── STATE ────────────────────────────────────────────────────────────────
+  var state = {
+    shape: '',
+    colors: [],
+    clarities: [],
+    cuts: [],
+    minCarat: CARAT_MIN,
+    maxCarat: CARAT_MAX,
+    minPrice: PRICE_MIN_DEFAULT,
+    maxPrice: PRICE_MAX_DEFAULT,
+    sort: 'price_asc'
+  };
+  var pagination = { from: 1, to: perPage, hasMore: false, total: null };
+  var cart = { items: [], count: 0, total: 0, currency: 'USD' };
+  var diamondIdsInCart = new Set();
+  var loadedDiamonds = []; // accumulated across "Load more" pages
+  var requestSeq = 0; // guards against out-of-order responses
+
+  // ─── DOM SCAFFOLD ─────────────────────────────────────────────────────────
   root.innerHTML =
-    '<h2 class="dw-heading">Browse Our Diamond Collection</h2>' +
+    '<header class="dw-hero">' +
+      '<p class="dw-hero__eyebrow">Loose Diamonds</p>' +
+      '<h2 class="dw-hero__title">Browse Our Collection</h2>' +
+    '</header>' +
     (showFilters ? buildFiltersHTML() : '') +
+    '<div class="dw-results-bar">' +
+      '<p class="dw-results-bar__count" id="dw-count" aria-live="polite">Loading diamonds…</p>' +
+      '<div class="dw-results-bar__sort">' +
+        '<label class="dw-results-bar__sort-label" for="dw-sort">Sort</label>' +
+        '<select class="dw-select" id="dw-sort">' +
+          SORTS.map(function (s) {
+            var sel = s.value === state.sort ? ' selected' : '';
+            return '<option value="' + s.value + '"' + sel + '>' + s.label + '</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+    '</div>' +
     '<div class="dw-grid" id="dw-grid"></div>' +
+    '<div class="dw-loadmore" id="dw-loadmore" hidden>' +
+      '<button class="dw-btn dw-btn--outline" id="dw-loadmore-btn" type="button">Load more</button>' +
+      '<p class="dw-loadmore__count" id="dw-loadmore-count"></p>' +
+    '</div>' +
     buildCartTriggerHTML() +
     buildCartPanelHTML() +
     buildCheckoutOverlayHTML();
 
-  var grid           = root.querySelector('#dw-grid');
-  var cartTrigger    = root.querySelector('#dw-cart-trigger');
-  var cartCount      = root.querySelector('#dw-cart-count');
-  var cartPanel      = root.querySelector('#dw-cart-panel');
-  var cartBody       = root.querySelector('#dw-cart-body');
-  var cartFooter     = root.querySelector('#dw-cart-footer');
-  var cartBackdrop   = root.querySelector('#dw-cart-backdrop');
-  var checkoutPanel  = root.querySelector('#dw-checkout');
+  var grid          = root.querySelector('#dw-grid');
+  var countEl       = root.querySelector('#dw-count');
+  var sortEl        = root.querySelector('#dw-sort');
+  var loadMoreWrap  = root.querySelector('#dw-loadmore');
+  var loadMoreBtn   = root.querySelector('#dw-loadmore-btn');
+  var loadMoreCount = root.querySelector('#dw-loadmore-count');
+  var chipsBar      = showFilters ? root.querySelector('#dw-chips') : null;
+  var cartTrigger   = root.querySelector('#dw-cart-trigger');
+  var cartCount     = root.querySelector('#dw-cart-count');
+  var cartPanel     = root.querySelector('#dw-cart-panel');
+  var cartBody      = root.querySelector('#dw-cart-body');
+  var cartFooter    = root.querySelector('#dw-cart-footer');
+  var cartBackdrop  = root.querySelector('#dw-cart-backdrop');
+  var checkoutPanel = root.querySelector('#dw-checkout');
 
-  if (showFilters) attachFilterListeners();
-  attachCartListeners();
-  fetchDiamonds();
+  readStateFromURL();
+  if (showFilters) {
+    syncFilterUIFromState();
+    attachFilterListeners();
+  }
+  attachListeners();
+  fetchInitial();
   fetchCart();
 
   // ─── HTML BUILDERS ────────────────────────────────────────────────────────
 
   function buildFiltersHTML() {
     return (
-      '<div class="dw-filters" role="search" aria-label="Filter diamonds">' +
-        '<span class="dw-filters__heading">Filter By:</span>' +
-        '<div class="dw-filters__group">' +
-          '<label class="dw-filters__label" for="dw-shape">Shape</label>' +
-          '<select class="dw-filters__select" id="dw-shape">' +
-            '<option value="">All Shapes</option>' +
-            '<option value="round">Round</option>' +
-            '<option value="princess">Princess</option>' +
-            '<option value="oval">Oval</option>' +
-            '<option value="cushion">Cushion</option>' +
-            '<option value="emerald">Emerald</option>' +
-            '<option value="pear">Pear</option>' +
-            '<option value="marquise">Marquise</option>' +
-            '<option value="radiant">Radiant</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="dw-filters__group dw-filters__group--carat">' +
-          '<label class="dw-filters__label">Carat</label>' +
-          '<div class="dw-filters__carat-range">' +
-            '<input class="dw-filters__input" id="dw-min-carat" type="number" placeholder="Min" min="0.01" step="0.01" aria-label="Minimum carat">' +
-            '<span class="dw-filters__carat-sep" aria-hidden="true">–</span>' +
-            '<input class="dw-filters__input" id="dw-max-carat" type="number" placeholder="Max" min="0.01" step="0.01" aria-label="Maximum carat">' +
+      '<section class="dw-filters" role="search" aria-label="Filter diamonds">' +
+        '<div class="dw-filters__grid">' +
+          // LEFT col: Shape + Colour + Cut
+          '<div class="dw-filters__col">' +
+            buildPillGroup('Shape', 'shape', SHAPES, false) +
+            buildPillGroup('Colour', 'colors', COLORS, true) +
+            buildPillGroup('Cut', 'cuts', CUTS, true) +
+          '</div>' +
+          // RIGHT col: Carat + Clarity + Price
+          '<div class="dw-filters__col">' +
+            buildSliderGroup('Carats', 'carat', CARAT_MIN, CARAT_MAX, CARAT_STEP, 'ct') +
+            buildPillGroup('Clarity', 'clarities', CLARITIES, true) +
+            buildSliderGroup('Price', 'price', PRICE_MIN_DEFAULT, PRICE_MAX_DEFAULT, PRICE_STEP, '$') +
           '</div>' +
         '</div>' +
-        '<div class="dw-filters__group">' +
-          '<label class="dw-filters__label" for="dw-color">Colour</label>' +
-          '<select class="dw-filters__select" id="dw-color">' +
-            '<option value="">All Colours</option>' +
-            '<option value="D">D</option><option value="E">E</option>' +
-            '<option value="F">F</option><option value="G">G</option>' +
-            '<option value="H">H</option><option value="I">I</option>' +
-            '<option value="J">J</option>' +
-          '</select>' +
+        '<div class="dw-chips" id="dw-chips" hidden></div>' +
+      '</section>'
+    );
+  }
+
+  function buildPillGroup(label, key, options, multi) {
+    return (
+      '<div class="dw-fgroup">' +
+        '<h3 class="dw-fgroup__label">' + label + '</h3>' +
+        '<div class="dw-pills" data-key="' + key + '" data-multi="' + (multi ? '1' : '0') + '" role="group" aria-label="' + label + '">' +
+          options.map(function (opt) {
+            return '<button type="button" class="dw-pill" data-value="' + escapeAttr(opt) + '">' + escapeHTML(opt) + '</button>';
+          }).join('') +
         '</div>' +
-        '<div class="dw-filters__group">' +
-          '<label class="dw-filters__label" for="dw-clarity">Clarity</label>' +
-          '<select class="dw-filters__select" id="dw-clarity">' +
-            '<option value="">All Clarities</option>' +
-            '<option value="FL">FL</option><option value="IF">IF</option>' +
-            '<option value="VVS1">VVS1</option><option value="VVS2">VVS2</option>' +
-            '<option value="VS1">VS1</option><option value="VS2">VS2</option>' +
-            '<option value="SI1">SI1</option><option value="SI2">SI2</option>' +
-          '</select>' +
+      '</div>'
+    );
+  }
+
+  function buildSliderGroup(label, key, min, max, step, unit) {
+    var unitLeft = unit === '$';
+    var fmt = function (v) { return unitLeft ? unit + Math.round(v) : v + ' ' + unit; };
+    return (
+      '<div class="dw-fgroup">' +
+        '<h3 class="dw-fgroup__label">' + label + '</h3>' +
+        '<div class="dw-slider" data-key="' + key + '" data-min="' + min + '" data-max="' + max + '" data-step="' + step + '">' +
+          '<div class="dw-slider__track" aria-hidden="true">' +
+            '<div class="dw-slider__range"></div>' +
+          '</div>' +
+          '<input class="dw-slider__input dw-slider__input--min" type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + min + '" aria-label="' + label + ' minimum">' +
+          '<input class="dw-slider__input dw-slider__input--max" type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="' + label + ' maximum">' +
         '</div>' +
-        '<button class="dw-filters__clear" id="dw-clear" type="button">Clear filters</button>' +
+        '<div class="dw-slider__values">' +
+          '<span class="dw-slider__val dw-slider__val--min">' + fmt(min) + '</span>' +
+          '<span class="dw-slider__val-sep">–</span>' +
+          '<span class="dw-slider__val dw-slider__val--max">' + fmt(max) + '</span>' +
+        '</div>' +
       '</div>'
     );
   }
@@ -124,10 +195,11 @@
   function buildCartTriggerHTML() {
     return (
       '<button class="dw-cart-trigger" id="dw-cart-trigger" type="button" aria-label="View cart">' +
-        '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">' +
           '<path d="M3 5h2l2.4 12.5a1.5 1.5 0 0 0 1.5 1.2h9.7a1.5 1.5 0 0 0 1.5-1.2L21.5 8H6"/>' +
           '<circle cx="9.5" cy="21" r="1.3"/><circle cx="17" cy="21" r="1.3"/>' +
         '</svg>' +
+        '<span class="dw-cart-trigger__label">Cart</span>' +
         '<span class="dw-cart-trigger__count" id="dw-cart-count" aria-live="polite">0</span>' +
       '</button>'
     );
@@ -147,7 +219,7 @@
             '<span>Subtotal</span>' +
             '<strong id="dw-cart-subtotal">$0.00</strong>' +
           '</div>' +
-          '<button class="dw-cart-panel__checkout" id="dw-cart-checkout" type="button">Checkout</button>' +
+          '<button class="dw-btn dw-btn--solid" id="dw-cart-checkout" type="button">Checkout</button>' +
         '</footer>' +
       '</aside>'
     );
@@ -174,7 +246,7 @@
               '<label for="dw-co-note">Order note <span class="dw-overlay__optional">(optional)</span></label>' +
               '<textarea id="dw-co-note" name="note" rows="3" placeholder="Any special requests…"></textarea>' +
             '</div>' +
-            '<button class="dw-overlay__submit" type="submit">Place Order</button>' +
+            '<button class="dw-btn dw-btn--solid dw-overlay__submit" type="submit">Place Order</button>' +
           '</form>' +
           '<div class="dw-overlay__thanks" id="dw-checkout-thanks" hidden>' +
             '<svg class="dw-overlay__thanks-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M7.5 12l3 3 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -188,25 +260,47 @@
   // ─── LISTENERS ────────────────────────────────────────────────────────────
 
   function attachFilterListeners() {
-    root.querySelector('#dw-shape').addEventListener('change', function () {
-      state.shape = this.value; state.page = 1; fetchDiamonds();
+    // Pill grids — single or multi select per data-multi
+    var pillGroups = root.querySelectorAll('.dw-pills');
+    pillGroups.forEach(function (group) {
+      group.addEventListener('click', function (e) {
+        var pill = e.target.closest('.dw-pill');
+        if (!pill) return;
+        var key = group.dataset.key;
+        var multi = group.dataset.multi === '1';
+        var value = pill.dataset.value;
+
+        if (key === 'shape') {
+          state.shape = (state.shape === value) ? '' : value;
+        } else if (multi) {
+          var arr = state[key];
+          var i = arr.indexOf(value);
+          if (i >= 0) arr.splice(i, 1); else arr.push(value);
+        }
+        syncFilterUIFromState();
+        renderChips();
+        writeStateToURL();
+        fetchInitial();
+      });
     });
-    root.querySelector('#dw-color').addEventListener('change', function () {
-      state.color = this.value; state.page = 1; fetchDiamonds();
+
+    // Sliders
+    initSlider(root.querySelector('.dw-slider[data-key="carat"]'), function (lo, hi) {
+      state.minCarat = lo; state.maxCarat = hi;
     });
-    root.querySelector('#dw-clarity').addEventListener('change', function () {
-      state.clarity = this.value; state.page = 1; fetchDiamonds();
+    initSlider(root.querySelector('.dw-slider[data-key="price"]'), function (lo, hi) {
+      state.minPrice = lo; state.maxPrice = hi;
     });
-    root.querySelector('#dw-min-carat').addEventListener('change', function () {
-      state.minCarat = this.value; state.page = 1; fetchDiamonds();
-    });
-    root.querySelector('#dw-max-carat').addEventListener('change', function () {
-      state.maxCarat = this.value; state.page = 1; fetchDiamonds();
-    });
-    root.querySelector('#dw-clear').addEventListener('click', clearFilters);
   }
 
-  function attachCartListeners() {
+  function attachListeners() {
+    sortEl.addEventListener('change', function () {
+      state.sort = this.value;
+      writeStateToURL();
+      fetchInitial();
+    });
+    loadMoreBtn.addEventListener('click', loadMore);
+
     cartTrigger.addEventListener('click', openCartPanel);
     root.querySelector('#dw-cart-close').addEventListener('click', closeCartPanel);
     cartBackdrop.addEventListener('click', closeCartPanel);
@@ -222,33 +316,540 @@
       else if (cartPanel.classList.contains('is-open')) closeCartPanel();
     });
 
-    // Card add buttons (delegated)
     root.addEventListener('click', function (e) {
       var btn = e.target.closest('.dw-card__add');
       if (btn) handleAddClick(btn);
     });
 
-    // Cart remove buttons (delegated)
     cartBody.addEventListener('click', function (e) {
       var btn = e.target.closest('.dw-cart-item__remove');
       if (btn) handleRemoveClick(btn.dataset.id);
     });
   }
 
-  function clearFilters() {
-    state.shape = ''; state.color = ''; state.clarity = '';
-    state.minCarat = ''; state.maxCarat = ''; state.page = 1;
-    if (showFilters) {
-      root.querySelector('#dw-shape').value    = '';
-      root.querySelector('#dw-color').value    = '';
-      root.querySelector('#dw-clarity').value  = '';
-      root.querySelector('#dw-min-carat').value = '';
-      root.querySelector('#dw-max-carat').value = '';
+  // ─── DUAL-THUMB SLIDER ────────────────────────────────────────────────────
+  // Two overlapped <input type=range>; each clamps so they can't cross.
+
+  function initSlider(slider, onChange) {
+    if (!slider) return;
+    var min = Number(slider.dataset.min);
+    var max = Number(slider.dataset.max);
+    var step = Number(slider.dataset.step);
+    var minInput = slider.querySelector('.dw-slider__input--min');
+    var maxInput = slider.querySelector('.dw-slider__input--max');
+    var range    = slider.querySelector('.dw-slider__range');
+    var minLabel = slider.parentElement.querySelector('.dw-slider__val--min');
+    var maxLabel = slider.parentElement.querySelector('.dw-slider__val--max');
+    var key      = slider.dataset.key;
+
+    function fmt(v) {
+      if (key === 'price') return '$' + Math.round(v).toLocaleString();
+      return Number(v).toFixed(2) + ' ct';
     }
-    fetchDiamonds();
+
+    function paint() {
+      var lo = Number(minInput.value);
+      var hi = Number(maxInput.value);
+      if (lo > hi - step) lo = hi - step;
+      if (hi < lo + step) hi = lo + step;
+      var pctLo = ((lo - min) / (max - min)) * 100;
+      var pctHi = ((hi - min) / (max - min)) * 100;
+      range.style.left  = pctLo + '%';
+      range.style.right = (100 - pctHi) + '%';
+      minLabel.textContent = fmt(lo);
+      maxLabel.textContent = fmt(hi);
+      // Expose computed values for state sync
+      slider._lo = lo;
+      slider._hi = hi;
+    }
+
+    function commit() {
+      paint();
+      onChange(slider._lo, slider._hi);
+      renderChips();
+      writeStateToURL();
+      fetchInitial();
+    }
+
+    minInput.addEventListener('input', paint);
+    maxInput.addEventListener('input', paint);
+    minInput.addEventListener('change', commit);
+    maxInput.addEventListener('change', commit);
+
+    // Initial paint from current state values
+    if (key === 'carat') {
+      minInput.value = state.minCarat;
+      maxInput.value = state.maxCarat;
+    } else if (key === 'price') {
+      minInput.value = state.minPrice;
+      maxInput.value = state.maxPrice;
+    }
+    paint();
   }
 
-  // ─── CART API CALLS ───────────────────────────────────────────────────────
+  // ─── FILTER UI <-> STATE ──────────────────────────────────────────────────
+
+  function syncFilterUIFromState() {
+    var pillGroups = root.querySelectorAll('.dw-pills');
+    pillGroups.forEach(function (group) {
+      var key = group.dataset.key;
+      group.querySelectorAll('.dw-pill').forEach(function (pill) {
+        var v = pill.dataset.value;
+        var active = false;
+        if (key === 'shape') active = (state.shape === v);
+        else if (key === 'colors') active = state.colors.indexOf(v) >= 0;
+        else if (key === 'clarities') active = state.clarities.indexOf(v) >= 0;
+        else if (key === 'cuts') active = state.cuts.indexOf(v) >= 0;
+        pill.classList.toggle('is-active', active);
+        pill.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    });
+  }
+
+  function clearAllFilters() {
+    state.shape = '';
+    state.colors = [];
+    state.clarities = [];
+    state.cuts = [];
+    state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX;
+    state.minPrice = PRICE_MIN_DEFAULT; state.maxPrice = PRICE_MAX_DEFAULT;
+    if (showFilters) {
+      syncFilterUIFromState();
+      // Reset slider visual + inputs
+      var sliders = root.querySelectorAll('.dw-slider');
+      sliders.forEach(function (s) {
+        var minI = s.querySelector('.dw-slider__input--min');
+        var maxI = s.querySelector('.dw-slider__input--max');
+        minI.value = s.dataset.min; maxI.value = s.dataset.max;
+        minI.dispatchEvent(new Event('input'));
+        maxI.dispatchEvent(new Event('input'));
+      });
+    }
+    renderChips();
+    writeStateToURL();
+    fetchInitial();
+  }
+
+  function renderChips() {
+    if (!chipsBar) return;
+    var chips = [];
+    if (state.shape) chips.push({ k: 'shape', v: state.shape, label: state.shape });
+    state.colors.forEach(function (c)    { chips.push({ k: 'colors', v: c, label: 'Colour: ' + c }); });
+    state.clarities.forEach(function (c) { chips.push({ k: 'clarities', v: c, label: 'Clarity: ' + c }); });
+    state.cuts.forEach(function (c)      { chips.push({ k: 'cuts', v: c, label: 'Cut: ' + c }); });
+    if (state.minCarat > CARAT_MIN || state.maxCarat < CARAT_MAX) {
+      chips.push({ k: 'carat', v: '', label: 'Carats: ' + state.minCarat.toFixed(2) + '–' + state.maxCarat.toFixed(2) });
+    }
+    if (state.minPrice > PRICE_MIN_DEFAULT || state.maxPrice < PRICE_MAX_DEFAULT) {
+      chips.push({ k: 'price', v: '', label: 'Price: $' + Math.round(state.minPrice).toLocaleString() + '–$' + Math.round(state.maxPrice).toLocaleString() });
+    }
+
+    if (chips.length === 0) {
+      chipsBar.hidden = true;
+      while (chipsBar.firstChild) chipsBar.removeChild(chipsBar.firstChild);
+      return;
+    }
+    chipsBar.hidden = false;
+    while (chipsBar.firstChild) chipsBar.removeChild(chipsBar.firstChild);
+    chips.forEach(function (c) {
+      var el = document.createElement('button');
+      el.className = 'dw-chip';
+      el.type = 'button';
+      el.setAttribute('data-key', c.k);
+      el.setAttribute('data-value', c.v);
+      el.setAttribute('aria-label', 'Remove ' + c.label);
+      el.textContent = c.label;
+      var x = document.createElement('span');
+      x.className = 'dw-chip__x';
+      x.setAttribute('aria-hidden', 'true');
+      x.textContent = '✕';
+      el.appendChild(x);
+      el.addEventListener('click', function () { removeChip(c.k, c.v); });
+      chipsBar.appendChild(el);
+    });
+    var clearAll = document.createElement('button');
+    clearAll.className = 'dw-chip__clear';
+    clearAll.type = 'button';
+    clearAll.textContent = 'Clear all';
+    clearAll.addEventListener('click', clearAllFilters);
+    chipsBar.appendChild(clearAll);
+  }
+
+  function removeChip(k, v) {
+    if (k === 'shape') state.shape = '';
+    else if (k === 'carat') { state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX; }
+    else if (k === 'price') { state.minPrice = PRICE_MIN_DEFAULT; state.maxPrice = PRICE_MAX_DEFAULT; }
+    else {
+      var arr = state[k];
+      var i = arr.indexOf(v);
+      if (i >= 0) arr.splice(i, 1);
+    }
+    if (showFilters) syncFilterUIFromState();
+    if (k === 'carat' || k === 'price') {
+      var s = root.querySelector('.dw-slider[data-key="' + k + '"]');
+      if (s) {
+        var minI = s.querySelector('.dw-slider__input--min');
+        var maxI = s.querySelector('.dw-slider__input--max');
+        minI.value = s.dataset.min; maxI.value = s.dataset.max;
+        minI.dispatchEvent(new Event('input'));
+      }
+    }
+    renderChips();
+    writeStateToURL();
+    fetchInitial();
+  }
+
+  // ─── URL STATE SYNC ───────────────────────────────────────────────────────
+
+  function readStateFromURL() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var v;
+      if ((v = params.get(URL_PREFIX + 'shape')))      state.shape = v;
+      if ((v = params.get(URL_PREFIX + 'color')))      state.colors = v.split(',').filter(Boolean);
+      if ((v = params.get(URL_PREFIX + 'clarity')))    state.clarities = v.split(',').filter(Boolean);
+      if ((v = params.get(URL_PREFIX + 'cut')))        state.cuts = v.split(',').filter(Boolean);
+      if ((v = params.get(URL_PREFIX + 'carat_min')))  state.minCarat = clamp(Number(v), CARAT_MIN, CARAT_MAX);
+      if ((v = params.get(URL_PREFIX + 'carat_max')))  state.maxCarat = clamp(Number(v), CARAT_MIN, CARAT_MAX);
+      if ((v = params.get(URL_PREFIX + 'price_min')))  state.minPrice = Math.max(PRICE_MIN_DEFAULT, Number(v) || 0);
+      if ((v = params.get(URL_PREFIX + 'price_max')))  state.maxPrice = Math.min(PRICE_MAX_DEFAULT, Number(v) || PRICE_MAX_DEFAULT);
+      if ((v = params.get(URL_PREFIX + 'sort')))       state.sort = v;
+    } catch (e) { /* URL parse failure — keep defaults */ }
+  }
+
+  function writeStateToURL() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      // Strip our existing keys
+      Array.from(params.keys()).forEach(function (k) {
+        if (k.indexOf(URL_PREFIX) === 0) params.delete(k);
+      });
+      if (state.shape)               params.set(URL_PREFIX + 'shape', state.shape);
+      if (state.colors.length)       params.set(URL_PREFIX + 'color', state.colors.join(','));
+      if (state.clarities.length)    params.set(URL_PREFIX + 'clarity', state.clarities.join(','));
+      if (state.cuts.length)         params.set(URL_PREFIX + 'cut', state.cuts.join(','));
+      if (state.minCarat > CARAT_MIN) params.set(URL_PREFIX + 'carat_min', state.minCarat.toFixed(2));
+      if (state.maxCarat < CARAT_MAX) params.set(URL_PREFIX + 'carat_max', state.maxCarat.toFixed(2));
+      if (state.minPrice > PRICE_MIN_DEFAULT) params.set(URL_PREFIX + 'price_min', String(Math.round(state.minPrice)));
+      if (state.maxPrice < PRICE_MAX_DEFAULT) params.set(URL_PREFIX + 'price_max', String(Math.round(state.maxPrice)));
+      if (state.sort && state.sort !== 'price_asc') params.set(URL_PREFIX + 'sort', state.sort);
+      var qs = params.toString();
+      var url = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+      window.history.replaceState({}, '', url);
+    } catch (e) { /* history API unavailable */ }
+  }
+
+  // ─── DIAMOND FETCH ────────────────────────────────────────────────────────
+
+  function buildFilterParams() {
+    var p = new URLSearchParams();
+    p.set('shop', shop);
+    if (state.shape)            p.set('shape', state.shape);
+    if (state.colors.length)    p.set('color', state.colors.join(','));
+    if (state.clarities.length) p.set('clarity', state.clarities.join(','));
+    if (state.cuts.length)      p.set('cut', state.cuts.join(','));
+    if (state.minCarat > CARAT_MIN) p.set('min_carat', state.minCarat.toFixed(2));
+    if (state.maxCarat < CARAT_MAX) p.set('max_carat', state.maxCarat.toFixed(2));
+    if (state.minPrice > PRICE_MIN_DEFAULT) p.set('min_price', String(Math.round(state.minPrice)));
+    if (state.maxPrice < PRICE_MAX_DEFAULT) p.set('max_price', String(Math.round(state.maxPrice)));
+    if (state.sort)             p.set('sort', state.sort);
+    return p;
+  }
+
+  function fetchInitial() {
+    pagination.from = 1;
+    pagination.to = perPage;
+    pagination.hasMore = false;
+    pagination.total = null;
+    loadedDiamonds = [];
+    var seq = ++requestSeq;
+    renderSkeletons();
+    countEl.textContent = 'Loading diamonds…';
+    loadMoreWrap.hidden = true;
+
+    var params = buildFilterParams();
+    params.set('from', String(pagination.from));
+    params.set('to', String(pagination.to));
+    params.set('count', 'true');
+
+    return fetch(apiUrl + '/api/public/diamonds?' + params.toString())
+      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then(function (data) {
+        if (seq !== requestSeq) return; // newer request superseded this one
+        var diamonds = Array.isArray(data) ? data : (data.diamonds || data.data || []);
+        loadedDiamonds = diamonds.slice();
+        if (data.pagination) {
+          pagination.from = data.pagination.from || pagination.from;
+          pagination.to   = data.pagination.to   || pagination.to;
+          pagination.hasMore = !!data.pagination.hasMore;
+        } else {
+          pagination.hasMore = diamonds.length >= perPage;
+        }
+        if (typeof data.totalCount === 'number') {
+          pagination.total = data.totalCount;
+        }
+        renderResults();
+      })
+      .catch(function (err) {
+        if (seq !== requestSeq) return;
+        console.error('[diamond-widget]', err);
+        renderError();
+      });
+  }
+
+  function loadMore() {
+    if (!pagination.hasMore) return;
+    var seq = ++requestSeq;
+    var nextFrom = pagination.to + 1;
+    var nextTo   = nextFrom + perPage - 1;
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.textContent = 'Loading…';
+
+    var params = buildFilterParams();
+    params.set('from', String(nextFrom));
+    params.set('to', String(nextTo));
+
+    fetch(apiUrl + '/api/public/diamonds?' + params.toString())
+      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then(function (data) {
+        if (seq !== requestSeq) return;
+        var diamonds = Array.isArray(data) ? data : (data.diamonds || data.data || []);
+        loadedDiamonds = loadedDiamonds.concat(diamonds);
+        if (data.pagination) {
+          pagination.from = data.pagination.from || nextFrom;
+          pagination.to   = data.pagination.to   || nextTo;
+          pagination.hasMore = !!data.pagination.hasMore;
+        } else {
+          pagination.from = nextFrom;
+          pagination.to = nextTo;
+          pagination.hasMore = diamonds.length >= perPage;
+        }
+        appendCards(diamonds);
+        markCardsInCart();
+        updateCounters();
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load more';
+        if (!pagination.hasMore) loadMoreWrap.hidden = true;
+      })
+      .catch(function (err) {
+        if (seq !== requestSeq) return;
+        console.error('[diamond-widget]', err);
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Try again';
+      });
+  }
+
+  // ─── RENDER ───────────────────────────────────────────────────────────────
+
+  function renderResults() {
+    if (loadedDiamonds.length === 0) {
+      renderEmpty();
+      countEl.textContent = '0 diamonds';
+      loadMoreWrap.hidden = true;
+      return;
+    }
+    while (grid.firstChild) grid.removeChild(grid.firstChild);
+    appendCards(loadedDiamonds);
+    markCardsInCart();
+    updateCounters();
+    loadMoreWrap.hidden = !pagination.hasMore;
+  }
+
+  function updateCounters() {
+    var loaded = loadedDiamonds.length;
+    if (pagination.total != null) {
+      countEl.textContent = 'Showing ' + loaded + ' of ' + pagination.total.toLocaleString() + ' diamonds';
+      loadMoreCount.textContent = loaded + ' / ' + pagination.total.toLocaleString();
+    } else {
+      countEl.textContent = 'Showing ' + loaded + ' diamonds';
+      loadMoreCount.textContent = loaded + ' loaded';
+    }
+  }
+
+  function appendCards(diamonds) {
+    var frag = document.createDocumentFragment();
+    diamonds.forEach(function (d) { frag.appendChild(buildCard(d)); });
+    grid.appendChild(frag);
+  }
+
+  function buildCard(d) {
+    var shape   = String(d.shape   || 'Diamond');
+    var carat   = (d.carat != null) ? Number(d.carat) : null;
+    var caratStr = carat != null ? carat.toFixed(2) : '—';
+    var color   = String(d.color   || '—');
+    var clarity = String(d.clarity || '—');
+    var cut     = d.cut ? String(d.cut) : '';
+    var price   = (d.price != null) ? Number(d.price) : null;
+    var mrp     = (d.mrp != null && Number(d.mrp) > 0) ? Number(d.mrp) : null;
+    var image   = String(d.image_url || d.image || '');
+    var id      = String(d.id || d.stoneId || d.stockNum || '');
+    var ccyCode = d.currency || cart.currency || 'USD';
+
+    var article = document.createElement('article');
+    article.className = 'dw-card';
+
+    // Image well
+    var imgWrap = document.createElement('div');
+    imgWrap.className = 'dw-card__image';
+    if (image) {
+      var img = document.createElement('img');
+      img.setAttribute('src', image);
+      img.setAttribute('alt', shape + ' diamond ' + caratStr + 'ct ' + color + ' ' + clarity);
+      img.setAttribute('loading', 'lazy');
+      img.setAttribute('width', '316'); img.setAttribute('height', '316');
+      img.addEventListener('error', function () {
+        while (imgWrap.firstChild) imgWrap.removeChild(imgWrap.firstChild);
+        imgWrap.appendChild(buildPlaceholder(shape));
+      });
+      imgWrap.appendChild(img);
+    } else {
+      imgWrap.appendChild(buildPlaceholder(shape));
+    }
+
+    // Discount badge — only render if mrp is meaningfully greater than price.
+    // Augmont UAT/prod do not currently expose mrp; this stays inert until
+    // the data model adds it. Threshold: >2% to avoid rounding noise.
+    if (mrp && price && mrp > price * 1.02) {
+      var pct = Math.round((1 - price / mrp) * 100);
+      var badge = document.createElement('span');
+      badge.className = 'dw-card__badge';
+      badge.textContent = '-' + pct + '%';
+      imgWrap.appendChild(badge);
+    }
+
+    article.appendChild(imgWrap);
+
+    var body = document.createElement('div');
+    body.className = 'dw-card__body';
+
+    // Title: "0.50ct Cushion Natural Diamond"
+    var title = document.createElement('p');
+    title.className = 'dw-card__title';
+    title.textContent = caratStr + 'ct ' + shape + ' Natural Diamond';
+    body.appendChild(title);
+
+    // Specs line
+    var specs = document.createElement('p');
+    specs.className = 'dw-card__specs';
+    var pieces = [];
+    pieces.push(specPair('Colour', color));
+    pieces.push(specPair('Clarity', clarity));
+    if (cut) pieces.push(specPair('Cut', cut));
+    pieces.forEach(function (frag, i) {
+      if (i > 0) specs.appendChild(document.createTextNode(', '));
+      specs.appendChild(frag);
+    });
+    body.appendChild(specs);
+
+    // Price block
+    var priceBlock = document.createElement('div');
+    priceBlock.className = 'dw-card__price-block';
+    if (price != null) {
+      var priceEl = document.createElement('p');
+      priceEl.className = 'dw-card__price';
+      priceEl.textContent = formatMoney(price, ccyCode);
+      priceBlock.appendChild(priceEl);
+      if (mrp && mrp > price * 1.02) {
+        var strike = document.createElement('p');
+        strike.className = 'dw-card__price-strike';
+        strike.textContent = formatMoney(mrp, ccyCode);
+        priceBlock.appendChild(strike);
+      }
+    }
+    body.appendChild(priceBlock);
+
+    // Add to cart
+    var btn = document.createElement('button');
+    btn.className = 'dw-btn dw-btn--outline dw-card__add';
+    btn.type = 'button';
+    btn.setAttribute('data-id', id);
+    setButtonState(btn, diamondIdsInCart.has(id) ? 'in-cart' : 'idle');
+    body.appendChild(btn);
+
+    article.appendChild(body);
+    return article;
+  }
+
+  function specPair(label, value) {
+    var f = document.createDocumentFragment();
+    var l = document.createElement('span');
+    l.className = 'dw-card__spec-label';
+    l.textContent = label + ': ';
+    var v = document.createElement('strong');
+    v.className = 'dw-card__spec-value';
+    v.textContent = value;
+    f.appendChild(l); f.appendChild(v);
+    return f;
+  }
+
+  function renderSkeletons() {
+    while (grid.firstChild) grid.removeChild(grid.firstChild);
+    var n = perPage;
+    for (var i = 0; i < n; i++) {
+      var sk = document.createElement('div');
+      sk.className = 'dw-skeleton';
+      sk.innerHTML =
+        '<div class="dw-skeleton__image"></div>' +
+        '<div class="dw-skeleton__line dw-skeleton__line--lg"></div>' +
+        '<div class="dw-skeleton__line"></div>' +
+        '<div class="dw-skeleton__line dw-skeleton__line--md"></div>' +
+        '<div class="dw-skeleton__btn"></div>';
+      grid.appendChild(sk);
+    }
+  }
+
+  function renderEmpty() {
+    while (grid.firstChild) grid.removeChild(grid.firstChild);
+    var box = document.createElement('div');
+    box.className = 'dw-empty';
+    box.innerHTML =
+      '<svg class="dw-diamond-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">' +
+        '<polygon points="32,6 58,22 58,42 32,58 6,42 6,22" stroke="currentColor" stroke-width="1.5" fill="none"/>' +
+      '</svg>' +
+      '<h3 class="dw-empty__title">No diamonds match your filters</h3>' +
+      '<p class="dw-empty__msg">Try widening the carat or price range, or removing a filter.</p>';
+    var clear = document.createElement('button');
+    clear.className = 'dw-btn dw-btn--outline dw-empty__reset';
+    clear.type = 'button';
+    clear.textContent = 'Clear all filters';
+    clear.addEventListener('click', clearAllFilters);
+    box.appendChild(clear);
+    grid.appendChild(box);
+  }
+
+  function renderError() {
+    while (grid.firstChild) grid.removeChild(grid.firstChild);
+    var box = document.createElement('div');
+    box.className = 'dw-error';
+    box.innerHTML =
+      '<svg class="dw-diamond-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">' +
+        '<polygon points="32,6 58,22 58,42 32,58 6,42 6,22" stroke="currentColor" stroke-width="1.5" fill="none"/>' +
+      '</svg>' +
+      '<h3 class="dw-error__title">Couldn’t load diamonds</h3>' +
+      '<p class="dw-error__msg">Something went wrong on our side. Please try again.</p>';
+    var retry = document.createElement('button');
+    retry.className = 'dw-btn dw-btn--outline dw-error__retry';
+    retry.type = 'button';
+    retry.textContent = 'Retry';
+    retry.addEventListener('click', fetchInitial);
+    box.appendChild(retry);
+    grid.appendChild(box);
+    countEl.textContent = '';
+    loadMoreWrap.hidden = true;
+  }
+
+  function buildPlaceholder(shape) {
+    var placeholder = document.createElement('div');
+    placeholder.className = 'dw-card__img-placeholder';
+    placeholder.setAttribute('aria-hidden', 'true');
+    var phText = document.createElement('span');
+    phText.className = 'dw-card__img-placeholder-text';
+    phText.textContent = shape;
+    placeholder.appendChild(phText);
+    return placeholder;
+  }
+
+  // ─── CART ─────────────────────────────────────────────────────────────────
 
   function fetchCart() {
     return fetch(apiUrl + '/api/public/cart?shop=' + encodeURIComponent(shop) + '&sessionId=' + encodeURIComponent(sessionId))
@@ -272,7 +873,6 @@
     var diamondId = btn.dataset.id;
     if (!diamondId || btn.dataset.busy === '1') return;
     if (diamondIdsInCart.has(diamondId)) {
-      // already in cart — open panel as a cue
       openCartPanel();
       return;
     }
@@ -284,7 +884,7 @@
     })
       .then(function (res) {
         if (res.status === 503) return res.json().then(function (b) { throw { kind: 'disabled', body: b }; });
-        if (!res.ok) return res.json().catch(function(){return{};}).then(function (b) { throw { kind: 'fail', body: b }; });
+        if (!res.ok) return res.json().catch(function () { return {}; }).then(function (b) { throw { kind: 'fail', body: b }; });
         return res.json();
       })
       .then(function () {
@@ -315,9 +915,7 @@
     })
       .then(function (res) { return res.ok ? res.json() : Promise.reject(res); })
       .then(function () { return fetchCart(); })
-      .catch(function () {
-        if (row) row.classList.remove('is-removing');
-      });
+      .catch(function () { if (row) row.classList.remove('is-removing'); });
   }
 
   function handleCheckoutSubmit(e) {
@@ -340,7 +938,7 @@
     })
       .then(function (res) {
         if (res.status === 503) return res.json().then(function (b) { throw { kind: 'disabled', body: b }; });
-        if (!res.ok) return res.json().catch(function(){return{};}).then(function (b) { throw { kind: 'fail', body: b }; });
+        if (!res.ok) return res.json().catch(function () { return {}; }).then(function (b) { throw { kind: 'fail', body: b }; });
         return res.json();
       })
       .then(function (data) {
@@ -349,7 +947,6 @@
         var inv = root.querySelector('#dw-checkout-invoice');
         if (inv) inv.textContent = data.invoiceNumber || data.orderId || '—';
         thanks.hidden = false;
-        // Cart is now empty server-side. Refresh local state.
         fetchCart();
       })
       .catch(function (err) {
@@ -363,8 +960,6 @@
         form.insertBefore(errEl, btn);
       });
   }
-
-  // ─── PANEL OPEN/CLOSE ─────────────────────────────────────────────────────
 
   function openCartPanel() {
     cartBackdrop.hidden = false;
@@ -396,11 +991,7 @@
     setTimeout(function () { root.querySelector('#dw-co-name').focus(); }, 50);
   }
 
-  function closeCheckout() {
-    checkoutPanel.hidden = true;
-  }
-
-  // ─── RENDER: CART TRIGGER + PANEL ─────────────────────────────────────────
+  function closeCheckout() { checkoutPanel.hidden = true; }
 
   function renderCartTrigger() {
     cartCount.textContent = cart.count;
@@ -433,7 +1024,8 @@
       imgWrap.className = 'dw-cart-item__image';
       if (d.image_url) {
         var img = document.createElement('img');
-        img.src = d.image_url; img.alt = (d.shape || 'Diamond') + ' ' + (d.carat || '') + 'ct';
+        img.src = d.image_url;
+        img.alt = (d.shape || 'Diamond') + ' ' + (d.carat || '') + 'ct';
         img.loading = 'lazy';
         img.addEventListener('error', function () {
           while (imgWrap.firstChild) imgWrap.removeChild(imgWrap.firstChild);
@@ -448,7 +1040,7 @@
       info.className = 'dw-cart-item__info';
       var title = document.createElement('p');
       title.className = 'dw-cart-item__title';
-      title.textContent = (d.shape || 'Diamond') + ' · ' + (d.carat || '—') + 'ct';
+      title.textContent = (d.carat || '—') + 'ct ' + (d.shape || 'Diamond');
       var meta = document.createElement('p');
       meta.className = 'dw-cart-item__meta';
       meta.textContent = (d.color || '—') + ' · ' + (d.clarity || '—');
@@ -495,14 +1087,14 @@
     switch (kind) {
       case 'loading':     btn.classList.add('is-loading');     btn.disabled = true;  btn.dataset.busy = '1'; btn.textContent = 'Adding…'; break;
       case 'added':       btn.classList.add('is-added');                              btn.textContent = 'Added ✓'; break;
-      case 'in-cart':     btn.classList.add('is-in-cart');                            btn.textContent = 'In Cart'; break;
-      case 'error':       btn.classList.add('is-error');                              btn.textContent = 'Try Again'; break;
+      case 'in-cart':     btn.classList.add('is-in-cart');                            btn.textContent = 'In cart'; break;
+      case 'error':       btn.classList.add('is-error');                              btn.textContent = 'Try again'; break;
       case 'unavailable': btn.classList.add('is-unavailable'); btn.disabled = true;   btn.textContent = 'Cart not available'; break;
-      default:            btn.textContent = 'Add to Cart';
+      default:            btn.textContent = 'Add to cart';
     }
   }
 
-  // ─── DIAMOND FETCH + CARDS ────────────────────────────────────────────────
+  // ─── HELPERS ──────────────────────────────────────────────────────────────
 
   function formatMoney(amount, currency) {
     var n = Number(amount) || 0;
@@ -519,146 +1111,17 @@
     }
   }
 
-  function buildPlaceholder(shape) {
-    var placeholder = document.createElement('div');
-    placeholder.className = 'dw-card__img-placeholder';
-    placeholder.setAttribute('aria-hidden', 'true');
-    var phText = document.createElement('span');
-    phText.className = 'dw-card__img-placeholder-text';
-    phText.textContent = shape;
-    placeholder.appendChild(phText);
-    return placeholder;
+  function clamp(n, lo, hi) {
+    if (isNaN(n)) return lo;
+    return Math.max(lo, Math.min(hi, n));
   }
 
-  function fetchDiamonds() {
-    renderSpinner();
-    var params = new URLSearchParams({ shop: shop, per_page: perPage, page: state.page });
-    if (state.shape)    params.set('shape',     state.shape);
-    if (state.color)    params.set('color',     state.color);
-    if (state.clarity)  params.set('clarity',   state.clarity);
-    if (state.minCarat) params.set('min_carat', state.minCarat);
-    if (state.maxCarat) params.set('max_carat', state.maxCarat);
-
-    fetch(apiUrl + '/api/public/diamonds?' + params.toString())
-      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-      .then(function (data) {
-        var diamonds = Array.isArray(data) ? data : (data.diamonds || data.data || []);
-        if (diamonds.length === 0) renderEmpty();
-        else { renderCards(diamonds); markCardsInCart(); }
-      })
-      .catch(function (err) { console.error('[diamond-widget]', err); renderError(); });
-  }
-
-  function renderSpinner() {
-    grid.innerHTML =
-      '<div class="dw-loading" role="status" aria-live="polite" aria-busy="true">' +
-        '<div class="dw-spinner" aria-hidden="true"></div>' +
-        '<p class="dw-loading__msg">Loading diamonds…</p>' +
-      '</div>';
-  }
-
-  function renderCards(diamonds) {
-    while (grid.firstChild) grid.removeChild(grid.firstChild);
-
-    diamonds.forEach(function (d) {
-      var shape   = String(d.shape   || 'Diamond');
-      var carat   = String(d.carat   || '—');
-      var color   = String(d.color   || '—');
-      var clarity = String(d.clarity || '—');
-      var price   = d.price || null;
-      var image   = String(d.image_url || d.image || '');
-      var id      = String(d.id || '');
-
-      var article = document.createElement('article');
-      article.className = 'dw-card';
-
-      var imgWrap = document.createElement('div');
-      imgWrap.className = 'dw-card__image';
-      if (image) {
-        var img = document.createElement('img');
-        img.setAttribute('src', image);
-        img.setAttribute('alt', shape + ' diamond ' + carat + 'ct ' + color + ' ' + clarity);
-        img.setAttribute('loading', 'lazy');
-        img.setAttribute('width', '300'); img.setAttribute('height', '300');
-        img.addEventListener('error', function () {
-          while (imgWrap.firstChild) imgWrap.removeChild(imgWrap.firstChild);
-          imgWrap.appendChild(buildPlaceholder(shape));
-        });
-        imgWrap.appendChild(img);
-      } else {
-        imgWrap.appendChild(buildPlaceholder(shape));
-      }
-      article.appendChild(imgWrap);
-
-      var body = document.createElement('div');
-      body.className = 'dw-card__body';
-
-      var shapePara = document.createElement('p');
-      shapePara.className = 'dw-card__shape';
-      shapePara.textContent = shape;
-      body.appendChild(shapePara);
-
-      var dl = document.createElement('dl');
-      dl.className = 'dw-card__specs';
-      [['Carat', carat], ['Colour', color], ['Clarity', clarity]].forEach(function (pair) {
-        var row = document.createElement('div');
-        row.className = 'dw-card__spec-row';
-        var dt = document.createElement('dt'); dt.textContent = pair[0];
-        var dd = document.createElement('dd'); dd.textContent = pair[1];
-        row.appendChild(dt); row.appendChild(dd); dl.appendChild(row);
-      });
-      body.appendChild(dl);
-
-      if (price) {
-        var pricePara = document.createElement('p');
-        pricePara.className = 'dw-card__price';
-        pricePara.textContent = formatMoney(price, cart.currency);
-        body.appendChild(pricePara);
-      }
-
-      var btn = document.createElement('button');
-      btn.className = 'dw-card__add';
-      btn.type = 'button';
-      btn.setAttribute('data-id', id);
-      setButtonState(btn, diamondIdsInCart.has(id) ? 'in-cart' : 'idle');
-      body.appendChild(btn);
-
-      article.appendChild(body);
-      grid.appendChild(article);
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
 
-  function renderEmpty() {
-    grid.innerHTML =
-      '<div class="dw-empty">' +
-        diamondSVG() +
-        '<p class="dw-empty__msg">No diamonds match your filters. Try adjusting your search.</p>' +
-        '<button class="dw-empty__reset" type="button">Clear filters</button>' +
-      '</div>';
-    var btn = grid.querySelector('.dw-empty__reset');
-    if (btn) btn.addEventListener('click', clearFilters);
-  }
-
-  function renderError() {
-    grid.innerHTML =
-      '<div class="dw-error">' +
-        '<p class="dw-error__msg">Unable to load diamonds. Please try again.</p>' +
-        '<button class="dw-error__retry" type="button">Retry</button>' +
-      '</div>';
-    grid.querySelector('.dw-error__retry').addEventListener('click', fetchDiamonds);
-  }
-
-  function diamondSVG() {
-    return (
-      '<svg class="dw-diamond-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-        '<polygon points="32,6 58,22 58,42 32,58 6,42 6,22" stroke="currentColor" stroke-width="1.5" fill="none"/>' +
-        '<line x1="6"  y1="22" x2="32" y2="34" stroke="currentColor" stroke-width="1"/>' +
-        '<line x1="58" y1="22" x2="32" y2="34" stroke="currentColor" stroke-width="1"/>' +
-        '<line x1="32" y1="6"  x2="32" y2="34" stroke="currentColor" stroke-width="1"/>' +
-        '<line x1="6"  y1="42" x2="32" y2="34" stroke="currentColor" stroke-width="1"/>' +
-        '<line x1="58" y1="42" x2="32" y2="34" stroke="currentColor" stroke-width="1"/>' +
-      '</svg>'
-    );
-  }
+  function escapeAttr(s) { return escapeHTML(s); }
 
 })();
