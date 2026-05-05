@@ -439,22 +439,30 @@
   line-height: 1.4;
 }
 
+/*
+ * Per-shape SVG silhouette placeholder (C-iter1 task 3.1).
+ * Augmont's image_url returns an HTML viewer page, not an image, so the
+ * <img onerror> swaps in this branded fallback instead of a broken-image
+ * icon or a stock "no image" graphic. The placeholder paints the SVG
+ * outline at ~60% of the card image well, centered, in a light gray
+ * stroke against the image-well background.
+ */
 .dw-card__img-placeholder {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #d6c19a 0%, #b59a6f 50%, #8a6f48 100%);
+  background: var(--dw-image-well);
+  color: #b8b8b8;
 }
-.dw-card__img-placeholder-text {
-  font-family: var(--dw-font-head);
-  font-size: 1rem;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.92);
-  text-align: center;
-  text-transform: capitalize;
+
+.dw-card__img-placeholder svg {
+  width: 60%;
+  height: 60%;
+  max-width: 200px;
+  max-height: 200px;
+  display: block;
 }
 
 .dw-card__body {
@@ -509,6 +517,47 @@
 }
 
 .dw-card__add { width: 100%; }
+
+/* Card-level click affordance (whole card is clickable to open viewer) */
+.dw-card { cursor: pointer; }
+.dw-card:focus-visible {
+  outline: 2px solid var(--dw-text);
+  outline-offset: 2px;
+}
+
+/*
+ * "View 360°" hover overlay (C-iter1 task 3.3).
+ * Hidden by default; revealed on hover ONLY on devices with real hover
+ * (skip touch screens that pretend to hover via :hover). Mobile users see
+ * no overlay — the whole card opens the modal on tap.
+ */
+.dw-card__view-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.36);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+.dw-card__view-overlay-text {
+  font-family: var(--dw-font-btn);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+@media (hover: hover) and (min-width: 769px) {
+  .dw-card:hover .dw-card__view-overlay { opacity: 1; }
+  .dw-card:focus-within .dw-card__view-overlay { opacity: 1; }
+}
 
 /* Card add button states */
 .dw-card__add.is-loading { opacity: 0.7; cursor: wait; }
@@ -997,6 +1046,102 @@
     padding: 6px 10px;
   }
   .dw-cart-panel { width: 100vw; }
+}
+
+/* ─── 360° VIEWER MODAL ──────────────────────────────────────────────────────
+ * Loads viewmydiamonds.com (Augmont's HTML viewer page that we can't render
+ * inline as an image) inside an iframe. iframe src is set on open, blanked
+ * on close so background tabs don't leave 24+ network connections hanging.
+ */
+
+.dw-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--dw-s4);
+}
+.dw-viewer[hidden] { display: none; }
+
+.dw-viewer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.dw-viewer__panel {
+  position: relative;
+  background: var(--dw-bg);
+  width: min(900px, 90vw);
+  height: min(700px, 86vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--dw-hairline);
+}
+
+.dw-viewer__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  background: var(--dw-bg);
+  border: 1px solid var(--dw-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  color: var(--dw-text);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dw-viewer__close:hover {
+  background: var(--dw-text);
+  color: var(--dw-bg);
+}
+
+.dw-viewer__frame-wrap {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  background: var(--dw-image-well);
+  min-height: 0;
+}
+
+.dw-viewer__frame-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: var(--dw-image-well);
+}
+
+.dw-viewer__caption {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  color: var(--dw-text-muted);
+  text-align: center;
+  margin: 0;
+  padding: var(--dw-s2) var(--dw-s4);
+  border-top: 1px solid var(--dw-hairline);
+}
+
+@media (max-width: 768px) {
+  .dw-viewer { padding: 0; }
+  .dw-viewer__panel {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    border: 0;
+  }
+  .dw-viewer__close { top: 12px; right: 12px; }
 }
 
 /* ─── REDUCED MOTION ──────────────────────────────────────────────────────── */

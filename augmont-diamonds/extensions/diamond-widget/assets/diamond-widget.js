@@ -57,11 +57,38 @@
   var CARAT_MIN = 0.25;
   var CARAT_MAX = 5.0;
   var CARAT_STEP = 0.05;
-  var PRICE_MIN_DEFAULT = 0;
-  var PRICE_MAX_DEFAULT = 50000;
-  var PRICE_STEP = 50;
   // URL query-param prefix to avoid collisions with merchant theme params.
   var URL_PREFIX = 'd_';
+
+  // ─── SHAPE SILHOUETTES ────────────────────────────────────────────────────
+  // Inline SVG outlines used as placeholders when an image_url fails to
+  // decode (Augmont returns viewmydiamonds.com viewer-page URLs, not raw
+  // images — see CLAUDE.md lesson #3). Each shape is a simple, recognizable
+  // silhouette in light gray; the goal is "looks intentional", not photorealism.
+  // viewBox is 0 0 100 100 so all shapes fit the same square card image well.
+  var SHAPE_SVGS = {
+    round:    '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="50" cy="50" r="36" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M14 50 L86 50 M50 14 L50 86 M24.6 24.6 L75.4 75.4 M75.4 24.6 L24.6 75.4" stroke="currentColor" stroke-width="0.6" opacity="0.55"/></svg>',
+    oval:     '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="50" cy="50" rx="26" ry="38" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M50 12 L50 88 M30 30 L70 70 M70 30 L30 70" stroke="currentColor" stroke-width="0.6" opacity="0.55"/></svg>',
+    princess: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="18" y="18" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M18 18 L82 82 M82 18 L18 82 M50 18 L50 82 M18 50 L82 50" stroke="currentColor" stroke-width="0.6" opacity="0.55"/></svg>',
+    cushion:  '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="18" y="18" width="64" height="64" rx="14" ry="14" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M28 28 L72 72 M72 28 L28 72 M50 18 L50 82 M18 50 L82 50" stroke="currentColor" stroke-width="0.6" opacity="0.55"/></svg>',
+    emerald:  '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M30 16 L70 16 L84 30 L84 70 L70 84 L30 84 L16 70 L16 30 Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M28 28 L72 28 M28 72 L72 72 M28 28 L28 72 M72 28 L72 72 M50 16 L50 84" stroke="currentColor" stroke-width="0.6" opacity="0.55"/></svg>',
+    pear:     '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M50 12 C30 30 22 50 28 70 C32 84 42 88 50 88 C58 88 68 84 72 70 C78 50 70 30 50 12 Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M50 12 L50 88 M32 50 L68 50 M38 30 L62 30" stroke="currentColor" stroke-width="0.6" opacity="0.55"/></svg>',
+    marquise: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M50 12 C70 30 80 50 80 50 C80 50 70 70 50 88 C30 70 20 50 20 50 C20 50 30 30 50 12 Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M20 50 L80 50 M50 12 L50 88 M30 30 L70 70 M70 30 L30 70" stroke="currentColor" stroke-width="0.6" opacity="0.55"/></svg>',
+    heart:    '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M50 86 C24 64 14 48 14 34 C14 22 24 16 32 16 C40 16 46 22 50 30 C54 22 60 16 68 16 C76 16 86 22 86 34 C86 48 76 64 50 86 Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M50 30 L50 80 M28 38 L72 38 M50 30 L24 56 M50 30 L76 56" stroke="currentColor" stroke-width="0.6" opacity="0.55"/></svg>',
+    asscher:  '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M28 16 L72 16 L84 28 L84 72 L72 84 L28 84 L16 72 L16 28 Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M30 30 L70 30 L70 70 L30 70 Z M40 40 L60 40 L60 60 L40 60 Z M16 28 L84 72 M84 28 L16 72" stroke="currentColor" stroke-width="0.6" opacity="0.55" fill="none"/></svg>',
+    radiant:  '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M30 14 L70 14 L86 30 L86 70 L70 86 L30 86 L14 70 L14 30 Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M30 30 L70 30 L70 70 L30 70 Z M50 14 L50 86 M14 50 L86 50 M30 30 L14 14 M70 30 L86 14 M70 70 L86 86 M30 70 L14 86" stroke="currentColor" stroke-width="0.6" opacity="0.55" fill="none"/></svg>'
+  };
+
+  function svgForShape(shape) {
+    var key = String(shape || '').toLowerCase();
+    return SHAPE_SVGS[key] || SHAPE_SVGS.round;
+  }
+
+  function capShape(s) {
+    var str = String(s || '').trim();
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
 
   // ─── STATE ────────────────────────────────────────────────────────────────
   var state = {
@@ -71,8 +98,6 @@
     cuts: [],
     minCarat: CARAT_MIN,
     maxCarat: CARAT_MAX,
-    minPrice: PRICE_MIN_DEFAULT,
-    maxPrice: PRICE_MAX_DEFAULT,
     sort: 'price_asc'
   };
   var pagination = { from: 1, to: perPage, hasMore: false, total: null };
@@ -107,7 +132,8 @@
     '</div>' +
     buildCartTriggerHTML() +
     buildCartPanelHTML() +
-    buildCheckoutOverlayHTML();
+    buildCheckoutOverlayHTML() +
+    buildViewerOverlayHTML();
 
   var grid          = root.querySelector('#dw-grid');
   var countEl       = root.querySelector('#dw-count');
@@ -123,10 +149,16 @@
   var cartFooter    = root.querySelector('#dw-cart-footer');
   var cartBackdrop  = root.querySelector('#dw-cart-backdrop');
   var checkoutPanel = root.querySelector('#dw-checkout');
+  var viewerPanel   = root.querySelector('#dw-viewer');
+  var viewerFrame   = root.querySelector('#dw-viewer-frame');
+  var viewerCaption = root.querySelector('#dw-viewer-caption');
 
   readStateFromURL();
+  // Restore sort dropdown from URL state (default 'price_asc' otherwise).
+  if (sortEl) sortEl.value = state.sort;
   if (showFilters) {
     syncFilterUIFromState();
+    renderChips(); // surface URL-restored filters as chips on first render
     attachFilterListeners();
   }
   attachListeners();
@@ -145,11 +177,15 @@
             buildPillGroup('Colour', 'colors', COLORS, true) +
             buildPillGroup('Cut', 'cuts', CUTS, true) +
           '</div>' +
-          // RIGHT col: Carat + Clarity + Price
+          // RIGHT col: Carat + Clarity
+          // Price filter removed in C-iter1: Augmont upstream does not
+          // support price filtering at any naming convention (verified
+          // C-setup task 4a). Shipping a slider that does nothing is worse
+          // than not shipping one. If/when Augmont adds price-range
+          // support, restore the slider via buildSliderGroup('Price', ...).
           '<div class="dw-filters__col">' +
             buildSliderGroup('Carats', 'carat', CARAT_MIN, CARAT_MAX, CARAT_STEP, 'ct') +
             buildPillGroup('Clarity', 'clarities', CLARITIES, true) +
-            buildSliderGroup('Price', 'price', PRICE_MIN_DEFAULT, PRICE_MAX_DEFAULT, PRICE_STEP, '$') +
           '</div>' +
         '</div>' +
         '<div class="dw-chips" id="dw-chips" hidden></div>' +
@@ -225,6 +261,21 @@
     );
   }
 
+  function buildViewerOverlayHTML() {
+    return (
+      '<div class="dw-viewer" id="dw-viewer" role="dialog" aria-modal="true" aria-label="Diamond 360° viewer" hidden>' +
+        '<div class="dw-viewer__backdrop" id="dw-viewer-backdrop"></div>' +
+        '<div class="dw-viewer__panel">' +
+          '<button class="dw-viewer__close" id="dw-viewer-close" type="button" aria-label="Close viewer">&#x2715;</button>' +
+          '<div class="dw-viewer__frame-wrap">' +
+            '<iframe id="dw-viewer-frame" title="Diamond 360° viewer" allow="autoplay; fullscreen" loading="lazy"></iframe>' +
+          '</div>' +
+          '<p class="dw-viewer__caption" id="dw-viewer-caption">Live 360° viewer from Augmont. Stones without uploaded media will display “No video found”.</p>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   function buildCheckoutOverlayHTML() {
     return (
       '<div class="dw-overlay" id="dw-checkout" role="dialog" aria-modal="true" aria-labelledby="dw-checkout-title" hidden>' +
@@ -284,12 +335,9 @@
       });
     });
 
-    // Sliders
+    // Sliders (carat only — price removed in C-iter1)
     initSlider(root.querySelector('.dw-slider[data-key="carat"]'), function (lo, hi) {
       state.minCarat = lo; state.maxCarat = hi;
-    });
-    initSlider(root.querySelector('.dw-slider[data-key="price"]'), function (lo, hi) {
-      state.minPrice = lo; state.maxPrice = hi;
     });
   }
 
@@ -310,15 +358,25 @@
     root.querySelector('#dw-checkout-backdrop').addEventListener('click', closeCheckout);
     root.querySelector('#dw-checkout-form').addEventListener('submit', handleCheckoutSubmit);
 
+    // 360° viewer modal close paths
+    root.querySelector('#dw-viewer-close').addEventListener('click', closeViewer);
+    root.querySelector('#dw-viewer-backdrop').addEventListener('click', closeViewer);
+
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
-      if (!checkoutPanel.hidden) closeCheckout();
+      if (!viewerPanel.hidden) closeViewer();
+      else if (!checkoutPanel.hidden) closeCheckout();
       else if (cartPanel.classList.contains('is-open')) closeCartPanel();
     });
 
+    // Click delegation: Add-to-cart button takes priority. Anywhere else on
+    // a card opens the 360° viewer modal (CLAUDE.md lesson #3 — Augmont
+    // image_url is an HTML viewer page, so we open it in a real iframe).
     root.addEventListener('click', function (e) {
-      var btn = e.target.closest('.dw-card__add');
-      if (btn) handleAddClick(btn);
+      var addBtn = e.target.closest('.dw-card__add');
+      if (addBtn) { handleAddClick(addBtn); return; }
+      var card = e.target.closest('.dw-card');
+      if (card && card.dataset.stockNum) openViewer(card.dataset.stockNum, card.dataset.shape, card.dataset.carat);
     });
 
     cartBody.addEventListener('click', function (e) {
@@ -376,13 +434,11 @@
     minInput.addEventListener('change', commit);
     maxInput.addEventListener('change', commit);
 
-    // Initial paint from current state values
+    // Initial paint from current state values (carat is the only slider
+    // remaining after C-iter1 removed the price slider).
     if (key === 'carat') {
       minInput.value = state.minCarat;
       maxInput.value = state.maxCarat;
-    } else if (key === 'price') {
-      minInput.value = state.minPrice;
-      maxInput.value = state.maxPrice;
     }
     paint();
   }
@@ -412,7 +468,6 @@
     state.clarities = [];
     state.cuts = [];
     state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX;
-    state.minPrice = PRICE_MIN_DEFAULT; state.maxPrice = PRICE_MAX_DEFAULT;
     if (showFilters) {
       syncFilterUIFromState();
       // Reset slider visual + inputs
@@ -433,15 +488,12 @@
   function renderChips() {
     if (!chipsBar) return;
     var chips = [];
-    if (state.shape) chips.push({ k: 'shape', v: state.shape, label: state.shape });
+    if (state.shape) chips.push({ k: 'shape', v: state.shape, label: capShape(state.shape) });
     state.colors.forEach(function (c)    { chips.push({ k: 'colors', v: c, label: 'Colour: ' + c }); });
     state.clarities.forEach(function (c) { chips.push({ k: 'clarities', v: c, label: 'Clarity: ' + c }); });
     state.cuts.forEach(function (c)      { chips.push({ k: 'cuts', v: c, label: 'Cut: ' + c }); });
     if (state.minCarat > CARAT_MIN || state.maxCarat < CARAT_MAX) {
       chips.push({ k: 'carat', v: '', label: 'Carats: ' + state.minCarat.toFixed(2) + '–' + state.maxCarat.toFixed(2) });
-    }
-    if (state.minPrice > PRICE_MIN_DEFAULT || state.maxPrice < PRICE_MAX_DEFAULT) {
-      chips.push({ k: 'price', v: '', label: 'Price: $' + Math.round(state.minPrice).toLocaleString() + '–$' + Math.round(state.maxPrice).toLocaleString() });
     }
 
     if (chips.length === 0) {
@@ -478,15 +530,14 @@
   function removeChip(k, v) {
     if (k === 'shape') state.shape = '';
     else if (k === 'carat') { state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX; }
-    else if (k === 'price') { state.minPrice = PRICE_MIN_DEFAULT; state.maxPrice = PRICE_MAX_DEFAULT; }
     else {
       var arr = state[k];
       var i = arr.indexOf(v);
       if (i >= 0) arr.splice(i, 1);
     }
     if (showFilters) syncFilterUIFromState();
-    if (k === 'carat' || k === 'price') {
-      var s = root.querySelector('.dw-slider[data-key="' + k + '"]');
+    if (k === 'carat') {
+      var s = root.querySelector('.dw-slider[data-key="carat"]');
       if (s) {
         var minI = s.querySelector('.dw-slider__input--min');
         var maxI = s.querySelector('.dw-slider__input--max');
@@ -511,8 +562,6 @@
       if ((v = params.get(URL_PREFIX + 'cut')))        state.cuts = v.split(',').filter(Boolean);
       if ((v = params.get(URL_PREFIX + 'carat_min')))  state.minCarat = clamp(Number(v), CARAT_MIN, CARAT_MAX);
       if ((v = params.get(URL_PREFIX + 'carat_max')))  state.maxCarat = clamp(Number(v), CARAT_MIN, CARAT_MAX);
-      if ((v = params.get(URL_PREFIX + 'price_min')))  state.minPrice = Math.max(PRICE_MIN_DEFAULT, Number(v) || 0);
-      if ((v = params.get(URL_PREFIX + 'price_max')))  state.maxPrice = Math.min(PRICE_MAX_DEFAULT, Number(v) || PRICE_MAX_DEFAULT);
       if ((v = params.get(URL_PREFIX + 'sort')))       state.sort = v;
     } catch (e) { /* URL parse failure — keep defaults */ }
   }
@@ -530,8 +579,6 @@
       if (state.cuts.length)         params.set(URL_PREFIX + 'cut', state.cuts.join(','));
       if (state.minCarat > CARAT_MIN) params.set(URL_PREFIX + 'carat_min', state.minCarat.toFixed(2));
       if (state.maxCarat < CARAT_MAX) params.set(URL_PREFIX + 'carat_max', state.maxCarat.toFixed(2));
-      if (state.minPrice > PRICE_MIN_DEFAULT) params.set(URL_PREFIX + 'price_min', String(Math.round(state.minPrice)));
-      if (state.maxPrice < PRICE_MAX_DEFAULT) params.set(URL_PREFIX + 'price_max', String(Math.round(state.maxPrice)));
       if (state.sort && state.sort !== 'price_asc') params.set(URL_PREFIX + 'sort', state.sort);
       var qs = params.toString();
       var url = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
@@ -548,10 +595,11 @@
     if (state.colors.length)    p.set('color', state.colors.join(','));
     if (state.clarities.length) p.set('clarity', state.clarities.join(','));
     if (state.cuts.length)      p.set('cut', state.cuts.join(','));
-    if (state.minCarat > CARAT_MIN) p.set('min_carat', state.minCarat.toFixed(2));
-    if (state.maxCarat < CARAT_MAX) p.set('max_carat', state.maxCarat.toFixed(2));
-    if (state.minPrice > PRICE_MIN_DEFAULT) p.set('min_price', String(Math.round(state.minPrice)));
-    if (state.maxPrice < PRICE_MAX_DEFAULT) p.set('max_price', String(Math.round(state.maxPrice)));
+    // Carat params use camelCase per Augmont contract (verified C-setup
+    // task 4a — snake_case is silently ignored upstream). URL prefix params
+    // (d_carat_min, d_carat_max) stay snake-cased for readability.
+    if (state.minCarat > CARAT_MIN) p.set('minCarat', state.minCarat.toFixed(2));
+    if (state.maxCarat < CARAT_MAX) p.set('maxCarat', state.maxCarat.toFixed(2));
     if (state.sort)             p.set('sort', state.sort);
     return p;
   }
@@ -673,20 +721,30 @@
   }
 
   function buildCard(d) {
-    var shape   = String(d.shape   || 'Diamond');
-    var carat   = (d.carat != null) ? Number(d.carat) : null;
+    var shapeRaw = String(d.shape   || 'Diamond');
+    var shape    = capShape(shapeRaw);
+    var carat    = (d.carat != null) ? Number(d.carat) : null;
     var caratStr = carat != null ? carat.toFixed(2) : '—';
-    var color   = String(d.color   || '—');
-    var clarity = String(d.clarity || '—');
-    var cut     = d.cut ? String(d.cut) : '';
-    var price   = (d.price != null) ? Number(d.price) : null;
-    var mrp     = (d.mrp != null && Number(d.mrp) > 0) ? Number(d.mrp) : null;
-    var image   = String(d.image_url || d.image || '');
-    var id      = String(d.id || d.stoneId || d.stockNum || '');
-    var ccyCode = d.currency || cart.currency || 'USD';
+    var color    = String(d.color   || '—');
+    var clarity  = String(d.clarity || '—');
+    var cut      = d.cut ? String(d.cut) : '';
+    var price    = (d.price != null) ? Number(d.price) : null;
+    var mrp      = (d.mrp != null && Number(d.mrp) > 0) ? Number(d.mrp) : null;
+    var image    = String(d.image_url || d.image || '');
+    var stockNum = String(d.stockNum || '');
+    var id       = String(d.id || d.stoneId || d.stockNum || '');
+    var ccyCode  = d.currency || cart.currency || 'USD';
 
     var article = document.createElement('article');
     article.className = 'dw-card';
+    // Card click delegates to openViewer() via attachListeners — these
+    // attributes carry the iframe URL inputs and accessible label text.
+    article.setAttribute('data-stock-num', stockNum);
+    article.setAttribute('data-shape', shape);
+    article.setAttribute('data-carat', caratStr);
+    article.setAttribute('role', 'button');
+    article.setAttribute('tabindex', '0');
+    article.setAttribute('aria-label', 'View ' + caratStr + 'ct ' + shape + ' diamond in 360°');
 
     // Image well
     var imgWrap = document.createElement('div');
@@ -699,12 +757,16 @@
       img.setAttribute('width', '316'); img.setAttribute('height', '316');
       img.addEventListener('error', function () {
         while (imgWrap.firstChild) imgWrap.removeChild(imgWrap.firstChild);
-        imgWrap.appendChild(buildPlaceholder(shape));
+        imgWrap.appendChild(buildPlaceholder(shapeRaw));
+        imgWrap.appendChild(buildViewOverlay());
       });
       imgWrap.appendChild(img);
     } else {
-      imgWrap.appendChild(buildPlaceholder(shape));
+      imgWrap.appendChild(buildPlaceholder(shapeRaw));
     }
+    // Hover affordance ("View 360°") sits over both the placeholder and
+    // any successfully loaded image. Pure CSS reveals it on hover.
+    imgWrap.appendChild(buildViewOverlay());
 
     // Discount badge — only render if mrp is meaningfully greater than price.
     // Augmont UAT/prod do not currently expose mrp; this stays inert until
@@ -842,11 +904,23 @@
     var placeholder = document.createElement('div');
     placeholder.className = 'dw-card__img-placeholder';
     placeholder.setAttribute('aria-hidden', 'true');
-    var phText = document.createElement('span');
-    phText.className = 'dw-card__img-placeholder-text';
-    phText.textContent = shape;
-    placeholder.appendChild(phText);
+    // Inline SVG silhouette for the shape — the only branded fallback when
+    // Augmont's image_url returns a non-image (HTML viewer page). innerHTML
+    // is safe here because SVG_SVGS is a developer-controlled constant
+    // (no user input), and rules out the gold-gradient broken-image look.
+    placeholder.innerHTML = svgForShape(shape);
     return placeholder;
+  }
+
+  function buildViewOverlay() {
+    var ov = document.createElement('div');
+    ov.className = 'dw-card__view-overlay';
+    ov.setAttribute('aria-hidden', 'true');
+    var inner = document.createElement('span');
+    inner.className = 'dw-card__view-overlay-text';
+    inner.textContent = 'View 360°';
+    ov.appendChild(inner);
+    return ov;
   }
 
   // ─── CART ─────────────────────────────────────────────────────────────────
@@ -993,6 +1067,30 @@
 
   function closeCheckout() { checkoutPanel.hidden = true; }
 
+  // ─── 360° VIEWER MODAL ────────────────────────────────────────────────────
+  // Loads viewmydiamonds.com (the source of d.image_url) inside an iframe so
+  // buyers can spin/zoom the stone. Iframe src is set ON OPEN and removed ON
+  // CLOSE so we don't leave 24+ background connections hanging.
+
+  function openViewer(stockNum, shapeLabel, caratStr) {
+    if (!stockNum) return;
+    var src = 'https://www.viewmydiamonds.com/?id=' + encodeURIComponent(stockNum) + '&type=image';
+    viewerFrame.setAttribute('src', src);
+    viewerPanel.setAttribute('aria-label', (caratStr ? caratStr + 'ct ' : '') + (shapeLabel || 'Diamond') + ' 360° viewer');
+    viewerPanel.hidden = false;
+    document.body.style.overflow = 'hidden';
+    // Move focus to the close button so keyboard users can dismiss easily.
+    setTimeout(function () { root.querySelector('#dw-viewer-close').focus(); }, 50);
+  }
+
+  function closeViewer() {
+    viewerPanel.hidden = true;
+    // Removing src on close stops any live iframe playback and frees the
+    // connection — important since the viewer page does not auto-pause.
+    viewerFrame.setAttribute('src', 'about:blank');
+    document.body.style.overflow = '';
+  }
+
   function renderCartTrigger() {
     cartCount.textContent = cart.count;
     cartTrigger.classList.toggle('has-items', cart.count > 0);
@@ -1029,18 +1127,18 @@
         img.loading = 'lazy';
         img.addEventListener('error', function () {
           while (imgWrap.firstChild) imgWrap.removeChild(imgWrap.firstChild);
-          imgWrap.appendChild(buildPlaceholder(d.shape || 'Diamond'));
+          imgWrap.appendChild(buildPlaceholder(d.shape || 'round'));
         });
         imgWrap.appendChild(img);
       } else {
-        imgWrap.appendChild(buildPlaceholder(d.shape || 'Diamond'));
+        imgWrap.appendChild(buildPlaceholder(d.shape || 'round'));
       }
 
       var info = document.createElement('div');
       info.className = 'dw-cart-item__info';
       var title = document.createElement('p');
       title.className = 'dw-cart-item__title';
-      title.textContent = (d.carat || '—') + 'ct ' + (d.shape || 'Diamond');
+      title.textContent = (d.carat || '—') + 'ct ' + capShape(d.shape || 'Diamond');
       var meta = document.createElement('p');
       meta.className = 'dw-cart-item__meta';
       meta.textContent = (d.color || '—') + ' · ' + (d.clarity || '—');
@@ -1100,12 +1198,17 @@
     var n = Number(amount) || 0;
     var ccy = (currency || 'USD').toUpperCase();
     try {
-      return new Intl.NumberFormat('en-US', {
+      // Append currency code after the symbolised amount ("$43.43 USD") to
+      // match Nivoda's convention. Native Intl.NumberFormat with
+      // currencyDisplay 'code' would render "USD 43.43" instead, so we
+      // build the symbol form and append the code.
+      var formatted = new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: ccy,
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }).format(n);
+      return formatted + ' ' + ccy;
     } catch (e) {
       return ccy + ' ' + n.toFixed(2);
     }

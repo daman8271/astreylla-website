@@ -11,6 +11,25 @@ function badPagination(res, message) {
   return res.status(400).json({ error: message, code: "INVALID_PAGINATION" });
 }
 
+// Per-page comparator factory for the four sort modes the widget exposes.
+// Field names match the normalized diamond shape from payalApi.js
+// (price: number, carat: number). Unknown sort values fall back to null
+// (caller skips the sort step).
+function sortComparator(sort) {
+  switch (sort) {
+    case "price_asc":
+      return (a, b) => (Number(a?.price) || 0) - (Number(b?.price) || 0);
+    case "price_desc":
+      return (a, b) => (Number(b?.price) || 0) - (Number(a?.price) || 0);
+    case "carat_asc":
+      return (a, b) => (Number(a?.carat) || 0) - (Number(b?.carat) || 0);
+    case "carat_desc":
+      return (a, b) => (Number(b?.carat) || 0) - (Number(a?.carat) || 0);
+    default:
+      return null;
+  }
+}
+
 // GET /api/public/diamonds — no JWT, requires ?shop= query param.
 // Called directly from the Theme Extension widget in the buyer's browser.
 // Shop authorization + widget-enabled check is done upstream in
@@ -57,12 +76,28 @@ export async function handlePublicDiamonds(req, res, next) {
     }
     const wantCount = countRaw === "true";
 
-    const augmontQuery = { ...filters, from: fromNum, to: toNum };
+    // Pull the `sort` param out of filters so it isn't forwarded to Augmont
+    // (Augmont silently ignores it — verified Phase C-setup task 4b). We
+    // apply it ourselves on the page-sized result before responding.
+    const { sort: sortParam, ...augmontFilters } = filters;
+
+    const augmontQuery = { ...augmontFilters, from: fromNum, to: toNum };
     if (wantCount) augmontQuery.count = "true";
 
     const { diamonds, totalCount } = await getDiamonds(augmontQuery, {
       nocache: nocache === "1",
     });
+
+    // Server-side sort fallback (C-iter1 task 1.2). We sort only the page
+    // we just fetched (24 stones), not the full catalog — true catalog
+    // sort would require Augmont support, which doesn't exist today.
+    // Trade-off: with paged catalog of 700K stones, "Price: low to high"
+    // means "lowest-priced of THIS page is first", not "globally lowest
+    // first". Acceptable starting point; document for future review.
+    if (sortParam && Array.isArray(diamonds)) {
+      const cmp = sortComparator(sortParam);
+      if (cmp) diamonds.sort(cmp);
+    }
 
     // Per spec: only surface totalCount on requests that asked for it. The
     // cache may be holding a totalCount from a prior count=true call under
