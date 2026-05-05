@@ -110,3 +110,16 @@ model Subscription {
 
   @@map("subscriptions")
 }
+
+// Generic key-value config table for global flags.
+// First user (Phase F7): key="billing_enabled", value="true" | "false".
+// Future global flags (e.g. maintenance_mode) can reuse the same table.
+model AppConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("app_config")
+}

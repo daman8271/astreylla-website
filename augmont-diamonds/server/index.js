@@ -9,6 +9,8 @@ import { handlePublicEnquiry } from "./routes/enquiry.js";
 import ordersRouter from "./routes/orders.js";
 import gdprRouter from "./routes/gdpr.js";
 import cartRouter, { handlePublicOrderCreate } from "./routes/cart.js";
+import billingRouter from "./routes/billing.js";
+import adminRouter from "./routes/admin.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { requestId } from "./middleware/requestId.js";
 import { publicRateLimit, publicRateLimitPerShop } from "./middleware/rateLimit.js";
@@ -119,8 +121,18 @@ app.post("/api/public/order/create", handlePublicOrderCreate);
 
 app.use("/api/diamonds", diamondsRouter);
 app.use("/api/orders", ordersRouter);
+// Phase F7: owner-only admin endpoints (billing toggle today, more later).
+// JSON body parser already mounted on /api above. Each endpoint inside the
+// router applies verifySessionToken + isOwnerShop guards itself — no global
+// gate at this prefix in case future read-only admin endpoints want
+// different auth.
+app.use("/api/admin", adminRouter);
 
 app.use("/webhooks", gdprRouter);
+// Phase F7: billing routes scaffolding. The router applies billingGate
+// middleware to every route on it; with the global flag OFF (default),
+// the gate short-circuits before any handler runs.
+app.use("/webhooks/billing", billingRouter);
 
 // Static client bundles. Vite emits hashed JS/CSS into build/client/assets —
 // content-addressed, safe to cache forever. The build/client root holds favicon

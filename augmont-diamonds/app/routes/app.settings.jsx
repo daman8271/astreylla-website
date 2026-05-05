@@ -3,6 +3,7 @@ import { useFetcher, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { isOwnerShop } from "../../server/services/owners.js";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
@@ -24,7 +25,23 @@ export const loader = async ({ request }) => {
   const apiConnected = Boolean(
     process.env.PAYAL_API_USERNAME && process.env.PAYAL_API_PASSWORD
   );
-  return { widgetEnabled: merchant.widgetEnabled, apiConnected };
+
+  // Phase F7: surface the owner-only billing toggle. Non-owner shops get
+  // billingSection=null which keeps the section out of the rendered tree
+  // entirely (no DOM, no hidden controls, no leaked state).
+  let billingSection = null;
+  if (isOwnerShop(session.shop)) {
+    const row = await db.appConfig.findUnique({
+      where: { key: "billing_enabled" },
+    });
+    billingSection = { billingEnabled: row?.value === "true" };
+  }
+
+  return {
+    widgetEnabled: merchant.widgetEnabled,
+    apiConnected,
+    billingSection,
+  };
 };
 
 export const action = async ({ request }) => {
@@ -40,9 +57,18 @@ export const action = async ({ request }) => {
 };
 
 export default function SettingsPage() {
-  const { widgetEnabled: initial, apiConnected } = useLoaderData();
+  const { widgetEnabled: initial, apiConnected, billingSection } = useLoaderData();
   const fetcher = useFetcher();
   const [enabled, setEnabled] = useState(initial);
+
+  // Phase F7: owner-only billing flag state. Local-only (the loader
+  // delivered the initial value); writes go to the Express endpoint
+  // /api/admin/billing-flag with an App Bridge session token.
+  const [billingEnabled, setBillingEnabled] = useState(
+    billingSection ? billingSection.billingEnabled : false
+  );
+  const [billingBusy, setBillingBusy] = useState(false);
+  const [billingError, setBillingError] = useState(null);
 
   // Reflect the server's confirmed value back into local state once the
   // action returns (handles concurrent edits and any normalization).
@@ -68,6 +94,45 @@ export default function SettingsPage() {
       { widgetEnabled: String(enabled) },
       { method: "post" }
     );
+  };
+
+  // Phase F7: writes go directly to the Express endpoint with a fresh
+  // App Bridge session token. We don't proxy through a Remix action
+  // because the gate is Express-side and the token already authenticates
+  // the shop — running it through Remix's authenticate.admin would just
+  // round-trip the same auth the Express middleware already does.
+  const handleBillingToggle = async (event) => {
+    if (!billingSection) return;
+    const next =
+      typeof event?.target?.checked === "boolean" ? event.target.checked
+      : typeof event?.detail?.checked === "boolean" ? event.detail.checked
+      : !billingEnabled;
+    setBillingBusy(true);
+    setBillingError(null);
+    try {
+      // window.shopify is exposed by AppProvider (App Bridge). idToken()
+      // returns a fresh JWT signed with SHOPIFY_API_SECRET that the
+      // server-side verifySessionToken middleware validates.
+      const token = await window.shopify.idToken();
+      const res = await fetch("/api/admin/billing-flag", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      const body = await res.json();
+      setBillingEnabled(Boolean(body.billingEnabled));
+    } catch (err) {
+      setBillingError(err.message || "Failed to update billing flag");
+    } finally {
+      setBillingBusy(false);
+    }
   };
 
   const isSaving = fetcher.state === "submitting";
@@ -118,6 +183,28 @@ export default function SettingsPage() {
           </s-stack>
         </s-stack>
       </s-section>
+
+      {billingSection ? (
+        <s-section heading="Billing (Owner Only)">
+          <s-stack direction="block" gap="base">
+            <s-switch
+              label="Billing enabled (charges merchants)"
+              checked={billingEnabled || undefined}
+              disabled={billingBusy || undefined}
+              onChange={handleBillingToggle}
+            />
+            {billingBusy ? <s-text>Updating…</s-text> : null}
+            {billingError ? (
+              <s-banner tone="critical">{billingError}</s-banner>
+            ) : null}
+            <s-paragraph>
+              Off (default): app is free for all merchants. On: future Shopify
+              Billing API charges become active. Visible only to owner shops
+              configured via OWNER_SHOP_DOMAINS.
+            </s-paragraph>
+          </s-stack>
+        </s-section>
+      ) : null}
 
       <s-section slot="aside" heading="Help">
         <s-paragraph>
