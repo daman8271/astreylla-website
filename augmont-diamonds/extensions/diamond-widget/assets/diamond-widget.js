@@ -48,6 +48,15 @@
   var COLORS   = ['D', 'E', 'F', 'G', 'H', 'I', 'J'];
   var CLARITIES = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
   var CUTS     = ['Excellent', 'Very Good', 'Good', 'Fair'];
+  // Certificate (lab) values seen on Augmont prod: GIA, IGI, HRD, No-cert. The
+  // "Other" pill collects everything that's not GIA/IGI/HRD (the server
+  // post-filters the page since Augmont doesn't expose a "not in" predicate).
+  var CERTIFICATES = ['GIA', 'IGI', 'HRD', 'Other'];
+  var TREATMENTS = [
+    { value: '',          label: 'All' },
+    { value: 'natural',   label: 'Natural' },
+    { value: 'lab-grown', label: 'Lab-Grown' }
+  ];
   var SORTS    = [
     { value: 'price_asc',  label: 'Price: low to high' },
     { value: 'price_desc', label: 'Price: high to low' },
@@ -96,6 +105,9 @@
     colors: [],
     clarities: [],
     cuts: [],
+    certificates: [],
+    treatment: '',     // '' = All, 'natural', or 'lab-grown' (server maps to Augmont)
+    hasImage: false,
     minCarat: CARAT_MIN,
     maxCarat: CARAT_MAX,
     sort: 'price_asc'
@@ -112,6 +124,7 @@
       '<p class="dw-hero__eyebrow">Loose Diamonds</p>' +
       '<h2 class="dw-hero__title">Browse Our Collection</h2>' +
     '</header>' +
+    (showFilters ? buildTreatmentTabsHTML() : '') +
     (showFilters ? buildFiltersHTML() : '') +
     '<div class="dw-results-bar">' +
       '<p class="dw-results-bar__count" id="dw-count" aria-live="polite">Loading diamonds…</p>' +
@@ -158,6 +171,9 @@
   if (sortEl) sortEl.value = state.sort;
   if (showFilters) {
     syncFilterUIFromState();
+    syncTreatmentUIFromState();
+    var hasImg = root.querySelector('#dw-has-image');
+    if (hasImg) hasImg.checked = !!state.hasImage;
     renderChips(); // surface URL-restored filters as chips on first render
     attachFilterListeners();
   }
@@ -171,25 +187,48 @@
     return (
       '<section class="dw-filters" role="search" aria-label="Filter diamonds">' +
         '<div class="dw-filters__grid">' +
-          // LEFT col: Shape + Colour + Cut
+          // LEFT col: Shape + Colour + Cut + Certificate
           '<div class="dw-filters__col">' +
             buildPillGroup('Shape', 'shape', SHAPES, false) +
             buildPillGroup('Colour', 'colors', COLORS, true) +
             buildPillGroup('Cut', 'cuts', CUTS, true) +
+            buildPillGroup('Certificate', 'certificates', CERTIFICATES, true) +
           '</div>' +
-          // RIGHT col: Carat + Clarity
+          // RIGHT col: Carat + Clarity + hasImage toggle
           // Price filter removed in C-iter1: Augmont upstream does not
-          // support price filtering at any naming convention (verified
-          // C-setup task 4a). Shipping a slider that does nothing is worse
-          // than not shipping one. If/when Augmont adds price-range
-          // support, restore the slider via buildSliderGroup('Price', ...).
+          // support price filtering at any naming convention.
           '<div class="dw-filters__col">' +
             buildSliderGroup('Carats', 'carat', CARAT_MIN, CARAT_MAX, CARAT_STEP, 'ct') +
             buildPillGroup('Clarity', 'clarities', CLARITIES, true) +
+            buildHasImageToggleHTML() +
           '</div>' +
         '</div>' +
         '<div class="dw-chips" id="dw-chips" hidden></div>' +
       '</section>'
+    );
+  }
+
+  function buildTreatmentTabsHTML() {
+    return (
+      '<div class="dw-treatment-tabs" role="tablist" aria-label="Treatment">' +
+        TREATMENTS.map(function (t) {
+          return '<button type="button" class="dw-treatment-tab" role="tab" data-value="' + escapeAttr(t.value) + '" aria-selected="false">' +
+                   escapeHTML(t.label) +
+                 '</button>';
+        }).join('') +
+      '</div>'
+    );
+  }
+
+  function buildHasImageToggleHTML() {
+    return (
+      '<div class="dw-fgroup">' +
+        '<label class="dw-toggle">' +
+          '<input type="checkbox" class="dw-toggle__input" id="dw-has-image">' +
+          '<span class="dw-toggle__track" aria-hidden="true"><span class="dw-toggle__thumb"></span></span>' +
+          '<span class="dw-toggle__label">Only show diamonds with images</span>' +
+        '</label>' +
+      '</div>'
     );
   }
 
@@ -339,6 +378,38 @@
     initSlider(root.querySelector('.dw-slider[data-key="carat"]'), function (lo, hi) {
       state.minCarat = lo; state.maxCarat = hi;
     });
+
+    // Treatment tabs (single-select)
+    var treatmentTabs = root.querySelectorAll('.dw-treatment-tab');
+    treatmentTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        state.treatment = tab.dataset.value || '';
+        syncTreatmentUIFromState();
+        renderChips();
+        writeStateToURL();
+        fetchInitial();
+      });
+    });
+
+    // hasImage toggle
+    var hasImageInput = root.querySelector('#dw-has-image');
+    if (hasImageInput) {
+      hasImageInput.addEventListener('change', function () {
+        state.hasImage = !!this.checked;
+        renderChips();
+        writeStateToURL();
+        fetchInitial();
+      });
+    }
+  }
+
+  function syncTreatmentUIFromState() {
+    var tabs = root.querySelectorAll('.dw-treatment-tab');
+    tabs.forEach(function (t) {
+      var active = (t.dataset.value || '') === (state.treatment || '');
+      t.classList.toggle('is-active', active);
+      t.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
   }
 
   function attachListeners() {
@@ -456,6 +527,7 @@
         else if (key === 'colors') active = state.colors.indexOf(v) >= 0;
         else if (key === 'clarities') active = state.clarities.indexOf(v) >= 0;
         else if (key === 'cuts') active = state.cuts.indexOf(v) >= 0;
+        else if (key === 'certificates') active = state.certificates.indexOf(v) >= 0;
         pill.classList.toggle('is-active', active);
         pill.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
@@ -467,8 +539,14 @@
     state.colors = [];
     state.clarities = [];
     state.cuts = [];
+    state.certificates = [];
+    state.treatment = '';
+    state.hasImage = false;
     state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX;
     if (showFilters) {
+      syncTreatmentUIFromState();
+      var hasImg = root.querySelector('#dw-has-image');
+      if (hasImg) hasImg.checked = false;
       syncFilterUIFromState();
       // Reset slider visual + inputs
       var sliders = root.querySelectorAll('.dw-slider');
@@ -488,12 +566,20 @@
   function renderChips() {
     if (!chipsBar) return;
     var chips = [];
+    if (state.treatment) {
+      var tlabel = (state.treatment === 'lab-grown') ? 'Lab-Grown' : 'Natural';
+      chips.push({ k: 'treatment', v: '', label: tlabel });
+    }
     if (state.shape) chips.push({ k: 'shape', v: state.shape, label: capShape(state.shape) });
     state.colors.forEach(function (c)    { chips.push({ k: 'colors', v: c, label: 'Colour: ' + c }); });
     state.clarities.forEach(function (c) { chips.push({ k: 'clarities', v: c, label: 'Clarity: ' + c }); });
     state.cuts.forEach(function (c)      { chips.push({ k: 'cuts', v: c, label: 'Cut: ' + c }); });
+    state.certificates.forEach(function (c) { chips.push({ k: 'certificates', v: c, label: c }); });
     if (state.minCarat > CARAT_MIN || state.maxCarat < CARAT_MAX) {
       chips.push({ k: 'carat', v: '', label: 'Carats: ' + state.minCarat.toFixed(2) + '–' + state.maxCarat.toFixed(2) });
+    }
+    if (state.hasImage) {
+      chips.push({ k: 'hasImage', v: '', label: 'With image' });
     }
 
     if (chips.length === 0) {
@@ -529,13 +615,20 @@
 
   function removeChip(k, v) {
     if (k === 'shape') state.shape = '';
+    else if (k === 'treatment') state.treatment = '';
+    else if (k === 'hasImage') state.hasImage = false;
     else if (k === 'carat') { state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX; }
     else {
       var arr = state[k];
       var i = arr.indexOf(v);
       if (i >= 0) arr.splice(i, 1);
     }
-    if (showFilters) syncFilterUIFromState();
+    if (showFilters) {
+      syncFilterUIFromState();
+      syncTreatmentUIFromState();
+      var hasImg = root.querySelector('#dw-has-image');
+      if (hasImg) hasImg.checked = !!state.hasImage;
+    }
     if (k === 'carat') {
       var s = root.querySelector('.dw-slider[data-key="carat"]');
       if (s) {
@@ -560,6 +653,9 @@
       if ((v = params.get(URL_PREFIX + 'color')))      state.colors = v.split(',').filter(Boolean);
       if ((v = params.get(URL_PREFIX + 'clarity')))    state.clarities = v.split(',').filter(Boolean);
       if ((v = params.get(URL_PREFIX + 'cut')))        state.cuts = v.split(',').filter(Boolean);
+      if ((v = params.get(URL_PREFIX + 'certificate'))) state.certificates = v.split(',').filter(Boolean);
+      if ((v = params.get(URL_PREFIX + 'treatment'))) state.treatment = v;
+      if (params.get(URL_PREFIX + 'hasImage') === 'true') state.hasImage = true;
       if ((v = params.get(URL_PREFIX + 'carat_min')))  state.minCarat = clamp(Number(v), CARAT_MIN, CARAT_MAX);
       if ((v = params.get(URL_PREFIX + 'carat_max')))  state.maxCarat = clamp(Number(v), CARAT_MIN, CARAT_MAX);
       if ((v = params.get(URL_PREFIX + 'sort')))       state.sort = v;
@@ -577,6 +673,9 @@
       if (state.colors.length)       params.set(URL_PREFIX + 'color', state.colors.join(','));
       if (state.clarities.length)    params.set(URL_PREFIX + 'clarity', state.clarities.join(','));
       if (state.cuts.length)         params.set(URL_PREFIX + 'cut', state.cuts.join(','));
+      if (state.certificates.length) params.set(URL_PREFIX + 'certificate', state.certificates.join(','));
+      if (state.treatment) params.set(URL_PREFIX + 'treatment', state.treatment);
+      if (state.hasImage) params.set(URL_PREFIX + 'hasImage', 'true');
       if (state.minCarat > CARAT_MIN) params.set(URL_PREFIX + 'carat_min', state.minCarat.toFixed(2));
       if (state.maxCarat < CARAT_MAX) params.set(URL_PREFIX + 'carat_max', state.maxCarat.toFixed(2));
       if (state.sort && state.sort !== 'price_asc') params.set(URL_PREFIX + 'sort', state.sort);
@@ -595,6 +694,9 @@
     if (state.colors.length)    p.set('color', state.colors.join(','));
     if (state.clarities.length) p.set('clarity', state.clarities.join(','));
     if (state.cuts.length)      p.set('cut', state.cuts.join(','));
+    if (state.certificates.length) p.set('certificate', state.certificates.join(','));
+    if (state.treatment)        p.set('treatment', state.treatment);
+    if (state.hasImage)         p.set('hasImage', 'true');
     // Carat params use camelCase per Augmont contract (verified C-setup
     // task 4a — snake_case is silently ignored upstream). URL prefix params
     // (d_carat_min, d_carat_max) stay snake-cased for readability.
@@ -744,7 +846,7 @@
     article.setAttribute('data-carat', caratStr);
     article.setAttribute('role', 'button');
     article.setAttribute('tabindex', '0');
-    article.setAttribute('aria-label', 'View ' + caratStr + 'ct ' + shape + ' diamond in 360°');
+    article.setAttribute('aria-label', 'View ' + caratStr + 'ct ' + shape + ' Diamond in 360°');
 
     // Image well
     var imgWrap = document.createElement('div');
@@ -784,10 +886,12 @@
     var body = document.createElement('div');
     body.className = 'dw-card__body';
 
-    // Title: "0.50ct Cushion Natural Diamond"
+    // Title: "0.50ct Cushion Diamond" — "Natural" dropped in C-iter2;
+    // Augmont catalog is overwhelmingly LGD and the Treatment tab control
+    // disambiguates whichever label the merchant cares about.
     var title = document.createElement('p');
     title.className = 'dw-card__title';
-    title.textContent = caratStr + 'ct ' + shape + ' Natural Diamond';
+    title.textContent = caratStr + 'ct ' + shape + ' Diamond';
     body.appendChild(title);
 
     // Specs line
@@ -803,7 +907,7 @@
     });
     body.appendChild(specs);
 
-    // Price block
+    // Price block — price + (optional MRP strikethrough) + (optional cert badge)
     var priceBlock = document.createElement('div');
     priceBlock.className = 'dw-card__price-block';
     if (price != null) {
@@ -818,7 +922,21 @@
         priceBlock.appendChild(strike);
       }
     }
+    var labRaw = d.lab ? String(d.lab).trim() : '';
+    if (labRaw && !/^no[-\s]?cert$/i.test(labRaw)) {
+      var certEl = document.createElement('span');
+      certEl.className = 'dw-card__cert';
+      certEl.textContent = labRaw.toUpperCase() + ' Certified';
+      priceBlock.appendChild(certEl);
+    }
     body.appendChild(priceBlock);
+
+    // Ships line — Augmont doesn't expose stone-level ship time; hardcoded
+    // for visual parity with Nivoda. Plain text, no emoji (taste.md rule).
+    var ships = document.createElement('p');
+    ships.className = 'dw-card__ships';
+    ships.textContent = 'Ships in 7-10 business days';
+    body.appendChild(ships);
 
     // Add to cart
     var btn = document.createElement('button');

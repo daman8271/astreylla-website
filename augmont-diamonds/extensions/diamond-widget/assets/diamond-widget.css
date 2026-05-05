@@ -84,6 +84,55 @@
   border: 1px solid var(--dw-hairline);
 }
 
+/* ─── TREATMENT TABS ──────────────────────────────────────────────────────── */
+/* Sits above the filter band. Active tab renders with an under-stroke
+ * (matches Nivoda's "Natural / Lab Grown" treatment).
+ */
+.dw-treatment-tabs {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--dw-s5);
+  max-width: 1280px;
+  margin: 0 auto var(--dw-s4);
+  padding-bottom: var(--dw-s2);
+  border-bottom: 1px solid var(--dw-hairline);
+}
+
+.dw-treatment-tab {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  padding: 10px 4px;
+  font-family: var(--dw-font-head);
+  font-size: 1.125rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--dw-text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease;
+  min-height: 44px;
+}
+.dw-treatment-tab:hover { color: var(--dw-text); }
+.dw-treatment-tab.is-active { color: var(--dw-text); }
+.dw-treatment-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -3px;
+  height: 2px;
+  background: var(--dw-text);
+}
+
+@media (max-width: 768px) {
+  .dw-treatment-tabs {
+    gap: var(--dw-s3);
+  }
+  .dw-treatment-tab { font-size: 1rem; }
+}
+
 /* ─── FILTERS ─────────────────────────────────────────────────────────────── */
 
 .dw-filters {
@@ -231,6 +280,67 @@
   letter-spacing: 0;
 }
 .dw-slider__val-sep { color: var(--dw-text-faint); padding: 0 var(--dw-s2); }
+
+/* ─── hasImage TOGGLE ─────────────────────────────────────────────────────── */
+/* CSS-only switch: peer-style label wraps an <input type=checkbox> +
+ * track/thumb spans. Track recolors when input is :checked.
+ */
+.dw-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dw-s3);
+  cursor: pointer;
+  user-select: none;
+  min-height: 44px;
+}
+.dw-toggle__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+.dw-toggle__track {
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+  background: var(--dw-hairline);
+  border: 1px solid var(--dw-hairline);
+  border-radius: 999px;
+  position: relative;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.dw-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--dw-bg);
+  border-radius: 50%;
+  transition: transform 0.18s ease, background-color 0.18s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.dw-toggle__input:checked + .dw-toggle__track {
+  background: var(--dw-text);
+  border-color: var(--dw-text);
+}
+.dw-toggle__input:checked + .dw-toggle__track .dw-toggle__thumb {
+  transform: translateX(16px);
+}
+.dw-toggle__input:focus-visible + .dw-toggle__track {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+.dw-toggle__label {
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--dw-text);
+  letter-spacing: 0;
+}
 
 /* ─── ACTIVE FILTER CHIPS ─────────────────────────────────────────────────── */
 
@@ -514,6 +624,40 @@
   color: var(--dw-text-faint);
   text-decoration: line-through;
   margin: 0;
+}
+
+/*
+ * Certificate badge (e.g. "GIA Certified"). Renders inline alongside the
+ * price when d.lab is non-empty and != "No-cert". Outline pill, low-key —
+ * spec is consistent with Nivoda's IGI/GIA badge treatment.
+ */
+.dw-card__cert {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--dw-font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--dw-text);
+  border: 1px solid var(--dw-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: auto;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/*
+ * Ships-in line: hardcoded copy until Augmont exposes per-stone ship time.
+ * Subtle gray, smaller than card body type, no icon.
+ */
+.dw-card__ships {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #666;
+  margin: 0 0 var(--dw-s3);
+  letter-spacing: 0;
 }
 
 .dw-card__add { width: 100%; }

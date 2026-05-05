@@ -30,6 +30,46 @@ function sortComparator(sort) {
   }
 }
 
+// Map widget-side treatment values to Augmont's exact strings (verified
+// C-iter2: ?treatment=CVD returns ~268K stones, ?treatment=Natural returns
+// ~13). Anything else passes through unchanged so future Augmont values
+// don't require a code change.
+function mapTreatment(value) {
+  if (!value) return null;
+  if (value === "lab-grown") return "CVD";
+  if (value === "natural") return "Natural";
+  return value;
+}
+
+// Certificate filter: "Other" means "any cert that isn't GIA / IGI / HRD".
+// Augmont has no "not in" predicate, so the server fetches without the
+// certificate filter (or with the explicit picks only) and post-filters
+// the page to keep only stones whose lab is in the explicit picks OR not
+// in the well-known three. The trade-off (per-page filtering) is the
+// same one accepted for sort: counts stay accurate but the visible page
+// may have fewer than `pageSize` stones if the page intersects sparsely.
+const KNOWN_CERTS = new Set(["GIA", "IGI", "HRD"]);
+function partitionCertFilter(certParam) {
+  if (!certParam) return { upstream: null, otherSelected: false, picks: [] };
+  const tokens = String(certParam)
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const otherSelected = tokens.some((t) => /^other$/i.test(t));
+  const explicitPicks = tokens.filter((t) => !/^other$/i.test(t));
+  if (otherSelected) {
+    // Cannot push "Other" upstream — Augmont only knows literal cert
+    // names. We fetch unfiltered (or with explicit picks if mixing
+    // wouldn't shrink the result inappropriately) and post-filter.
+    return { upstream: null, otherSelected: true, picks: explicitPicks };
+  }
+  return {
+    upstream: explicitPicks.length ? explicitPicks.join(",") : null,
+    otherSelected: false,
+    picks: explicitPicks,
+  };
+}
+
 // GET /api/public/diamonds — no JWT, requires ?shop= query param.
 // Called directly from the Theme Extension widget in the buyer's browser.
 // Shop authorization + widget-enabled check is done upstream in
@@ -76,17 +116,45 @@ export async function handlePublicDiamonds(req, res, next) {
     }
     const wantCount = countRaw === "true";
 
-    // Pull the `sort` param out of filters so it isn't forwarded to Augmont
-    // (Augmont silently ignores it — verified Phase C-setup task 4b). We
-    // apply it ourselves on the page-sized result before responding.
-    const { sort: sortParam, ...augmontFilters } = filters;
+    // Pull `sort`, `treatment`, and `certificate` out of the upstream
+    // filter set: each needs server-side handling (sort = ignored upstream;
+    // treatment = mapped to Augmont's exact string; certificate = "Other"
+    // tag means a server-side post-filter).
+    const {
+      sort: sortParam,
+      treatment: treatmentParam,
+      certificate: certParam,
+      ...rest
+    } = filters;
+
+    const augmontFilters = { ...rest };
+    const mappedTreatment = mapTreatment(treatmentParam);
+    if (mappedTreatment) augmontFilters.treatment = mappedTreatment;
+
+    const certInfo = partitionCertFilter(certParam);
+    if (certInfo.upstream) augmontFilters.certificate = certInfo.upstream;
 
     const augmontQuery = { ...augmontFilters, from: fromNum, to: toNum };
     if (wantCount) augmontQuery.count = "true";
 
-    const { diamonds, totalCount } = await getDiamonds(augmontQuery, {
+    const result = await getDiamonds(augmontQuery, {
       nocache: nocache === "1",
     });
+    let diamonds = result.diamonds;
+    const totalCount = result.totalCount;
+
+    // Certificate "Other" post-filter (C-iter2). Reduce the page to stones
+    // whose lab is NOT one of the well-known certs OR is in the explicit
+    // picks the user mixed with "Other". When only "Other" is selected
+    // and no explicit picks, this collapses to "lab not in {GIA,IGI,HRD}".
+    if (certInfo.otherSelected && Array.isArray(diamonds)) {
+      const explicitSet = new Set(certInfo.picks);
+      diamonds = diamonds.filter((d) => {
+        const lab = String(d?.lab || "").toUpperCase();
+        if (explicitSet.has(lab)) return true;
+        return !KNOWN_CERTS.has(lab);
+      });
+    }
 
     // Server-side sort fallback (C-iter1 task 1.2). We sort only the page
     // we just fetched (24 stones), not the full catalog — true catalog
