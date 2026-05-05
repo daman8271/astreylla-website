@@ -56,6 +56,16 @@ function corsOriginCheck(origin, callback) {
   if (hostname.endsWith(".myshopify.com")) return callback(null, true);
   if (ALLOWED_HOSTNAMES.has(hostname)) return callback(null, true);
 
+  // Phase C dev shim: when running locally for the widget test harness, allow
+  // localhost / 127.0.0.1 so the harness on :3000 can call the API on :4000.
+  // Gated on NODE_ENV=development so production never sees this branch.
+  if (
+    process.env.NODE_ENV === "development" &&
+    (hostname === "localhost" || hostname === "127.0.0.1")
+  ) {
+    return callback(null, true);
+  }
+
   console.warn(`[cors] blocked origin: ${origin}`);
   return callback(null, false);
 }
