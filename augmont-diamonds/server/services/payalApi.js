@@ -304,9 +304,21 @@ async function fetchAndNormalizeProducts(filters) {
     body?.products ??
     [];
   const arr = Array.isArray(list) ? list : [];
-  return arr.map(normalizeDiamond).filter(Boolean);
+  // Augmont's own `total` / `pagination.totalCount` are not the catalog-wide
+  // total — they're per-page or null. Phase F5: when `count=true` is sent,
+  // Augmont adds a top-level `count` integer = the catalog total.
+  const totalCount = typeof body?.count === "number" ? body.count : null;
+  return {
+    diamonds: arr.map(normalizeDiamond).filter(Boolean),
+    totalCount,
+  };
 }
 
+// Returns { diamonds: Diamond[], totalCount: number | null }.
+// `filters` may include the Augmont pagination/count params (`from`, `to`,
+// `count`) alongside catalog filters — they're forwarded as query string and
+// participate in the cache key via buildCacheKey, so each (filters × page ×
+// count-flag) combination is its own cache entry.
 export async function getDiamonds(filters = {}, opts = {}) {
   const { nocache = false } = opts;
   const key = buildCacheKey(filters);
@@ -334,7 +346,7 @@ export async function getDiamonds(filters = {}, opts = {}) {
         const startMs = Date.now();
         try {
           const fresh = await fetchAndNormalizeProducts(filters);
-          if (fresh && fresh.length > 0) {
+          if (fresh && fresh.diamonds.length > 0) {
             entry.data = fresh;
             entry.fetchedAt = Date.now();
             entry.expiresAt = entry.fetchedAt + CACHE_TTL_MS;
@@ -374,7 +386,7 @@ export async function getDiamonds(filters = {}, opts = {}) {
 
   try {
     const fresh = await fetchPromise;
-    if (fresh && fresh.length > 0) {
+    if (fresh && fresh.diamonds.length > 0) {
       evictOldestIfNeeded();
       productsCache.set(key, {
         data: fresh,
@@ -395,8 +407,8 @@ export async function getDiamonds(filters = {}, opts = {}) {
 
 export async function getDiamondById(id) {
   if (!id) throw new AugmontError("diamond id required", { status: 400 });
-  const all = await getDiamonds();
-  const match = all.find((d) => d.id === String(id));
+  const { diamonds } = await getDiamonds();
+  const match = diamonds.find((d) => d.id === String(id));
   if (!match) {
     throw new AugmontError(`Diamond ${id} not found`, { status: 404, code: "NOT_FOUND" });
   }
