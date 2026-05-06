@@ -48,6 +48,27 @@
   var COLORS   = ['D', 'E', 'F', 'G', 'H', 'I', 'J'];
   var CLARITIES = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
   var CUTS     = ['Excellent', 'Very Good', 'Good', 'Fair'];
+
+  // iter11 — Ordinal scales for the labeled range sliders that replaced
+  // the Colour / Clarity / Cut pill rows (Aria parity). Each scale is
+  // arranged worst→best LEFT-TO-RIGHT so the slider thumb's natural
+  // direction (low→high) matches the user's mental model of grade.
+  // The original COLORS / CLARITIES / CUTS arrays above stay intact so
+  // any backend / chip / capShape / API expansion paths that still
+  // expect Title-Case strings keep working unchanged.
+  var COLORS_SCALE    = ['J', 'I', 'H', 'G', 'F', 'E', 'D'];
+  var CLARITIES_SCALE = ['SI2', 'SI1', 'VS2', 'VS1', 'VVS2', 'VVS1', 'IF', 'FL'];
+  var CUTS_SCALE      = ['Fair', 'Good', 'Very Good', 'Excellent'];
+
+  function expandScale(scale, lo, hi) {
+    var a = Math.max(0, Math.min(lo|0, scale.length - 1));
+    var b = Math.max(0, Math.min(hi|0, scale.length - 1));
+    if (a > b) { var t = a; a = b; b = t; }
+    return scale.slice(a, b + 1);
+  }
+  function isFullScaleRange(scale, lo, hi) {
+    return (lo|0) === 0 && (hi|0) === scale.length - 1;
+  }
   // Certificate (lab) values seen on Augmont prod: GIA, IGI, HRD, No-cert. The
   // "Other" pill collects everything that's not GIA/IGI/HRD (the server
   // post-filters the page since Augmont doesn't expose a "not in" predicate).
@@ -131,9 +152,13 @@
   // ─── STATE ────────────────────────────────────────────────────────────────
   var state = {
     shape: '',
-    colors: [],
-    clarities: [],
-    cuts: [],
+    // iter11 — Colour / Clarity / Cut moved from multi-select pill arrays
+    // to ordinal range sliders. Indices reference COLORS_SCALE etc.
+    // Default = full range (0 .. scale.length-1) which sends NO filter
+    // param to Augmont, matching the previous "empty array" semantics.
+    colorMinIdx:   0, colorMaxIdx:   COLORS_SCALE.length - 1,
+    clarityMinIdx: 0, clarityMaxIdx: CLARITIES_SCALE.length - 1,
+    cutMinIdx:     0, cutMaxIdx:     CUTS_SCALE.length - 1,
     certificates: [],
     treatment: '',     // '' = All, 'natural', or 'lab-grown' (server maps to Augmont)
     hasImage: false,
@@ -251,10 +276,12 @@
       '<section class="dw-filters" role="search" aria-label="Filter diamonds">' +
         '<div class="dw-filters__grid">' +
           // LEFT col: Shape + Colour + Cut + Certificate
+          // iter11 — Colour and Cut converted from pill rows to ordinal
+          // range sliders matching Aria's grade-scale UI.
           '<div class="dw-filters__col">' +
             buildShapeTilesHTML() +
-            buildPillGroup('Colour', 'colors', COLORS, true) +
-            buildPillGroup('Cut', 'cuts', CUTS, true) +
+            buildOrdinalSliderGroup('Colour', 'colors', COLORS_SCALE) +
+            buildOrdinalSliderGroup('Cut', 'cuts', CUTS_SCALE) +
             buildPillGroup('Certificate', 'certificates', CERTIFICATES, true) +
           '</div>' +
           // RIGHT col: Carat + Clarity + hasImage toggle
@@ -262,7 +289,7 @@
           // support price filtering at any naming convention.
           '<div class="dw-filters__col">' +
             buildSliderGroup('Carats', 'carat', CARAT_MIN, CARAT_MAX, CARAT_STEP, 'ct') +
-            buildPillGroup('Clarity', 'clarities', CLARITIES, true) +
+            buildOrdinalSliderGroup('Clarity', 'clarities', CLARITIES_SCALE) +
             buildHasImageToggleHTML() +
           '</div>' +
         '</div>' +
@@ -326,6 +353,33 @@
                 '<span class="dw-shape-tile__label">' + escapeHTML(shape) + '</span>' +
               '</button>'
             );
+          }).join('') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // iter11 — Aria-style labeled range slider for ordinal grade scales
+  // (Colour, Clarity, Cut). Reuses the .dw-slider DOM structure of the
+  // numeric carat slider so initSlider() works without modification —
+  // the ticks row replaces the numeric input row underneath. The slider
+  // operates on integer indices into `scale`; expandScale() converts
+  // [min, max] indices into the comma-joined value list the API expects.
+  function buildOrdinalSliderGroup(label, key, scale) {
+    var maxIdx = scale.length - 1;
+    return (
+      '<div class="dw-fgroup">' +
+        '<h3 class="dw-fgroup__label">' + label + '</h3>' +
+        '<div class="dw-slider dw-slider--ordinal" data-key="' + key + '" data-min="0" data-max="' + maxIdx + '" data-step="1">' +
+          '<div class="dw-slider__track" aria-hidden="true">' +
+            '<div class="dw-slider__range"></div>' +
+          '</div>' +
+          '<input class="dw-slider__input dw-slider__input--min" type="range" min="0" max="' + maxIdx + '" step="1" value="0" aria-label="' + escapeAttr(label) + ' minimum">' +
+          '<input class="dw-slider__input dw-slider__input--max" type="range" min="0" max="' + maxIdx + '" step="1" value="' + maxIdx + '" aria-label="' + escapeAttr(label) + ' maximum">' +
+        '</div>' +
+        '<div class="dw-slider__ticks" aria-hidden="true">' +
+          scale.map(function (lbl) {
+            return '<span class="dw-slider__tick">' + escapeHTML(lbl) + '</span>';
           }).join('') +
         '</div>' +
       '</div>'
@@ -616,9 +670,20 @@
       });
     });
 
-    // Sliders (carat only — price removed in C-iter1)
+    // Sliders — carat (numeric) plus iter11 ordinal grade sliders
+    // (Colour, Clarity, Cut). All four reuse initSlider(); the callback
+    // captures lo/hi indices straight into state.
     initSlider(root.querySelector('.dw-slider[data-key="carat"]'), function (lo, hi) {
       state.minCarat = lo; state.maxCarat = hi;
+    });
+    initSlider(root.querySelector('.dw-slider[data-key="colors"]'), function (lo, hi) {
+      state.colorMinIdx = lo|0; state.colorMaxIdx = hi|0;
+    });
+    initSlider(root.querySelector('.dw-slider[data-key="clarities"]'), function (lo, hi) {
+      state.clarityMinIdx = lo|0; state.clarityMaxIdx = hi|0;
+    });
+    initSlider(root.querySelector('.dw-slider[data-key="cuts"]'), function (lo, hi) {
+      state.cutMinIdx = lo|0; state.cutMaxIdx = hi|0;
     });
 
     // Treatment tabs (single-select)
@@ -858,18 +923,34 @@
       });
     }
 
-    // Initial paint from current state values (carat is the only slider
-    // remaining after C-iter1 removed the price slider).
+    // Initial paint from current state values. iter11 added three ordinal
+    // sliders (colors, clarities, cuts) that store min/max indices.
     if (key === 'carat') {
       minInput.value = state.minCarat;
       maxInput.value = state.maxCarat;
+    } else if (key === 'colors') {
+      minInput.value = state.colorMinIdx;
+      maxInput.value = state.colorMaxIdx;
+    } else if (key === 'clarities') {
+      minInput.value = state.clarityMinIdx;
+      maxInput.value = state.clarityMaxIdx;
+    } else if (key === 'cuts') {
+      minInput.value = state.cutMinIdx;
+      maxInput.value = state.cutMaxIdx;
     }
+    // Expose paint for syncFilterUIFromState / removeChip / clearAllFilters
+    // — call slider._repaint() after writing new values to the inputs to
+    // re-flow the range fill without firing a fetch.
+    slider._repaint = paint;
     paint();
   }
 
   // ─── FILTER UI <-> STATE ──────────────────────────────────────────────────
 
   function syncFilterUIFromState() {
+    // Pill groups remaining after iter11: shape (single-select tile)
+    // and certificates (multi-select). Colour / Clarity / Cut are now
+    // sliders — synced separately below.
     var pillGroups = root.querySelectorAll('.dw-pills');
     pillGroups.forEach(function (group) {
       var key = group.dataset.key;
@@ -877,21 +958,36 @@
         var v = pill.dataset.value;
         var active = false;
         if (key === 'shape') active = (state.shape === v);
-        else if (key === 'colors') active = state.colors.indexOf(v) >= 0;
-        else if (key === 'clarities') active = state.clarities.indexOf(v) >= 0;
-        else if (key === 'cuts') active = state.cuts.indexOf(v) >= 0;
         else if (key === 'certificates') active = state.certificates.indexOf(v) >= 0;
         pill.classList.toggle('is-active', active);
         pill.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
     });
+    // Sync ordinal grade sliders from state (clearAll / chip-remove paths
+    // mutate state.*MinIdx / state.*MaxIdx but the slider thumbs still
+    // sit where the user dragged them — repaint to catch them up).
+    syncOrdinalSlider('colors',    state.colorMinIdx,   state.colorMaxIdx);
+    syncOrdinalSlider('clarities', state.clarityMinIdx, state.clarityMaxIdx);
+    syncOrdinalSlider('cuts',      state.cutMinIdx,     state.cutMaxIdx);
+  }
+
+  function syncOrdinalSlider(key, lo, hi) {
+    var slider = root.querySelector('.dw-slider[data-key="' + key + '"]');
+    if (!slider) return;
+    var minI = slider.querySelector('.dw-slider__input--min');
+    var maxI = slider.querySelector('.dw-slider__input--max');
+    if (!minI || !maxI) return;
+    minI.value = lo;
+    maxI.value = hi;
+    if (slider._repaint) slider._repaint();
   }
 
   function clearAllFilters() {
     state.shape = '';
-    state.colors = [];
-    state.clarities = [];
-    state.cuts = [];
+    // iter11 — Colour / Clarity / Cut are ordinal range indices now.
+    state.colorMinIdx   = 0; state.colorMaxIdx   = COLORS_SCALE.length - 1;
+    state.clarityMinIdx = 0; state.clarityMaxIdx = CLARITIES_SCALE.length - 1;
+    state.cutMinIdx     = 0; state.cutMaxIdx     = CUTS_SCALE.length - 1;
     state.certificates = [];
     state.treatment = '';
     state.hasImage = false;
@@ -924,9 +1020,17 @@
       chips.push({ k: 'treatment', v: '', label: tlabel });
     }
     if (state.shape) chips.push({ k: 'shape', v: state.shape, label: capShape(state.shape) });
-    state.colors.forEach(function (c)    { chips.push({ k: 'colors', v: c, label: 'Colour: ' + c }); });
-    state.clarities.forEach(function (c) { chips.push({ k: 'clarities', v: c, label: 'Clarity: ' + c }); });
-    state.cuts.forEach(function (c)      { chips.push({ k: 'cuts', v: c, label: 'Cut: ' + c }); });
+    // iter11 — single range chip per ordinal slider when not at full
+    // range. Clicking the X removes the constraint (resets to full range).
+    if (!isFullScaleRange(COLORS_SCALE, state.colorMinIdx, state.colorMaxIdx)) {
+      chips.push({ k: 'colors', v: '', label: 'Colour: ' + COLORS_SCALE[state.colorMinIdx] + '–' + COLORS_SCALE[state.colorMaxIdx] });
+    }
+    if (!isFullScaleRange(CLARITIES_SCALE, state.clarityMinIdx, state.clarityMaxIdx)) {
+      chips.push({ k: 'clarities', v: '', label: 'Clarity: ' + CLARITIES_SCALE[state.clarityMinIdx] + '–' + CLARITIES_SCALE[state.clarityMaxIdx] });
+    }
+    if (!isFullScaleRange(CUTS_SCALE, state.cutMinIdx, state.cutMaxIdx)) {
+      chips.push({ k: 'cuts', v: '', label: 'Cut: ' + CUTS_SCALE[state.cutMinIdx] + '–' + CUTS_SCALE[state.cutMaxIdx] });
+    }
     state.certificates.forEach(function (c) { chips.push({ k: 'certificates', v: c, label: c }); });
     if (state.minCarat > CARAT_MIN || state.maxCarat < CARAT_MAX) {
       chips.push({ k: 'carat', v: '', label: 'Carats: ' + state.minCarat.toFixed(2) + '–' + state.maxCarat.toFixed(2) });
@@ -971,10 +1075,16 @@
     else if (k === 'treatment') state.treatment = '';
     else if (k === 'hasImage') state.hasImage = false;
     else if (k === 'carat') { state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX; }
+    // iter11 — the three ordinal sliders reset to full range on chip-X.
+    else if (k === 'colors')    { state.colorMinIdx   = 0; state.colorMaxIdx   = COLORS_SCALE.length - 1; }
+    else if (k === 'clarities') { state.clarityMinIdx = 0; state.clarityMaxIdx = CLARITIES_SCALE.length - 1; }
+    else if (k === 'cuts')      { state.cutMinIdx     = 0; state.cutMaxIdx     = CUTS_SCALE.length - 1; }
     else {
       var arr = state[k];
-      var i = arr.indexOf(v);
-      if (i >= 0) arr.splice(i, 1);
+      if (Array.isArray(arr)) {
+        var i = arr.indexOf(v);
+        if (i >= 0) arr.splice(i, 1);
+      }
     }
     if (showFilters) {
       syncFilterUIFromState();
@@ -1003,9 +1113,15 @@
       var params = new URLSearchParams(window.location.search);
       var v;
       if ((v = params.get(URL_PREFIX + 'shape')))      state.shape = v;
-      if ((v = params.get(URL_PREFIX + 'color')))      state.colors = v.split(',').filter(Boolean);
-      if ((v = params.get(URL_PREFIX + 'clarity')))    state.clarities = v.split(',').filter(Boolean);
-      if ((v = params.get(URL_PREFIX + 'cut')))        state.cuts = v.split(',').filter(Boolean);
+      // iter11 — Colour / Clarity / Cut now stored as min/max indices.
+      // URL keys: ?d_color_min=2&d_color_max=5 etc. Defensive clamping
+      // tolerates malformed/out-of-range values from hand-edited URLs.
+      if ((v = params.get(URL_PREFIX + 'color_min'))) state.colorMinIdx = clamp(parseInt(v, 10), 0, COLORS_SCALE.length - 1);
+      if ((v = params.get(URL_PREFIX + 'color_max'))) state.colorMaxIdx = clamp(parseInt(v, 10), 0, COLORS_SCALE.length - 1);
+      if ((v = params.get(URL_PREFIX + 'clarity_min'))) state.clarityMinIdx = clamp(parseInt(v, 10), 0, CLARITIES_SCALE.length - 1);
+      if ((v = params.get(URL_PREFIX + 'clarity_max'))) state.clarityMaxIdx = clamp(parseInt(v, 10), 0, CLARITIES_SCALE.length - 1);
+      if ((v = params.get(URL_PREFIX + 'cut_min'))) state.cutMinIdx = clamp(parseInt(v, 10), 0, CUTS_SCALE.length - 1);
+      if ((v = params.get(URL_PREFIX + 'cut_max'))) state.cutMaxIdx = clamp(parseInt(v, 10), 0, CUTS_SCALE.length - 1);
       if ((v = params.get(URL_PREFIX + 'certificate'))) state.certificates = v.split(',').filter(Boolean);
       if ((v = params.get(URL_PREFIX + 'treatment'))) state.treatment = v;
       if (params.get(URL_PREFIX + 'hasImage') === 'true') state.hasImage = true;
@@ -1023,9 +1139,21 @@
         if (k.indexOf(URL_PREFIX) === 0) params.delete(k);
       });
       if (state.shape)               params.set(URL_PREFIX + 'shape', state.shape);
-      if (state.colors.length)       params.set(URL_PREFIX + 'color', state.colors.join(','));
-      if (state.clarities.length)    params.set(URL_PREFIX + 'clarity', state.clarities.join(','));
-      if (state.cuts.length)         params.set(URL_PREFIX + 'cut', state.cuts.join(','));
+      // iter11 — only write ordinal slider URL params if user has
+      // narrowed from full range; default range = no URL entry = no
+      // filter param sent to Augmont.
+      if (!isFullScaleRange(COLORS_SCALE, state.colorMinIdx, state.colorMaxIdx)) {
+        params.set(URL_PREFIX + 'color_min', String(state.colorMinIdx));
+        params.set(URL_PREFIX + 'color_max', String(state.colorMaxIdx));
+      }
+      if (!isFullScaleRange(CLARITIES_SCALE, state.clarityMinIdx, state.clarityMaxIdx)) {
+        params.set(URL_PREFIX + 'clarity_min', String(state.clarityMinIdx));
+        params.set(URL_PREFIX + 'clarity_max', String(state.clarityMaxIdx));
+      }
+      if (!isFullScaleRange(CUTS_SCALE, state.cutMinIdx, state.cutMaxIdx)) {
+        params.set(URL_PREFIX + 'cut_min', String(state.cutMinIdx));
+        params.set(URL_PREFIX + 'cut_max', String(state.cutMaxIdx));
+      }
       if (state.certificates.length) params.set(URL_PREFIX + 'certificate', state.certificates.join(','));
       if (state.treatment) params.set(URL_PREFIX + 'treatment', state.treatment);
       if (state.hasImage) params.set(URL_PREFIX + 'hasImage', 'true');
@@ -1044,9 +1172,19 @@
     var p = new URLSearchParams();
     p.set('shop', shop);
     if (state.shape)            p.set('shape', state.shape);
-    if (state.colors.length)    p.set('color', state.colors.join(','));
-    if (state.clarities.length) p.set('clarity', state.clarities.join(','));
-    if (state.cuts.length)      p.set('cut', state.cuts.join(','));
+    // iter11 — expand ordinal range indices to the comma-joined value
+    // list Augmont expects. Send no param when at full range so the
+    // backend treats the filter as "any" (matches the previous empty-
+    // array semantics).
+    if (!isFullScaleRange(COLORS_SCALE, state.colorMinIdx, state.colorMaxIdx)) {
+      p.set('color', expandScale(COLORS_SCALE, state.colorMinIdx, state.colorMaxIdx).join(','));
+    }
+    if (!isFullScaleRange(CLARITIES_SCALE, state.clarityMinIdx, state.clarityMaxIdx)) {
+      p.set('clarity', expandScale(CLARITIES_SCALE, state.clarityMinIdx, state.clarityMaxIdx).join(','));
+    }
+    if (!isFullScaleRange(CUTS_SCALE, state.cutMinIdx, state.cutMaxIdx)) {
+      p.set('cut', expandScale(CUTS_SCALE, state.cutMinIdx, state.cutMaxIdx).join(','));
+    }
     if (state.certificates.length) p.set('certificate', state.certificates.join(','));
     if (state.treatment)        p.set('treatment', state.treatment);
     if (state.hasImage)         p.set('hasImage', 'true');

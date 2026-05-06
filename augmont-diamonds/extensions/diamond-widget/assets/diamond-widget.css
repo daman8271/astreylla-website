@@ -397,6 +397,33 @@
 .dw-slider__input--max { z-index: 2; }
 .dw-slider__input--min { z-index: 3; }
 
+/* iter11 — Aria-style labeled tick row sitting under ordinal range
+ * sliders (Colour / Clarity / Cut). flex space-between distributes
+ * the labels evenly between the two end stops; the 9px horizontal
+ * padding aligns with half the 18px thumb circle so the first/last
+ * label sits centered under the thumb's stop position rather than
+ * the slider track edge. */
+.dw-slider__ticks {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0 0;
+  padding: 0 9px;
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dw-text-primary);
+  letter-spacing: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.dw-slider__tick {
+  display: inline-block;
+  text-align: center;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
 .dw-slider__values {
   display: flex;
   justify-content: space-between;
