@@ -1971,10 +1971,12 @@
     btn.classList.remove('is-loading', 'is-added', 'is-error', 'is-in-cart', 'is-unavailable');
     btn.disabled = false;
     btn.dataset.busy = '0';
-    // The "added" / "in-cart" states pair an inline check SVG with a label.
-    // innerHTML is safe — CHECK_SVG is a developer-controlled constant; the
-    // label is hard-coded (no user input flowing into the markup). Other
-    // states stay on textContent for clarity + assurance.
+    // iter10 — Aria editorial vibe: plain text labels for every state.
+    // The previous CHECK_SVG injection (an inline checkmark glyph) rendered
+    // unconstrained without explicit width/height attrs and ballooned to
+    // fill the button after iter9's card aspect-ratio change. Per Daman's
+    // feedback "the giant tick is unprofessional" — buttons now show pure
+    // typographic feedback ("Added" / "In cart") matching Aria's restraint.
     switch (kind) {
       case 'loading':
         btn.classList.add('is-loading'); btn.disabled = true; btn.dataset.busy = '1';
@@ -1982,11 +1984,11 @@
         break;
       case 'added':
         btn.classList.add('is-added');
-        btn.innerHTML = CHECK_SVG + '<span class="dw-btn__label">Added</span>';
+        btn.textContent = 'Added';
         break;
       case 'in-cart':
         btn.classList.add('is-in-cart');
-        btn.innerHTML = CHECK_SVG + '<span class="dw-btn__label">In cart</span>';
+        btn.textContent = 'In cart';
         break;
       case 'error':
         btn.classList.add('is-error');
