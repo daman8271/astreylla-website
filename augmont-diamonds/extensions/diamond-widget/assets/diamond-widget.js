@@ -252,7 +252,7 @@
         '<div class="dw-filters__grid">' +
           // LEFT col: Shape + Colour + Cut + Certificate
           '<div class="dw-filters__col">' +
-            buildPillGroup('Shape', 'shape', SHAPES, false) +
+            buildShapeTilesHTML() +
             buildPillGroup('Colour', 'colors', COLORS, true) +
             buildPillGroup('Cut', 'cuts', CUTS, true) +
             buildPillGroup('Certificate', 'certificates', CERTIFICATES, true) +
@@ -302,6 +302,30 @@
         '<div class="dw-pills" data-key="' + key + '" data-multi="' + (multi ? '1' : '0') + '" role="group" aria-label="' + label + '">' +
           options.map(function (opt) {
             return '<button type="button" class="dw-pill" data-value="' + escapeAttr(opt) + '">' + escapeHTML(opt) + '</button>';
+          }).join('') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // iter7 — Aria parity: Shape filter renders as 94×80 tiles with diamond
+  // silhouettes (re-using svgForShape from the placeholder system). Buttons
+  // keep the .dw-pill class so the existing click listener (line ~575) and
+  // syncFilterUIFromState (line ~852) work without any filter-logic change;
+  // .dw-shape-tile is the visual modifier. data-value preserves the existing
+  // Title-Case shape strings so URL state and Augmont API params are unaffected.
+  function buildShapeTilesHTML() {
+    return (
+      '<div class="dw-fgroup">' +
+        '<h3 class="dw-fgroup__label">Shape</h3>' +
+        '<div class="dw-pills dw-shape-tiles" data-key="shape" data-multi="0" role="group" aria-label="Shape">' +
+          SHAPES.map(function (shape) {
+            return (
+              '<button type="button" class="dw-pill dw-shape-tile" data-value="' + escapeAttr(shape) + '">' +
+                '<span class="dw-shape-tile__icon" aria-hidden="true">' + svgForShape(shape) + '</span>' +
+                '<span class="dw-shape-tile__label">' + escapeHTML(shape) + '</span>' +
+              '</button>'
+            );
           }).join('') +
         '</div>' +
       '</div>'
