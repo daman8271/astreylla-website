@@ -116,6 +116,9 @@
   var cart = { items: [], count: 0, total: 0, currency: 'USD' };
   var diamondIdsInCart = new Set();
   var loadedDiamonds = []; // accumulated across "Load more" pages
+  // Map of stockNum -> diamond object so we can look up the full record when
+  // the user opens the modal or a deep link restores ?stone=X on page load.
+  var diamondsByStockNum = Object.create(null);
   var requestSeq = 0; // guards against out-of-order responses
 
   // ─── DOM SCAFFOLD ─────────────────────────────────────────────────────────
@@ -162,9 +165,24 @@
   var cartFooter    = root.querySelector('#dw-cart-footer');
   var cartBackdrop  = root.querySelector('#dw-cart-backdrop');
   var checkoutPanel = root.querySelector('#dw-checkout');
-  var viewerPanel   = root.querySelector('#dw-viewer');
-  var viewerFrame   = root.querySelector('#dw-viewer-frame');
-  var viewerCaption = root.querySelector('#dw-viewer-caption');
+  var viewerPanel    = root.querySelector('#dw-viewer');
+  var viewerFrame    = root.querySelector('#dw-viewer-frame');
+  var viewerCaption  = root.querySelector('#dw-viewer-caption');
+  var viewerFallback = root.querySelector('#dw-viewer-fallback');
+  var viewerFallSvg  = root.querySelector('#dw-viewer-fallback-svg');
+  var viewerTitle    = root.querySelector('#dw-viewer-title');
+  var viewerSpecs    = root.querySelector('#dw-viewer-specs');
+  var viewerPrice    = root.querySelector('#dw-viewer-price');
+  var viewerCert     = root.querySelector('#dw-viewer-cert');
+  var viewerAddBtn   = root.querySelector('#dw-viewer-add');
+  var viewerTierBtns = root.querySelectorAll('.dw-viewer__tier-btn');
+  // 360° viewer state for tier promotion + history-pop tracking
+  var viewerState = {
+    diamond: null,    // currently shown stone (full d object)
+    tier: null,       // 'video' | 'image' | 'outline'
+    timer: null,      // pending tier-promotion timer id
+    historyPushed: false,
+  };
 
   readStateFromURL();
   // Restore sort dropdown from URL state (default 'price_asc' otherwise).
@@ -246,8 +264,6 @@
   }
 
   function buildSliderGroup(label, key, min, max, step, unit) {
-    var unitLeft = unit === '$';
-    var fmt = function (v) { return unitLeft ? unit + Math.round(v) : v + ' ' + unit; };
     return (
       '<div class="dw-fgroup">' +
         '<h3 class="dw-fgroup__label">' + label + '</h3>' +
@@ -259,9 +275,15 @@
           '<input class="dw-slider__input dw-slider__input--max" type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="' + label + ' maximum">' +
         '</div>' +
         '<div class="dw-slider__values">' +
-          '<span class="dw-slider__val dw-slider__val--min">' + fmt(min) + '</span>' +
-          '<span class="dw-slider__val-sep">–</span>' +
-          '<span class="dw-slider__val dw-slider__val--max">' + fmt(max) + '</span>' +
+          '<div class="dw-slider__numwrap">' +
+            '<input type="number" class="dw-slider__num dw-slider__num--min" min="' + min + '" max="' + max + '" step="' + step + '" value="' + min + '" aria-label="' + label + ' minimum value">' +
+            '<span class="dw-slider__numunit">' + escapeHTML(unit) + '</span>' +
+          '</div>' +
+          '<span class="dw-slider__val-sep" aria-hidden="true">–</span>' +
+          '<div class="dw-slider__numwrap">' +
+            '<input type="number" class="dw-slider__num dw-slider__num--max" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="' + label + ' maximum value">' +
+            '<span class="dw-slider__numunit">' + escapeHTML(unit) + '</span>' +
+          '</div>' +
         '</div>' +
       '</div>'
     );
@@ -302,12 +324,37 @@
 
   function buildViewerOverlayHTML() {
     return (
-      '<div class="dw-viewer" id="dw-viewer" role="dialog" aria-modal="true" aria-label="Diamond 360° viewer" hidden>' +
+      '<div class="dw-viewer" id="dw-viewer" role="dialog" aria-modal="true" aria-label="Diamond detail viewer" hidden>' +
         '<div class="dw-viewer__backdrop" id="dw-viewer-backdrop"></div>' +
         '<div class="dw-viewer__panel">' +
           '<button class="dw-viewer__close" id="dw-viewer-close" type="button" aria-label="Close viewer">&#x2715;</button>' +
-          '<div class="dw-viewer__frame-wrap">' +
-            '<iframe id="dw-viewer-frame" title="Diamond 360° viewer" allow="autoplay; fullscreen" loading="lazy"></iframe>' +
+          '<div class="dw-viewer__layout">' +
+            // LEFT: media area (iframe + manual fallback toggles + SVG fallback)
+            '<div class="dw-viewer__media">' +
+              '<div class="dw-viewer__media-frame" id="dw-viewer-media-frame">' +
+                '<iframe id="dw-viewer-frame" title="Diamond viewer" allow="autoplay; fullscreen" loading="lazy"></iframe>' +
+                '<div class="dw-viewer__fallback" id="dw-viewer-fallback" hidden>' +
+                  '<div class="dw-viewer__fallback-svg" id="dw-viewer-fallback-svg"></div>' +
+                  '<p class="dw-viewer__fallback-msg">Live preview not yet available — Augmont catalog imagery being indexed.</p>' +
+                '</div>' +
+              '</div>' +
+              '<div class="dw-viewer__tier-controls" id="dw-viewer-tier-controls">' +
+                '<button type="button" class="dw-viewer__tier-btn" data-tier="video" aria-label="Show 360° spin">360° spin</button>' +
+                '<button type="button" class="dw-viewer__tier-btn" data-tier="image" aria-label="Show photo">Photo</button>' +
+                '<button type="button" class="dw-viewer__tier-btn" data-tier="outline" aria-label="Show outline">Outline</button>' +
+              '</div>' +
+            '</div>' +
+            // RIGHT: rich detail panel
+            '<div class="dw-viewer__detail" id="dw-viewer-detail">' +
+              '<h2 class="dw-viewer__title" id="dw-viewer-title">Diamond</h2>' +
+              '<dl class="dw-viewer__specs" id="dw-viewer-specs"></dl>' +
+              '<div class="dw-viewer__price-row" id="dw-viewer-price-row">' +
+                '<p class="dw-viewer__price" id="dw-viewer-price"></p>' +
+                '<span class="dw-viewer__cert" id="dw-viewer-cert" hidden></span>' +
+              '</div>' +
+              '<p class="dw-viewer__ships">Ships in 7-10 business days</p>' +
+              '<button type="button" class="dw-btn dw-btn--solid dw-viewer__add" id="dw-viewer-add">Add to cart</button>' +
+            '</div>' +
           '</div>' +
           '<p class="dw-viewer__caption" id="dw-viewer-caption">Live 360° viewer from Augmont. Stones without uploaded media will display “No video found”.</p>' +
         '</div>' +
@@ -441,13 +488,50 @@
     });
 
     // Click delegation: Add-to-cart button takes priority. Anywhere else on
-    // a card opens the 360° viewer modal (CLAUDE.md lesson #3 — Augmont
-    // image_url is an HTML viewer page, so we open it in a real iframe).
+    // a card opens the detail modal (rich layout: video → image → SVG
+    // tier fallback + spec table + add-to-cart in panel).
     root.addEventListener('click', function (e) {
       var addBtn = e.target.closest('.dw-card__add');
       if (addBtn) { handleAddClick(addBtn); return; }
       var card = e.target.closest('.dw-card');
-      if (card && card.dataset.stockNum) openViewer(card.dataset.stockNum, card.dataset.shape, card.dataset.carat);
+      if (card && card.dataset.stockNum) {
+        var d = diamondsByStockNum[card.dataset.stockNum] || null;
+        openViewer(d, { pushHistory: true });
+      }
+    });
+
+    // Tier toggle buttons (manual override of automatic tier promotion)
+    viewerTierBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!viewerState.diamond) return;
+        loadViewerTier(btn.dataset.tier);
+      });
+    });
+
+    // Modal Add-to-cart respects the same state machine as card-add buttons.
+    viewerAddBtn.addEventListener('click', function () {
+      var d = viewerState.diamond;
+      if (!d || !d.id) return;
+      // Reuse handleAddClick by emulating a card-add button. The actual
+      // card button (in the grid behind) updates via markCardsInCart()
+      // after the cart fetch completes.
+      var fakeBtn = document.createElement('button');
+      fakeBtn.dataset.id = String(d.id);
+      // Drive the in-modal button through the same setButtonState +
+      // fetch logic by passing it instead of fakeBtn.
+      handleAddClick(viewerAddBtn);
+    });
+
+    // Browser back/forward should close the modal cleanly when the URL no
+    // longer references a stone.
+    window.addEventListener('popstate', function () {
+      var sn = currentStoneFromURL();
+      if (!sn && !viewerPanel.hidden) {
+        // Close without pushing another history entry.
+        closeViewer({ syncHistory: false });
+      } else if (sn && diamondsByStockNum[sn]) {
+        openViewer(diamondsByStockNum[sn], { pushHistory: false });
+      }
     });
 
     cartBody.addEventListener('click', function (e) {
@@ -467,14 +551,12 @@
     var minInput = slider.querySelector('.dw-slider__input--min');
     var maxInput = slider.querySelector('.dw-slider__input--max');
     var range    = slider.querySelector('.dw-slider__range');
-    var minLabel = slider.parentElement.querySelector('.dw-slider__val--min');
-    var maxLabel = slider.parentElement.querySelector('.dw-slider__val--max');
+    // Number-input boxes (added Phase D-final 1.8 — two-way bound to the
+    // range thumbs). Older spans (.dw-slider__val--min/max) no longer in
+    // the DOM but the lookup-and-skip pattern below stays defensive.
+    var minNum   = slider.parentElement.querySelector('.dw-slider__num--min');
+    var maxNum   = slider.parentElement.querySelector('.dw-slider__num--max');
     var key      = slider.dataset.key;
-
-    function fmt(v) {
-      if (key === 'price') return '$' + Math.round(v).toLocaleString();
-      return Number(v).toFixed(2) + ' ct';
-    }
 
     function paint() {
       var lo = Number(minInput.value);
@@ -485,9 +567,9 @@
       var pctHi = ((hi - min) / (max - min)) * 100;
       range.style.left  = pctLo + '%';
       range.style.right = (100 - pctHi) + '%';
-      minLabel.textContent = fmt(lo);
-      maxLabel.textContent = fmt(hi);
-      // Expose computed values for state sync
+      // Mirror to number inputs (avoid feedback loops by guarding focus)
+      if (minNum && document.activeElement !== minNum) minNum.value = Number(lo).toFixed(2);
+      if (maxNum && document.activeElement !== maxNum) maxNum.value = Number(hi).toFixed(2);
       slider._lo = lo;
       slider._hi = hi;
     }
@@ -504,6 +586,26 @@
     maxInput.addEventListener('input', paint);
     minInput.addEventListener('change', commit);
     maxInput.addEventListener('change', commit);
+
+    // Number-input <-> range two-way binding. Clamp + guard against crossing.
+    if (minNum) {
+      minNum.addEventListener('change', function () {
+        var v = clamp(Number(minNum.value), min, max);
+        var hi = Number(maxInput.value);
+        if (v > hi - step) v = hi - step;
+        minInput.value = v;
+        commit();
+      });
+    }
+    if (maxNum) {
+      maxNum.addEventListener('change', function () {
+        var v = clamp(Number(maxNum.value), min, max);
+        var lo = Number(minInput.value);
+        if (v < lo + step) v = lo + step;
+        maxInput.value = v;
+        commit();
+      });
+    }
 
     // Initial paint from current state values (carat is the only slider
     // remaining after C-iter1 removed the price slider).
@@ -739,6 +841,9 @@
           pagination.total = data.totalCount;
         }
         renderResults();
+        // If the URL has ?stone=X (share-link / refresh-with-modal-open),
+        // re-open that stone now that diamondsByStockNum is populated.
+        maybeOpenDeepLinkStone();
       })
       .catch(function (err) {
         if (seq !== requestSeq) return;
@@ -818,7 +923,12 @@
 
   function appendCards(diamonds) {
     var frag = document.createDocumentFragment();
-    diamonds.forEach(function (d) { frag.appendChild(buildCard(d)); });
+    diamonds.forEach(function (d) {
+      // Index by stockNum so the modal/deep-link path can resolve
+      // d -> full record without re-fetching.
+      if (d && d.stockNum) diamondsByStockNum[String(d.stockNum)] = d;
+      frag.appendChild(buildCard(d));
+    });
     grid.appendChild(frag);
   }
 
@@ -1185,28 +1295,198 @@
 
   function closeCheckout() { checkoutPanel.hidden = true; }
 
-  // ─── 360° VIEWER MODAL ────────────────────────────────────────────────────
-  // Loads viewmydiamonds.com (the source of d.image_url) inside an iframe so
-  // buyers can spin/zoom the stone. Iframe src is set ON OPEN and removed ON
-  // CLOSE so we don't leave 24+ background connections hanging.
+  // ─── DETAIL MODAL (3-tier viewer + spec panel) ────────────────────────────
+  //
+  // Open behaviour:
+  //   1. Populate the detail panel from the full diamond object.
+  //   2. Start at tier=video; iframe src = viewmydiamonds.com/?id=X&type=video.
+  //   3. Set a 3.5s tier-promotion timer. If the iframe `load` event fires
+  //      before the timer, success — clear the timer.
+  //   4. If the timer fires (no load event = hard 404 / blocked / very slow),
+  //      promote: video → image → outline (SVG silhouette).
+  //   5. The user can manually pick a tier via the three buttons under the
+  //      iframe ("360° spin" / "Photo" / "Outline").
+  //
+  // We can't read iframe content cross-origin, so "No video found" detection
+  // is opt-in via the user's manual tier toggle. The timer catches truly
+  // failed loads.
+  //
+  // pushHistory: true on user click; we push ?stone=X to history so back-button
+  // closes the modal and a copied URL re-opens the same stone on next load.
 
-  function openViewer(stockNum, shapeLabel, caratStr) {
-    if (!stockNum) return;
-    var src = 'https://www.viewmydiamonds.com/?id=' + encodeURIComponent(stockNum) + '&type=image';
-    viewerFrame.setAttribute('src', src);
-    viewerPanel.setAttribute('aria-label', (caratStr ? caratStr + 'ct ' : '') + (shapeLabel || 'Diamond') + ' 360° viewer');
+  var TIER_VIDEO   = 'video';
+  var TIER_IMAGE   = 'image';
+  var TIER_OUTLINE = 'outline';
+
+  function openViewer(d, opts) {
+    if (!d) return;
+    opts = opts || {};
+    clearViewerTimer();
+    viewerState.diamond = d;
+
+    // Populate detail panel
+    var shapeRaw = d.shape || 'Diamond';
+    var shape    = capShape(shapeRaw);
+    var caratStr = (d.carat != null) ? Number(d.carat).toFixed(2) : '—';
+    var color    = d.color   || '—';
+    var clarity  = d.clarity || '—';
+    var cut      = d.cut     || null;
+    var labRaw   = d.lab     || '';
+    var price    = (d.price != null) ? Number(d.price) : null;
+    var ccy      = d.currency || cart.currency || 'USD';
+
+    viewerTitle.textContent = caratStr + 'ct ' + shape + ' Diamond';
+    // Spec rows
+    while (viewerSpecs.firstChild) viewerSpecs.removeChild(viewerSpecs.firstChild);
+    [
+      ['Carat',   caratStr],
+      ['Colour',  color],
+      ['Clarity', clarity],
+      ['Cut',     cut || '—'],
+      ['Lab',     labRaw && !/^no[-\s]?cert$/i.test(labRaw) ? String(labRaw).toUpperCase() : '—'],
+      ['Stock',   d.stockNum || '—']
+    ].forEach(function (pair) {
+      var dt = document.createElement('dt'); dt.textContent = pair[0];
+      var dd = document.createElement('dd'); dd.textContent = String(pair[1]);
+      viewerSpecs.appendChild(dt); viewerSpecs.appendChild(dd);
+    });
+    viewerPrice.textContent = price != null ? formatMoney(price, ccy) : '';
+    if (labRaw && !/^no[-\s]?cert$/i.test(labRaw)) {
+      viewerCert.textContent = String(labRaw).toUpperCase() + ' Certified';
+      viewerCert.hidden = false;
+    } else {
+      viewerCert.textContent = '';
+      viewerCert.hidden = true;
+    }
+
+    // Wire the modal Add-to-cart to this stone's id + the right state.
+    viewerAddBtn.dataset.id = String(d.id || d.stockNum || '');
+    setButtonState(viewerAddBtn, diamondIdsInCart.has(viewerAddBtn.dataset.id) ? 'in-cart' : 'idle');
+
+    // Open the modal shell
+    viewerPanel.setAttribute('aria-label', caratStr + 'ct ' + shape + ' Diamond detail');
     viewerPanel.hidden = false;
     document.body.style.overflow = 'hidden';
-    // Move focus to the close button so keyboard users can dismiss easily.
+
+    // Pre-load the SVG silhouette so the outline tier is instant.
+    viewerFallSvg.innerHTML = svgForShape(shapeRaw);
+
+    // Start tier 1: video.
+    loadViewerTier(TIER_VIDEO);
+
+    // History push so back-button closes modal + share-link re-opens it.
+    if (opts.pushHistory && d.stockNum) {
+      try {
+        var u = new URL(window.location.href);
+        u.searchParams.set('stone', d.stockNum);
+        window.history.pushState({ stone: d.stockNum }, '', u.pathname + u.search + u.hash);
+        viewerState.historyPushed = true;
+      } catch (e) { /* history API blocked — fail silent */ }
+    }
+
     setTimeout(function () { root.querySelector('#dw-viewer-close').focus(); }, 50);
   }
 
-  function closeViewer() {
+  function loadViewerTier(tier) {
+    if (!viewerState.diamond) return;
+    clearViewerTimer();
+    viewerState.tier = tier;
+
+    // Update tier-button active state
+    viewerTierBtns.forEach(function (btn) {
+      var on = btn.dataset.tier === tier;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+
+    var stockNum = viewerState.diamond.stockNum;
+    if (tier === TIER_OUTLINE || !stockNum) {
+      // Show SVG silhouette fallback. Stop the iframe.
+      viewerFrame.setAttribute('src', 'about:blank');
+      viewerFrame.style.display = 'none';
+      viewerFallback.hidden = false;
+      return;
+    }
+
+    // Video or image: hide SVG, show iframe, set src.
+    viewerFallback.hidden = true;
+    viewerFrame.style.display = '';
+    var src = 'https://www.viewmydiamonds.com/?id=' +
+              encodeURIComponent(stockNum) +
+              '&type=' + (tier === TIER_VIDEO ? 'video' : 'image');
+    var loadFired = false;
+    function onload() {
+      loadFired = true;
+      viewerFrame.removeEventListener('load', onload);
+      // load fired in time — clear timer; trust iframe content.
+      clearViewerTimer();
+    }
+    viewerFrame.addEventListener('load', onload);
+    viewerFrame.setAttribute('src', src);
+
+    // 3.5s timer auto-promotes if iframe never fires `load`. Cross-origin
+    // iframe content can't be inspected, so we can't detect "No video
+    // found" — only hard-fails (timeouts, blocked frames, 404s).
+    viewerState.timer = setTimeout(function () {
+      viewerState.timer = null;
+      viewerFrame.removeEventListener('load', onload);
+      if (loadFired) return;
+      if (tier === TIER_VIDEO)      loadViewerTier(TIER_IMAGE);
+      else if (tier === TIER_IMAGE) loadViewerTier(TIER_OUTLINE);
+    }, 3500);
+  }
+
+  function clearViewerTimer() {
+    if (viewerState.timer) {
+      clearTimeout(viewerState.timer);
+      viewerState.timer = null;
+    }
+  }
+
+  function closeViewer(opts) {
+    opts = opts || { syncHistory: true };
+    clearViewerTimer();
     viewerPanel.hidden = true;
-    // Removing src on close stops any live iframe playback and frees the
-    // connection — important since the viewer page does not auto-pause.
     viewerFrame.setAttribute('src', 'about:blank');
+    viewerFrame.style.display = '';
+    viewerFallback.hidden = true;
     document.body.style.overflow = '';
+
+    // Sync history: if we pushed an entry to open this modal, pop it so
+    // the browser back stack stays clean. If we got here via popstate,
+    // skip (the browser already moved).
+    if (opts.syncHistory !== false && viewerState.historyPushed) {
+      try {
+        var u = new URL(window.location.href);
+        u.searchParams.delete('stone');
+        window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+      } catch (e) { /* fail silent */ }
+    }
+    viewerState.historyPushed = false;
+    viewerState.diamond = null;
+    viewerState.tier = null;
+  }
+
+  function currentStoneFromURL() {
+    try {
+      var p = new URLSearchParams(window.location.search);
+      return p.get('stone') || null;
+    } catch (e) { return null; }
+  }
+
+  // After the initial fetch resolves we may need to deep-link-open a stone.
+  // Set up a one-shot watcher: once diamondsByStockNum has the requested
+  // stockNum, open the modal. If the requested stone never loads (it's not
+  // on page 1), fall through gracefully.
+  function maybeOpenDeepLinkStone() {
+    var sn = currentStoneFromURL();
+    if (!sn) return;
+    if (diamondsByStockNum[sn]) {
+      openViewer(diamondsByStockNum[sn], { pushHistory: false });
+      return;
+    }
+    // Stone not on page 1; widget could "Load more" until found in the
+    // future. For now, the share-link is best-effort.
   }
 
   function renderCartTrigger() {

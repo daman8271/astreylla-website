@@ -6,19 +6,30 @@
  * ───────────────────────────────────────────────────────────────────────── */
 
 .diamond-widget {
-  /* Color tokens (overridable via merchant theme CSS vars) */
-  --dw-text:        var(--color-foreground, #292929);
-  --dw-text-muted:  #6b6b6b;
-  --dw-text-faint:  #999999;
-  --dw-bg:          var(--color-background, #ffffff);
-  --dw-image-well:  var(--color-base-background-2, #f2f1f0);
-  --dw-border:      #3d3d3d;
-  --dw-hairline:    rgba(0, 0, 0, 0.09);
-  --dw-skeleton:    #ececec;
-  --dw-skeleton-hi: #f5f5f5;
-  --dw-accent-red:  #e5484d;
-  --dw-accent:      var(--dw-text); /* merchant-set accent overrides this in JS */
-  --dw-shadow-overlay: rgba(0, 0, 0, 0.45);
+  /*
+   * Phase D-final palette: warm-white over pure white, deep charcoal text,
+   * subtle warm borders. Tokens still defer to merchant theme vars where
+   * sensible so a dark-themed storefront can override the surface.
+   */
+  --dw-text:         var(--color-foreground, #1a1a1a);
+  --dw-text-muted:   #666666;
+  --dw-text-faint:   #999999;
+  --dw-bg:           var(--color-background, #fafaf9);
+  --dw-bg-card:      #ffffff;
+  --dw-image-well:   var(--color-base-background-2, #f2f1f0);
+  --dw-border:       #e5e3df;        /* warm hairline */
+  --dw-border-strong:#3d3d3d;        /* button outline */
+  --dw-hairline:     rgba(0, 0, 0, 0.06);
+  --dw-hover-bg:     #f5f3ef;        /* subtle beige hover */
+  --dw-skeleton:     #ececec;
+  --dw-skeleton-hi:  #f5f5f5;
+  --dw-accent-red:   #e5484d;        /* discount + destructive only */
+  --dw-accent:       var(--dw-text); /* merchant primary_color overrides this */
+  --dw-overlay-cart:   rgba(0, 0, 0, 0.85);  /* cart slide-in scrim */
+  --dw-overlay-viewer: rgba(0, 0, 0, 0.92);  /* near-opaque for detail modal */
+  --dw-overlay-form:   rgba(0, 0, 0, 0.85);  /* checkout form scrim */
+  /* Back-compat alias */
+  --dw-shadow-overlay: var(--dw-overlay-cart);
 
   /* Spacing */
   --dw-s1: 4px;
@@ -30,12 +41,20 @@
   --dw-s7: 48px;
   --dw-s8: 64px;
 
-  /* Typography — inherit from merchant theme; fall back to system */
-  --dw-font-body:   var(--font-body-family, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
-  --dw-font-head:   var(--font-heading-family, var(--font-body-family, system-ui, -apple-system, sans-serif));
-  --dw-font-btn:    var(--font-button-family, var(--font-body-family, system-ui, -apple-system, sans-serif));
+  /*
+   * Typography — Instrument Sans is loaded via the Liquid block; if it
+   * doesn't load (offline merchant, slow CDN), fall back to merchant theme
+   * vars, then to a clean system stack. Single typeface family across the
+   * whole widget per Nivoda's convention.
+   */
+  --dw-font:         'Instrument Sans', var(--font-body-family, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --dw-font-heading: 'Instrument Sans', var(--font-heading-family, var(--dw-font));
+  --dw-font-btn:     'Instrument Sans', var(--font-button-family, var(--dw-font));
+  /* Back-compat aliases (older selectors still reference these) */
+  --dw-font-body:    var(--dw-font);
+  --dw-font-head:    var(--dw-font-heading);
 
-  font-family: var(--dw-font-body);
+  font-family: var(--dw-font);
   font-weight: 400;
   color: var(--dw-text);
   background: var(--dw-bg);
@@ -194,7 +213,7 @@
   outline: none;
   line-height: 1.2;
 }
-.dw-pill:hover { border-color: var(--dw-text); }
+.dw-pill:hover { background: var(--dw-hover-bg); border-color: var(--dw-text); }
 .dw-pill:focus-visible {
   border-color: var(--dw-text);
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
@@ -272,14 +291,52 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--dw-font-body);
-  font-size: 0.8125rem;
+  gap: var(--dw-s2);
+  margin-top: var(--dw-s4);
+}
+.dw-slider__numwrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  flex: 1;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+.dw-slider__numwrap:focus-within { border-color: var(--dw-text); }
+.dw-slider__num {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-family: var(--dw-font);
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--dw-text);
-  margin-top: var(--dw-s3);
+  width: 100%;
+  min-width: 0;
+  padding: 6px 0;
   letter-spacing: 0;
+  -moz-appearance: textfield;
 }
-.dw-slider__val-sep { color: var(--dw-text-faint); padding: 0 var(--dw-s2); }
+.dw-slider__num::-webkit-outer-spin-button,
+.dw-slider__num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.dw-slider__numunit {
+  font-family: var(--dw-font);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--dw-text-muted);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+.dw-slider__val-sep { color: var(--dw-text-faint); padding: 0 var(--dw-s1); flex-shrink: 0; }
 
 /* ─── hasImage TOGGLE ─────────────────────────────────────────────────────── */
 /* CSS-only switch: peer-style label wraps an <input type=checkbox> +
@@ -433,7 +490,7 @@
 .dw-select {
   appearance: none;
   -webkit-appearance: none;
-  background: var(--dw-bg);
+  background: var(--dw-bg-card);
   border: 1px solid var(--dw-hairline);
   border-radius: 8px;
   color: var(--dw-text);
@@ -472,13 +529,19 @@
 .dw-btn:focus-visible { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08); }
 
 .dw-btn--outline {
-  background: var(--dw-bg);
+  background: var(--dw-bg-card);
   color: var(--dw-text);
-  border: 1px solid var(--dw-border);
+  border: 1px solid var(--dw-border-strong);
+  /* Subtle warm fill on hover before flipping to solid on press */
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .dw-btn--outline:hover {
   background: var(--dw-text);
-  color: var(--dw-bg);
+  color: var(--dw-bg-card);
+}
+.dw-btn--outline:active {
+  background: var(--dw-text);
+  color: var(--dw-bg-card);
 }
 
 .dw-btn--solid {
@@ -508,7 +571,7 @@
 /* ─── CARD ────────────────────────────────────────────────────────────────── */
 
 .dw-card {
-  background: var(--dw-bg);
+  background: var(--dw-bg-card);
   border-radius: 0;
   border: none;
   box-shadow: none;
@@ -639,7 +702,7 @@
   font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--dw-text);
-  border: 1px solid var(--dw-border);
+  border: 1px solid var(--dw-border-strong);
   border-radius: 4px;
   padding: 2px 6px;
   margin-left: auto;
@@ -711,13 +774,13 @@
   border-color: var(--dw-text);
 }
 .dw-card__add.is-in-cart {
-  background: var(--dw-bg);
+  background: var(--dw-bg-card);
   color: var(--dw-text-muted);
-  border-color: var(--dw-hairline);
+  border-color: var(--dw-border);
   cursor: default;
 }
 .dw-card__add.is-in-cart:hover {
-  background: var(--dw-bg);
+  background: var(--dw-bg-card);
   color: var(--dw-text);
   border-color: var(--dw-text);
 }
@@ -726,7 +789,7 @@
   color: var(--dw-accent-red);
 }
 .dw-card__add.is-unavailable {
-  background: var(--dw-bg);
+  background: var(--dw-bg-card);
   color: var(--dw-text-faint);
   border-color: var(--dw-hairline);
   cursor: not-allowed;
@@ -838,7 +901,7 @@
   gap: var(--dw-s2);
   background: var(--dw-bg);
   color: var(--dw-text);
-  border: 1px solid var(--dw-border);
+  border: 1px solid var(--dw-border-strong);
   border-radius: 8px;
   padding: 8px 12px;
   min-height: 40px;
@@ -880,9 +943,9 @@
 .dw-cart-panel {
   position: fixed;
   top: 0; right: 0; bottom: 0;
-  width: min(420px, 100vw);
+  width: min(400px, 100vw);
   z-index: 9200;
-  background: var(--dw-bg);
+  background: var(--dw-bg-card);
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
@@ -946,7 +1009,7 @@
   gap: var(--dw-s3);
   align-items: center;
   padding: var(--dw-s3) 0;
-  border-bottom: 1px solid var(--dw-hairline);
+  border-bottom: 1px solid var(--dw-border);
   transition: opacity 0.15s ease;
 }
 .dw-cart-item:last-child { border-bottom: none; }
@@ -997,28 +1060,35 @@
 .dw-cart-item__remove:hover { color: var(--dw-accent-red); }
 
 .dw-cart-panel__footer {
-  border-top: 1px solid var(--dw-hairline);
-  padding: var(--dw-s4) var(--dw-s5) var(--dw-s5);
+  border-top: 2px solid var(--dw-text);
+  padding: var(--dw-s5) var(--dw-s5);
   display: flex;
   flex-direction: column;
-  gap: var(--dw-s3);
+  gap: var(--dw-s4);
+  background: var(--dw-bg-card);
 }
 .dw-cart-panel__footer[hidden] { display: none; }
 .dw-cart-panel__subtotal {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-family: var(--dw-font-body);
+  font-family: var(--dw-font);
 }
 .dw-cart-panel__subtotal span {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: var(--dw-text-muted);
+  letter-spacing: 0;
 }
 .dw-cart-panel__subtotal strong {
-  font-family: var(--dw-font-body);
-  font-size: 1.125rem;
+  font-family: var(--dw-font);
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--dw-text);
+  letter-spacing: -0.01em;
+}
+.dw-cart-panel__footer .dw-btn--solid {
+  min-height: 48px;
+  font-size: 0.9375rem;
 }
 
 /* ─── CHECKOUT OVERLAY ────────────────────────────────────────────────────── */
@@ -1042,7 +1112,7 @@
 
 .dw-overlay__panel {
   position: relative;
-  background: var(--dw-bg);
+  background: var(--dw-bg-card);
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
@@ -1105,8 +1175,8 @@
 
 .dw-overlay__field input,
 .dw-overlay__field textarea {
-  background: var(--dw-bg);
-  border: 1px solid var(--dw-hairline);
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-border);
   border-radius: 8px;
   color: var(--dw-text);
   font-family: var(--dw-font-body);
@@ -1212,35 +1282,36 @@
 .dw-viewer__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--dw-overlay-viewer);
 }
 
 .dw-viewer__panel {
   position: relative;
-  background: var(--dw-bg);
-  width: min(900px, 90vw);
-  height: min(700px, 86vh);
+  background: var(--dw-bg-card);
+  width: min(1200px, 92vw);
+  max-width: 1200px;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--dw-hairline);
+  border: 1px solid var(--dw-border);
 }
 
 .dw-viewer__close {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 12px;
+  right: 12px;
   z-index: 2;
-  background: var(--dw-bg);
-  border: 1px solid var(--dw-border);
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-border-strong);
   border-radius: 8px;
   font-size: 1rem;
   color: var(--dw-text);
   cursor: pointer;
   line-height: 1;
   padding: 0;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1250,16 +1321,35 @@
   color: var(--dw-bg);
 }
 
-.dw-viewer__frame-wrap {
+/*
+ * Two-column detail layout: media (58%) on the left, rich detail panel
+ * (42%) on the right. Mobile collapses to single column with media on top.
+ */
+.dw-viewer__layout {
   flex: 1;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  background: var(--dw-image-well);
+  display: grid;
+  grid-template-columns: 58% 42%;
   min-height: 0;
 }
 
-.dw-viewer__frame-wrap iframe {
+.dw-viewer__media {
+  background: var(--dw-image-well);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+.dw-viewer__media-frame {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.dw-viewer__media-frame iframe {
   width: 100%;
   height: 100%;
   border: 0;
@@ -1267,14 +1357,172 @@
   background: var(--dw-image-well);
 }
 
+.dw-viewer__fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dw-s4);
+  padding: var(--dw-s5);
+  text-align: center;
+  background: var(--dw-image-well);
+}
+.dw-viewer__fallback[hidden] { display: none; }
+
+.dw-viewer__fallback-svg {
+  width: 60%;
+  max-width: 280px;
+  aspect-ratio: 1 / 1;
+  color: #b8b8b8;
+}
+.dw-viewer__fallback-svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.dw-viewer__fallback-msg {
+  font-family: var(--dw-font);
+  font-size: 0.875rem;
+  color: var(--dw-text-muted);
+  margin: 0;
+  max-width: 36ch;
+  line-height: 1.5;
+}
+
+/* Tier toggle row: 360°/Photo/Outline pills below the iframe */
+.dw-viewer__tier-controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--dw-s2);
+  padding: var(--dw-s2) var(--dw-s3);
+  background: var(--dw-bg-card);
+  border-top: 1px solid var(--dw-border);
+}
+
+.dw-viewer__tier-btn {
+  appearance: none;
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-border);
+  border-radius: 6px;
+  font-family: var(--dw-font-btn);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--dw-text-muted);
+  padding: 6px 10px;
+  min-height: 32px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.dw-viewer__tier-btn:hover { color: var(--dw-text); border-color: var(--dw-text); }
+.dw-viewer__tier-btn.is-active {
+  background: var(--dw-text);
+  color: var(--dw-bg-card);
+  border-color: var(--dw-text);
+}
+
+/* Right-side detail panel */
+.dw-viewer__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-s4);
+  padding: var(--dw-s7) var(--dw-s5) var(--dw-s5);
+  overflow-y: auto;
+  background: var(--dw-bg-card);
+}
+
+.dw-viewer__title {
+  font-family: var(--dw-font-heading);
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--dw-text);
+  margin: 0;
+}
+
+.dw-viewer__specs {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--dw-s4);
+  row-gap: var(--dw-s2);
+  padding: var(--dw-s4) 0;
+  border-top: 1px solid var(--dw-border);
+  border-bottom: 1px solid var(--dw-border);
+}
+.dw-viewer__specs dt {
+  font-family: var(--dw-font);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--dw-text-muted);
+  letter-spacing: 0;
+}
+.dw-viewer__specs dd {
+  font-family: var(--dw-font);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dw-text);
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.dw-viewer__price-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dw-s3);
+  flex-wrap: wrap;
+}
+.dw-viewer__price {
+  font-family: var(--dw-font);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dw-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.dw-viewer__cert {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--dw-font);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--dw-text);
+  border: 1px solid var(--dw-border-strong);
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.dw-viewer__cert[hidden] { display: none; }
+
+.dw-viewer__ships {
+  font-family: var(--dw-font);
+  font-size: 0.8125rem;
+  color: var(--dw-text-muted);
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.dw-viewer__add {
+  width: 100%;
+  min-height: 48px;
+  margin-top: auto;
+  font-size: 0.9375rem;
+}
+
 .dw-viewer__caption {
-  font-family: var(--dw-font-body);
+  font-family: var(--dw-font);
   font-size: 0.75rem;
   color: var(--dw-text-muted);
   text-align: center;
   margin: 0;
   padding: var(--dw-s2) var(--dw-s4);
-  border-top: 1px solid var(--dw-hairline);
+  border-top: 1px solid var(--dw-border);
+  background: var(--dw-bg-card);
 }
 
 @media (max-width: 768px) {
@@ -1283,9 +1531,19 @@
     width: 100vw;
     height: 100vh;
     max-width: none;
+    max-height: none;
     border: 0;
   }
+  .dw-viewer__layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 50% 50%;
+  }
+  .dw-viewer__detail {
+    padding: var(--dw-s5) var(--dw-s4);
+  }
   .dw-viewer__close { top: 12px; right: 12px; }
+  .dw-viewer__title { font-size: 1.375rem; }
+  .dw-viewer__price { font-size: 1.5rem; }
 }
 
 /* ─── REDUCED MOTION ──────────────────────────────────────────────────────── */
