@@ -165,12 +165,12 @@
 /* ─── FILTERS ─────────────────────────────────────────────────────────────── */
 
 .dw-filters {
+  /* iter8 — flat document flow per Aria reference: filter section sits on
+   * the same pure white page bg, no boxed surround. Depth comes from line
+   * (the bottom hairline divider on .dw-filters__grid), not from a fill. */
   margin: 0 auto var(--dw-s6);
   max-width: 1280px;
   padding: var(--dw-s5);
-  background: var(--dw-bg-elevated);
-  border: 1px solid var(--dw-border-subtle);
-  border-radius: 4px;
 }
 
 .dw-filters__grid {
@@ -190,7 +190,7 @@
 .dw-filters__col {
   display: flex;
   flex-direction: column;
-  gap: var(--dw-s5);
+  gap: var(--dw-s6); /* iter8 — generous breathing between filter groups (32px) */
   padding: 0 15px; /* iter7 — Aria DevTools: filter wrapper horizontal padding */
 }
 
@@ -778,24 +778,29 @@
 .dw-card__title {
   font-family: var(--dw-font-body);
   font-size: 1rem;
-  /* iter5 weight bump: bring catalog card title to 600 to match the
-   * heavier Aria title weight (parity with .dw-viewer__title). */
-  font-weight: 600;
+  /* iter8 — heavier weight for editorial presence (700 not 600).
+   * Aria's card titles read with strong typographic contrast. */
+  font-weight: 700;
   line-height: 1.4;
   letter-spacing: -0.005em;
   color: var(--dw-text-primary);
-  margin: 0;
+  /* iter8 — Aria DevTools: h3 margin 16px 0 */
+  margin: var(--dw-s4) 0;
 }
 
 .dw-card__specs {
   font-family: var(--dw-font-body);
-  font-size: 0.8125rem;
-  color: var(--dw-text-secondary);
-  margin: 0;
+  /* iter8 — Aria DevTools: 12px exact, margin 5px 0 */
+  font-size: 0.75rem;
+  color: var(--dw-text-primary);
+  margin: 5px 0;
   line-height: 1.5;
 }
-.dw-card__spec-label  { color: var(--dw-text-secondary); font-weight: 400; }
-.dw-card__spec-value  { font-weight: 500; color: var(--dw-text-primary); }
+/* iter8 — Aria parity: BOTH label and value at primary text color
+ * (#292929); presence comes from weight contrast (400 vs 700), not
+ * from desaturating the label to gray. */
+.dw-card__spec-label  { color: var(--dw-text-primary); font-weight: 400; }
+.dw-card__spec-value  { font-weight: 700; color: var(--dw-text-primary); }
 .dw-card__spec-sep    { color: var(--dw-text-faint); padding: 0 4px; }
 
 .dw-card__price-block {
@@ -832,7 +837,8 @@
   display: inline-flex;
   align-items: center;
   font-family: var(--dw-font-body);
-  font-size: 0.6875rem;
+  /* iter8 — Aria DevTools: 12px exact */
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--dw-text-primary);
@@ -861,6 +867,11 @@
   width: 100%;
   min-height: 44px;
   font-size: 0.875rem;
+  /* iter8 — Aria DevTools: pure #000000 + bolder for editorial presence.
+   * Card add button text is darker than body text (#292929) by design —
+   * the CTA reads heavier than surrounding spec/title text. */
+  color: #000000;
+  font-weight: 700;
 }
 
 /* Card-level click affordance (whole card is clickable to open viewer) */
