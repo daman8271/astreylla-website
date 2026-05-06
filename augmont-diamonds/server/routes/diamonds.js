@@ -140,14 +140,20 @@ export async function handlePublicDiamonds(req, res, next) {
     const result = await getDiamonds(augmontQuery, {
       nocache: nocache === "1",
     });
-    let diamonds = result.diamonds;
+    // CRITICAL: clone the cached array before any in-place mutation. The
+    // cache stores `result` by reference; `Array.prototype.sort` mutates,
+    // and `.filter` returns a new array but if we ever skip the cert step
+    // the same reference is forwarded. A previous request issuing
+    // `?sort=price_desc` would otherwise leave the cached page sorted, so a
+    // subsequent unsorted request returns price-desc order. Always slice.
+    let diamonds = Array.isArray(result.diamonds) ? result.diamonds.slice() : [];
     const totalCount = result.totalCount;
 
     // Certificate "Other" post-filter (C-iter2). Reduce the page to stones
     // whose lab is NOT one of the well-known certs OR is in the explicit
     // picks the user mixed with "Other". When only "Other" is selected
     // and no explicit picks, this collapses to "lab not in {GIA,IGI,HRD}".
-    if (certInfo.otherSelected && Array.isArray(diamonds)) {
+    if (certInfo.otherSelected) {
       const explicitSet = new Set(certInfo.picks);
       diamonds = diamonds.filter((d) => {
         const lab = String(d?.lab || "").toUpperCase();
@@ -162,7 +168,9 @@ export async function handlePublicDiamonds(req, res, next) {
     // Trade-off: with paged catalog of 700K stones, "Price: low to high"
     // means "lowest-priced of THIS page is first", not "globally lowest
     // first". Acceptable starting point; document for future review.
-    if (sortParam && Array.isArray(diamonds)) {
+    // Safe to sort in place: `diamonds` is now an owned slice (not a cache
+    // alias) thanks to the clone above.
+    if (sortParam) {
       const cmp = sortComparator(sortParam);
       if (cmp) diamonds.sort(cmp);
     }
@@ -182,6 +190,28 @@ export async function handlePublicDiamonds(req, res, next) {
       pagination: { from: fromNum, to: toNum, hasMore },
       totalCount: exposedTotal,
     });
+
+    // Speculative prefetch of next page (best-effort). When the buyer just
+    // landed on the first page (from=1) and there appears to be more, fire
+    // a background fetch for the next page so "Load more" lands in the SWR
+    // cache. Only first-page → page 2 to avoid runaway prefetch chains.
+    // Errors are swallowed (we already responded to the user).
+    const shouldPrefetch =
+      fromNum === 1 && (hasMore || exposedTotal == null) && nocache !== "1";
+    if (shouldPrefetch) {
+      const nextFrom = toNum + 1;
+      const nextTo = nextFrom + pageSize - 1;
+      const prefetchQuery = { ...augmontFilters, from: nextFrom, to: nextTo };
+      // Drop count for prefetch — we already have the total from this call,
+      // and dropping it keeps the prefetch on the same upstream cache key
+      // family as a future user request (which probably also won't ask for
+      // count on page 2).
+      setImmediate(() => {
+        getDiamonds(prefetchQuery).catch(() => {
+          /* prefetch failures are non-fatal; the user already has page 1 */
+        });
+      });
+    }
   } catch (err) {
     if (err instanceof AugmontError && err.code === "UPSTREAM_TIMEOUT") {
       return res.status(503).json({

@@ -5,6 +5,7 @@ import { dirname, resolve } from "path";
 import { createRequestHandler } from "@react-router/express";
 import * as remixBuild from "../build/server/index.js";
 import diamondsRouter, { handlePublicDiamonds } from "./routes/diamonds.js";
+import { getDiamonds } from "./services/payalApi.js";
 import { handlePublicEnquiry } from "./routes/enquiry.js";
 import ordersRouter from "./routes/orders.js";
 import gdprRouter from "./routes/gdpr.js";
@@ -187,4 +188,25 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`[server] listening on :${PORT} (NODE_ENV=${process.env.NODE_ENV ?? "development"})`);
   console.log(`[server] static client: ${CLIENT_BUILD_DIR}`);
+
+  // Cold-start warm-up: fire ONE non-blocking Augmont fetch for the default
+  // first-page query so the SWR cache is populated before the first buyer
+  // pageview. Augmont's "no filter" path is ~21s slow path that returns 25
+  // stones; with `hasImage=true&from=1&to=24` we hit a real filtered query
+  // matching what the widget asks for first. Fire-and-forget — failures are
+  // logged but don't block boot.
+  if (process.env.AUGMONT_BASE_URL && process.env.PAYAL_API_USERNAME) {
+    const warmStart = Date.now();
+    getDiamonds({ from: 1, to: 24, hasImage: "true", count: "true" })
+      .then((r) => {
+        console.log(
+          `[warmup] ok latencyMs=${Date.now() - warmStart} count=${r?.diamonds?.length ?? 0} totalCount=${r?.totalCount ?? "n/a"}`
+        );
+      })
+      .catch((err) => {
+        console.warn(`[warmup] failed: ${err?.message || err}`);
+      });
+  } else {
+    console.log("[warmup] skipped (Augmont env not configured)");
+  }
 });

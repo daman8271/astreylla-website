@@ -7,28 +7,38 @@
 
 .diamond-widget {
   /*
-   * Phase D-final palette: warm-white over pure white, deep charcoal text,
-   * subtle warm borders. Tokens still defer to merchant theme vars where
-   * sensible so a dark-themed storefront can override the surface.
+   * F6 D-fix palette — visibly warm beige/cream surfaces, pure-white cards.
+   * The cream `--dw-bg-page` is the visual signature: it must read warmer
+   * than ivory at arm's length. Cards pop against it; the image well sits
+   * a half-step deeper so empty stones still feel intentional.
+   * Tokens still defer to merchant theme vars where it's safe to.
    */
-  --dw-text:         var(--color-foreground, #1a1a1a);
-  --dw-text-muted:   #666666;
-  --dw-text-faint:   #999999;
-  --dw-bg:           var(--color-background, #fafaf9);
-  --dw-bg-card:      #ffffff;
-  --dw-image-well:   var(--color-base-background-2, #f2f1f0);
-  --dw-border:       #e5e3df;        /* warm hairline */
-  --dw-border-strong:#3d3d3d;        /* button outline */
-  --dw-hairline:     rgba(0, 0, 0, 0.06);
-  --dw-hover-bg:     #f5f3ef;        /* subtle beige hover */
-  --dw-skeleton:     #ececec;
-  --dw-skeleton-hi:  #f5f5f5;
-  --dw-accent-red:   #e5484d;        /* discount + destructive only */
-  --dw-accent:       var(--dw-text); /* merchant primary_color overrides this */
-  --dw-overlay-cart:   rgba(0, 0, 0, 0.85);  /* cart slide-in scrim */
-  --dw-overlay-viewer: rgba(0, 0, 0, 0.92);  /* near-opaque for detail modal */
-  --dw-overlay-form:   rgba(0, 0, 0, 0.85);  /* checkout form scrim */
-  /* Back-compat alias */
+  --dw-bg-page:        #f5f1ea;       /* warm cream — page background */
+  --dw-bg-card:        #ffffff;       /* pure white card pops on cream */
+  --dw-bg-image-well:  #ebe6dc;       /* deeper warm tone for placeholders */
+  --dw-bg-elevated:    #faf6ee;       /* between page + card — filter band, cert block */
+  --dw-text-primary:   #1a1814;       /* warm near-black */
+  --dw-text-secondary: #6b6359;       /* warm gray for labels/captions */
+  --dw-text-faint:     #9a9183;       /* tertiary — strikethroughs, captions */
+  --dw-border-subtle:  #e3ddd0;       /* warm hairline */
+  --dw-border-strong:  #2a2520;       /* warm dark for outlines */
+  --dw-accent-red:     #c8312c;       /* warm red for discount badges */
+  --dw-hover-bg:       #efeae0;       /* subtle warm hover for pills/chips */
+  --dw-skeleton:       #e8e2d6;
+  --dw-skeleton-hi:    #f3eee4;
+  --dw-shadow-card:    0 4px 16px rgba(40, 32, 18, 0.05);
+  --dw-accent:         var(--dw-text-primary); /* merchant primary_color overrides this */
+  --dw-overlay-cart:   rgba(40, 32, 18, 0.55);  /* warm scrim */
+  --dw-overlay-viewer: rgba(40, 32, 18, 0.62);  /* warm near-opaque for detail modal */
+  --dw-overlay-form:   rgba(40, 32, 18, 0.55);
+  /* Back-compat aliases — keep older selectors rendering sensibly while we
+   * migrate every rule to the new token names. */
+  --dw-bg:             var(--dw-bg-page);
+  --dw-text:           var(--dw-text-primary);
+  --dw-text-muted:     var(--dw-text-secondary);
+  --dw-border:         var(--dw-border-subtle);
+  --dw-image-well:     var(--dw-bg-image-well);
+  --dw-hairline:       var(--dw-border-subtle);
   --dw-shadow-overlay: var(--dw-overlay-cart);
 
   /* Spacing */
@@ -56,8 +66,8 @@
 
   font-family: var(--dw-font);
   font-weight: 400;
-  color: var(--dw-text);
-  background: var(--dw-bg);
+  color: var(--dw-text-primary);
+  background: var(--dw-bg-page);
   padding: var(--dw-s7) var(--dw-s5) var(--dw-s8);
   box-sizing: border-box;
   line-height: 1.4;
@@ -128,21 +138,21 @@
   font-size: 1.125rem;
   font-weight: 400;
   letter-spacing: -0.01em;
-  color: var(--dw-text-muted);
+  color: var(--dw-text-secondary);
   cursor: pointer;
   position: relative;
   transition: color 0.15s ease;
   min-height: 44px;
 }
-.dw-treatment-tab:hover { color: var(--dw-text); }
-.dw-treatment-tab.is-active { color: var(--dw-text); }
+.dw-treatment-tab:hover { color: var(--dw-text-primary); }
+.dw-treatment-tab.is-active { color: var(--dw-text-primary); }
 .dw-treatment-tab.is-active::after {
   content: '';
   position: absolute;
   left: 0; right: 0;
   bottom: -3px;
   height: 2px;
-  background: var(--dw-text);
+  background: var(--dw-text-primary);
 }
 
 @media (max-width: 768px) {
@@ -157,14 +167,24 @@
 .dw-filters {
   margin: 0 auto var(--dw-s6);
   max-width: 1280px;
-  padding-bottom: var(--dw-s5);
-  border-bottom: 1px solid var(--dw-hairline);
+  padding: var(--dw-s5);
+  background: var(--dw-bg-elevated);
+  border: 1px solid var(--dw-border-subtle);
+  border-radius: 4px;
 }
 
 .dw-filters__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--dw-s7);
+  padding-bottom: var(--dw-s4);
+  border-bottom: 1px solid var(--dw-border-subtle);
+}
+/* When chips are visible they sit below the divider; if hidden the divider
+ * is the natural bottom edge of the grid and we don't need extra space. */
+.dw-filters:has(.dw-chips[hidden]) .dw-filters__grid {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .dw-filters__col {
@@ -199,10 +219,10 @@
 .dw-pill {
   appearance: none;
   -webkit-appearance: none;
-  background: rgba(0, 0, 0, 0.01);
-  border: 1px solid var(--dw-hairline);
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-border-subtle);
   border-radius: 8px;
-  color: var(--dw-text);
+  color: var(--dw-text-primary);
   font-family: var(--dw-font-btn);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -213,15 +233,15 @@
   outline: none;
   line-height: 1.2;
 }
-.dw-pill:hover { background: var(--dw-hover-bg); border-color: var(--dw-text); }
+.dw-pill:hover { background: var(--dw-hover-bg); border-color: var(--dw-text-primary); }
 .dw-pill:focus-visible {
-  border-color: var(--dw-text);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+  border-color: var(--dw-text-primary);
+  box-shadow: 0 0 0 3px rgba(40, 32, 18, 0.10);
 }
 .dw-pill.is-active {
-  background: var(--dw-text);
-  color: var(--dw-bg);
-  border-color: var(--dw-text);
+  background: var(--dw-text-primary);
+  color: var(--dw-bg-card);
+  border-color: var(--dw-text-primary);
 }
 
 /* ─── SLIDERS (dual-thumb) ────────────────────────────────────────────────── */
@@ -572,18 +592,32 @@
 
 .dw-card {
   background: var(--dw-bg-card);
-  border-radius: 0;
-  border: none;
+  border-radius: 4px;
+  border: 1px solid var(--dw-border-subtle);
   box-shadow: none;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  /* Hardware-accelerated hover lift; never animate top/left/box-size. */
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.18s ease,
+              border-color 0.18s ease;
+  will-change: transform;
+}
+@media (hover: hover) and (min-width: 769px) {
+  .dw-card:hover,
+  .dw-card:focus-within {
+    transform: translateY(-1px);
+    box-shadow: var(--dw-shadow-card);
+    border-color: var(--dw-border-subtle);
+  }
 }
 
 .dw-card__image {
   position: relative;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: var(--dw-image-well);
+  background: var(--dw-bg-image-well);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -600,16 +634,37 @@
 .dw-card__badge {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   background: var(--dw-accent-red);
   color: #ffffff;
   font-family: var(--dw-font-body);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0;
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 3px 7px;
+  border-radius: 999px;
   line-height: 1.4;
+}
+
+/* "360" pill — top-left, only when video tier media is available */
+.dw-card__360-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(26, 24, 20, 0.85);
+  color: #ffffff;
+  font-family: var(--dw-font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+/* When discount + 360 badges coexist, push 360 to the right side. */
+.dw-card__badge ~ .dw-card__360-badge {
+  left: auto;
+  right: 8px;
 }
 
 /*
@@ -626,8 +681,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--dw-image-well);
-  color: #b8b8b8;
+  background: var(--dw-bg-image-well);
+  color: #c2b9a6;
 }
 
 .dw-card__img-placeholder svg {
@@ -639,7 +694,7 @@
 }
 
 .dw-card__body {
-  padding: var(--dw-s3) 0 0;
+  padding: var(--dw-s4);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -647,42 +702,44 @@
 
 .dw-card__title {
   font-family: var(--dw-font-body);
-  font-size: 1rem;
-  font-weight: 400;
+  font-size: 0.9375rem;
+  font-weight: 500;
   line-height: 1.4;
-  color: var(--dw-text);
+  letter-spacing: -0.005em;
+  color: var(--dw-text-primary);
   margin: 0;
 }
 
 .dw-card__specs {
   font-family: var(--dw-font-body);
-  font-size: 0.875rem;
-  color: var(--dw-text);
+  font-size: 0.75rem;
+  color: var(--dw-text-secondary);
   margin: 0;
   line-height: 1.5;
 }
-.dw-card__spec-label  { color: var(--dw-text-muted); font-weight: 400; }
-.dw-card__spec-value  { font-weight: 700; color: var(--dw-text); }
+.dw-card__spec-label  { color: var(--dw-text-secondary); font-weight: 400; }
+.dw-card__spec-value  { font-weight: 500; color: var(--dw-text-primary); }
+.dw-card__spec-sep    { color: var(--dw-text-faint); padding: 0 4px; }
 
 .dw-card__price-block {
   display: flex;
   align-items: baseline;
   gap: var(--dw-s2);
-  margin: var(--dw-s2) 0 var(--dw-s3);
+  margin: var(--dw-s3) 0 var(--dw-s3);
 }
 
 .dw-card__price {
   font-family: var(--dw-font-body);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--dw-text);
+  color: var(--dw-text-primary);
   margin: 0;
-  letter-spacing: 0;
+  letter-spacing: -0.005em;
 }
 
 .dw-card__price-strike {
   font-family: var(--dw-font-body);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 400;
   color: var(--dw-text-faint);
   text-decoration: line-through;
@@ -701,7 +758,7 @@
   font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0.04em;
-  color: var(--dw-text);
+  color: var(--dw-text-primary);
   border: 1px solid var(--dw-border-strong);
   border-radius: 4px;
   padding: 2px 6px;
@@ -718,12 +775,16 @@
   font-family: var(--dw-font-body);
   font-size: 0.75rem;
   font-weight: 400;
-  color: #666;
+  color: var(--dw-text-secondary);
   margin: 0 0 var(--dw-s3);
   letter-spacing: 0;
 }
 
-.dw-card__add { width: 100%; }
+.dw-card__add {
+  width: 100%;
+  min-height: 40px;
+  font-size: 0.8125rem;
+}
 
 /* Card-level click affordance (whole card is clickable to open viewer) */
 .dw-card { cursor: pointer; }
@@ -1262,10 +1323,12 @@
   .dw-cart-panel { width: 100vw; }
 }
 
-/* ─── 360° VIEWER MODAL ──────────────────────────────────────────────────────
- * Loads viewmydiamonds.com (Augmont's HTML viewer page that we can't render
- * inline as an image) inside an iframe. iframe src is set on open, blanked
- * on close so background tabs don't leave 24+ network connections hanging.
+/* ─── DETAIL MODAL — Aria Morelle clone ────────────────────────────────────
+ * Full-bleed scrim, 50/50 columns up to 1100px max. Image well left,
+ * spec-and-actions block right. Below the fold a "Diamond details"
+ * accordion lists every Augmont field. Mobile collapses to single column,
+ * image on top. The iframe + 3-tier auto-promotion logic in JS is preserved
+ * exactly — only the surrounding chrome was rebuilt.
  */
 
 .dw-viewer {
@@ -1273,71 +1336,83 @@
   inset: 0;
   z-index: 9999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: var(--dw-s4);
+  padding: 0;
+  overflow-y: auto;
 }
 .dw-viewer[hidden] { display: none; }
 
 .dw-viewer__backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: var(--dw-overlay-viewer);
 }
 
 .dw-viewer__panel {
   position: relative;
-  background: var(--dw-bg-card);
-  width: min(1200px, 92vw);
-  max-width: 1200px;
-  max-height: 88vh;
+  background: var(--dw-bg-page);
+  width: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--dw-border);
+  border: 0;
+  /* Scroll happens on the panel — body scroll is locked while open. */
 }
 
-.dw-viewer__close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-  background: var(--dw-bg-card);
-  border: 1px solid var(--dw-border-strong);
-  border-radius: 8px;
-  font-size: 1rem;
-  color: var(--dw-text);
+.dw-viewer__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--dw-bg-page);
+  padding: var(--dw-s4) var(--dw-s5);
+  border-bottom: 1px solid var(--dw-border-subtle);
+}
+
+.dw-viewer__back {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 6px 4px;
+  font-family: var(--dw-font-btn);
+  font-size: 0.8125rem;
+  color: var(--dw-text-secondary);
   cursor: pointer;
-  line-height: 1;
-  padding: 0;
-  width: 32px;
-  height: 32px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0;
+  min-height: 36px;
 }
-.dw-viewer__close:hover {
-  background: var(--dw-text);
-  color: var(--dw-bg);
-}
+.dw-viewer__back:hover { color: var(--dw-text-primary); }
+.dw-viewer__back svg { width: 12px; height: 12px; }
 
-/*
- * Two-column detail layout: media (58%) on the left, rich detail panel
- * (42%) on the right. Mobile collapses to single column with media on top.
- */
+/* Hide the original X close button — back link replaces it on the new layout. */
+.dw-viewer__close { display: none; }
+
 .dw-viewer__layout {
   flex: 1;
   display: grid;
-  grid-template-columns: 58% 42%;
-  min-height: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--dw-s7);
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--dw-s5) var(--dw-s5) var(--dw-s7);
+  align-items: start;
 }
 
+/* ---- LEFT: image well + 360 badge + tier media ---- */
+
 .dw-viewer__media {
-  background: var(--dw-image-well);
+  background: var(--dw-bg-image-well);
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  border-radius: 4px;
+  overflow: hidden;
   position: relative;
+  /* Square image well — locks the visual rhythm vs the right column. */
+  aspect-ratio: 1 / 1;
 }
 
 .dw-viewer__media-frame {
@@ -1347,6 +1422,8 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .dw-viewer__media-frame iframe {
@@ -1354,7 +1431,7 @@
   height: 100%;
   border: 0;
   display: block;
-  background: var(--dw-image-well);
+  background: var(--dw-bg-image-well);
 }
 
 .dw-viewer__fallback {
@@ -1364,186 +1441,376 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--dw-s4);
+  gap: var(--dw-s3);
   padding: var(--dw-s5);
   text-align: center;
-  background: var(--dw-image-well);
+  background: var(--dw-bg-image-well);
 }
 .dw-viewer__fallback[hidden] { display: none; }
 
 .dw-viewer__fallback-svg {
-  width: 60%;
-  max-width: 280px;
+  width: 50%;
+  max-width: 220px;
   aspect-ratio: 1 / 1;
-  color: #b8b8b8;
+  color: #c2b9a6;
 }
-.dw-viewer__fallback-svg svg {
-  width: 100%;
-  height: 100%;
-}
+.dw-viewer__fallback-svg svg { width: 100%; height: 100%; }
 
 .dw-viewer__fallback-msg {
   font-family: var(--dw-font);
-  font-size: 0.875rem;
-  color: var(--dw-text-muted);
+  font-size: 0.8125rem;
+  color: var(--dw-text-secondary);
   margin: 0;
-  max-width: 36ch;
+  max-width: 30ch;
   line-height: 1.5;
 }
 
-/* Tier toggle row: 360°/Photo/Outline pills below the iframe */
+/* Tiny "360" badge bottom-left — only visible while video tier is active */
+.dw-viewer__360-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 2;
+  background: rgba(26, 24, 20, 0.85);
+  color: #ffffff;
+  font-family: var(--dw-font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+.dw-viewer__360-badge[hidden] { display: none; }
+
+/* Tier toggle row: 360°/Photo/Outline pills sitting below the image well */
 .dw-viewer__tier-controls {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 2;
   display: flex;
-  justify-content: center;
-  gap: var(--dw-s2);
-  padding: var(--dw-s2) var(--dw-s3);
-  background: var(--dw-bg-card);
-  border-top: 1px solid var(--dw-border);
+  gap: 6px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  border: 1px solid var(--dw-border-subtle);
+  backdrop-filter: blur(6px);
 }
 
 .dw-viewer__tier-btn {
   appearance: none;
-  background: var(--dw-bg-card);
-  border: 1px solid var(--dw-border);
-  border-radius: 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
   font-family: var(--dw-font-btn);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0;
-  color: var(--dw-text-muted);
+  letter-spacing: 0.02em;
+  color: var(--dw-text-secondary);
   padding: 6px 10px;
-  min-height: 32px;
+  min-height: 28px;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
-.dw-viewer__tier-btn:hover { color: var(--dw-text); border-color: var(--dw-text); }
+.dw-viewer__tier-btn:hover { color: var(--dw-text-primary); }
 .dw-viewer__tier-btn.is-active {
-  background: var(--dw-text);
-  color: var(--dw-bg-card);
-  border-color: var(--dw-text);
+  background: var(--dw-text-primary);
+  color: #ffffff;
 }
 
-/* Right-side detail panel */
+/* ---- RIGHT: detail panel ---- */
+
 .dw-viewer__detail {
   display: flex;
   flex-direction: column;
-  gap: var(--dw-s4);
-  padding: var(--dw-s7) var(--dw-s5) var(--dw-s5);
-  overflow-y: auto;
-  background: var(--dw-bg-card);
+  gap: 0;
+  background: transparent;
+  padding: 0;
+  /* Anchor link target for "Talk to an expert" scroll-to-details. */
+  scroll-margin-top: 80px;
 }
+
+.dw-viewer__discount {
+  display: inline-flex;
+  align-self: flex-start;
+  background: var(--dw-accent-red);
+  color: #ffffff;
+  font-family: var(--dw-font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  line-height: 1.4;
+  margin-bottom: var(--dw-s3);
+}
+.dw-viewer__discount[hidden] { display: none; }
 
 .dw-viewer__title {
   font-family: var(--dw-font-heading);
   font-size: 1.75rem;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.01em;
   line-height: 1.1;
-  color: var(--dw-text);
+  color: var(--dw-text-primary);
+  margin: 0 0 var(--dw-s2);
+}
+
+.dw-viewer__head-spec {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--dw-font);
+  font-size: 0.875rem;
+  color: var(--dw-text-secondary);
+  margin: 0 0 6px;
+  letter-spacing: 0;
+  flex-wrap: wrap;
+}
+.dw-viewer__head-spec svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--dw-text-secondary);
+}
+.dw-viewer__head-spec-label { color: var(--dw-text-secondary); font-weight: 400; }
+.dw-viewer__head-spec-value { color: var(--dw-text-primary); font-weight: 500; }
+.dw-viewer__head-spec-sep { color: var(--dw-text-faint); padding: 0 2px; }
+
+/* Cert badge block — boxed surface w/ lab seal SVG */
+.dw-viewer__cert-block {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-s3);
+  background: var(--dw-bg-elevated);
+  border: 1px solid var(--dw-border-subtle);
+  border-radius: 12px;
+  padding: var(--dw-s3);
+  margin-top: var(--dw-s4);
+}
+.dw-viewer__cert-block[hidden] { display: none; }
+.dw-viewer__cert-seal {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  color: var(--dw-text-primary);
+}
+.dw-viewer__cert-seal svg { width: 100%; height: 100%; display: block; }
+.dw-viewer__cert-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dw-viewer__cert-name {
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--dw-text-primary);
   margin: 0;
+  letter-spacing: -0.005em;
+}
+.dw-viewer__cert-num {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  color: var(--dw-text-secondary);
+  margin: 0;
+}
+.dw-viewer__cert-link {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  color: var(--dw-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.dw-viewer__cert-link:hover { opacity: 0.75; }
+
+/* Price block — flex row aligning label-stack on left, price-stack on right */
+.dw-viewer__price-block {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--dw-s4);
+  margin-top: var(--dw-s5);
+  padding-top: var(--dw-s4);
+  border-top: 1px solid var(--dw-border-subtle);
+}
+.dw-viewer__price-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dw-viewer__price-label {
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--dw-text-primary);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+.dw-viewer__price-sublabel {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  color: var(--dw-text-secondary);
+  margin: 0;
+}
+.dw-viewer__price-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.dw-viewer__price {
+  font-family: var(--dw-font);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dw-text-primary);
+  margin: 0;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+.dw-viewer__price-strike-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+}
+.dw-viewer__price-strike {
+  color: var(--dw-text-faint);
+  text-decoration: line-through;
+}
+.dw-viewer__price-discount { color: var(--dw-accent-red); font-weight: 600; }
+
+/* Action buttons — full-width, stacked */
+.dw-viewer__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-s2);
+  margin-top: var(--dw-s4);
+}
+.dw-viewer__add {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 4px;
+}
+.dw-viewer__expert {
+  width: 100%;
+  min-height: 48px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  background: var(--dw-bg-card);
+  color: var(--dw-text-primary);
+  border: 1px solid var(--dw-text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--dw-font-btn);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.dw-viewer__expert:hover {
+  background: var(--dw-text-primary);
+  color: var(--dw-bg-card);
+}
+
+/* ---- BELOW THE FOLD: Diamond details accordion ---- */
+
+.dw-viewer__details-section {
+  grid-column: 1 / -1;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--dw-s5) var(--dw-s7);
+}
+
+.dw-viewer__accordion {
+  border-top: 1px solid var(--dw-border-subtle);
+  padding-top: var(--dw-s4);
+}
+
+.dw-viewer__accordion-trigger {
+  appearance: none;
+  background: none;
+  border: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-family: var(--dw-font-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--dw-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+.dw-viewer__accordion-chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.18s ease;
+  color: var(--dw-text-secondary);
+}
+.dw-viewer__accordion[data-open="true"] .dw-viewer__accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.dw-viewer__accordion-body {
+  padding: var(--dw-s4) 0 0;
+}
+.dw-viewer__accordion[data-open="false"] .dw-viewer__accordion-body {
+  display: none;
 }
 
 .dw-viewer__specs {
   margin: 0;
   display: grid;
   grid-template-columns: max-content 1fr;
-  column-gap: var(--dw-s4);
-  row-gap: var(--dw-s2);
-  padding: var(--dw-s4) 0;
-  border-top: 1px solid var(--dw-border);
-  border-bottom: 1px solid var(--dw-border);
+  column-gap: var(--dw-s5);
+  row-gap: 8px;
 }
 .dw-viewer__specs dt {
   font-family: var(--dw-font);
   font-size: 0.8125rem;
   font-weight: 400;
-  color: var(--dw-text-muted);
+  color: var(--dw-text-secondary);
   letter-spacing: 0;
 }
 .dw-viewer__specs dd {
   font-family: var(--dw-font);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--dw-text);
-  margin: 0;
-  letter-spacing: 0;
-}
-
-.dw-viewer__price-row {
-  display: flex;
-  align-items: baseline;
-  gap: var(--dw-s3);
-  flex-wrap: wrap;
-}
-.dw-viewer__price {
-  font-family: var(--dw-font);
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--dw-text);
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-.dw-viewer__cert {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--dw-font);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--dw-text);
-  border: 1px solid var(--dw-border-strong);
-  border-radius: 4px;
-  padding: 2px 6px;
-  white-space: nowrap;
-  line-height: 1.4;
-}
-.dw-viewer__cert[hidden] { display: none; }
-
-.dw-viewer__ships {
-  font-family: var(--dw-font);
   font-size: 0.8125rem;
-  color: var(--dw-text-muted);
+  font-weight: 500;
+  color: var(--dw-text-primary);
   margin: 0;
   letter-spacing: 0;
+  text-align: right;
 }
 
-.dw-viewer__add {
-  width: 100%;
-  min-height: 48px;
-  margin-top: auto;
-  font-size: 0.9375rem;
-}
+/* Old caption no longer used in the rebuilt modal */
+.dw-viewer__caption { display: none; }
 
-.dw-viewer__caption {
-  font-family: var(--dw-font);
-  font-size: 0.75rem;
-  color: var(--dw-text-muted);
-  text-align: center;
-  margin: 0;
-  padding: var(--dw-s2) var(--dw-s4);
-  border-top: 1px solid var(--dw-border);
-  background: var(--dw-bg-card);
-}
+/* ---- Mobile: stack to single column ---- */
 
 @media (max-width: 768px) {
-  .dw-viewer { padding: 0; }
-  .dw-viewer__panel {
-    width: 100vw;
-    height: 100vh;
-    max-width: none;
-    max-height: none;
-    border: 0;
-  }
+  .dw-viewer__topbar { padding: var(--dw-s3) var(--dw-s4); }
   .dw-viewer__layout {
     grid-template-columns: 1fr;
-    grid-template-rows: 50% 50%;
+    gap: var(--dw-s5);
+    padding: var(--dw-s4) var(--dw-s4) var(--dw-s5);
   }
-  .dw-viewer__detail {
-    padding: var(--dw-s5) var(--dw-s4);
-  }
-  .dw-viewer__close { top: 12px; right: 12px; }
+  .dw-viewer__media { aspect-ratio: 1 / 1; }
   .dw-viewer__title { font-size: 1.375rem; }
-  .dw-viewer__price { font-size: 1.5rem; }
+  .dw-viewer__price { font-size: 1.25rem; }
+  .dw-viewer__details-section {
+    padding: 0 var(--dw-s4) var(--dw-s7);
+  }
+  .dw-viewer__add { min-height: 48px; }
+  .dw-viewer__expert { min-height: 44px; }
 }
 
 /* ─── REDUCED MOTION ──────────────────────────────────────────────────────── */

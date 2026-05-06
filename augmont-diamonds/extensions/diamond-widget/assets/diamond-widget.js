@@ -165,17 +165,32 @@
   var cartFooter    = root.querySelector('#dw-cart-footer');
   var cartBackdrop  = root.querySelector('#dw-cart-backdrop');
   var checkoutPanel = root.querySelector('#dw-checkout');
-  var viewerPanel    = root.querySelector('#dw-viewer');
-  var viewerFrame    = root.querySelector('#dw-viewer-frame');
-  var viewerCaption  = root.querySelector('#dw-viewer-caption');
-  var viewerFallback = root.querySelector('#dw-viewer-fallback');
-  var viewerFallSvg  = root.querySelector('#dw-viewer-fallback-svg');
-  var viewerTitle    = root.querySelector('#dw-viewer-title');
-  var viewerSpecs    = root.querySelector('#dw-viewer-specs');
-  var viewerPrice    = root.querySelector('#dw-viewer-price');
-  var viewerCert     = root.querySelector('#dw-viewer-cert');
-  var viewerAddBtn   = root.querySelector('#dw-viewer-add');
-  var viewerTierBtns = root.querySelectorAll('.dw-viewer__tier-btn');
+  var viewerPanel        = root.querySelector('#dw-viewer');
+  var viewerFrame        = root.querySelector('#dw-viewer-frame');
+  var viewerCaption      = root.querySelector('#dw-viewer-caption');
+  var viewerFallback     = root.querySelector('#dw-viewer-fallback');
+  var viewerFallSvg      = root.querySelector('#dw-viewer-fallback-svg');
+  var viewerTitle        = root.querySelector('#dw-viewer-title');
+  var viewerHeadSpecBody = root.querySelector('#dw-viewer-head-spec-body');
+  var viewerSpecs        = root.querySelector('#dw-viewer-specs');
+  var viewerPrice        = root.querySelector('#dw-viewer-price');
+  var viewerPriceStrikeRow = root.querySelector('#dw-viewer-price-strike-row');
+  var viewerPriceStrike  = root.querySelector('#dw-viewer-price-strike');
+  var viewerPriceDiscount = root.querySelector('#dw-viewer-price-discount');
+  var viewerDiscount     = root.querySelector('#dw-viewer-discount');
+  var viewerCertBlock    = root.querySelector('#dw-viewer-cert-block');
+  var viewerCertSeal     = root.querySelector('#dw-viewer-cert-seal');
+  var viewerCertName     = root.querySelector('#dw-viewer-cert-name');
+  var viewerCertNum      = root.querySelector('#dw-viewer-cert-num');
+  var viewerCertLink     = root.querySelector('#dw-viewer-cert-link');
+  var viewerAddBtn       = root.querySelector('#dw-viewer-add');
+  var viewerExpertBtn    = root.querySelector('#dw-viewer-expert');
+  var viewerBackBtn      = root.querySelector('#dw-viewer-back');
+  var viewer360Badge     = root.querySelector('#dw-viewer-360-badge');
+  var viewerAccordion    = root.querySelector('#dw-viewer-accordion');
+  var viewerAccordionTrg = root.querySelector('#dw-viewer-accordion-trigger');
+  var viewerDetailsSec   = root.querySelector('#dw-viewer-details-section');
+  var viewerTierBtns     = root.querySelectorAll('.dw-viewer__tier-btn');
   // 360° viewer state for tier promotion + history-pop tracking
   var viewerState = {
     diamond: null,    // currently shown stone (full d object)
@@ -322,14 +337,32 @@
     );
   }
 
+  // ─── DETAIL MODAL HTML (Aria Morelle clone) ──────────────────────────────
+  // Structure mirrors the Nivoda-beta diamond detail page:
+  //   - Sticky topbar w/ "Back to browse"
+  //   - 50/50 grid: image well (left) + spec/price/buttons (right)
+  //   - Below grid: "Diamond details" accordion (default open)
+  // The 3-tier media tier-controls + auto-promotion logic is preserved exactly;
+  // only the surrounding chrome was rebuilt. Static SVG icons are embedded
+  // (truck, diamond, chevron, lab seal) so no external asset requests fire.
   function buildViewerOverlayHTML() {
     return (
       '<div class="dw-viewer" id="dw-viewer" role="dialog" aria-modal="true" aria-label="Diamond detail viewer" hidden>' +
         '<div class="dw-viewer__backdrop" id="dw-viewer-backdrop"></div>' +
         '<div class="dw-viewer__panel">' +
-          '<button class="dw-viewer__close" id="dw-viewer-close" type="button" aria-label="Close viewer">&#x2715;</button>' +
+          // Sticky top bar: replaces the corner X with a "Back to browse" link
+          '<div class="dw-viewer__topbar">' +
+            '<button type="button" class="dw-viewer__back" id="dw-viewer-back" aria-label="Close viewer">' +
+              '<svg viewBox="0 0 12 12" fill="none" aria-hidden="true">' +
+                '<path d="M7.5 2L3.5 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+              '</svg>' +
+              'Back to browse' +
+            '</button>' +
+            // Hidden legacy close button — left in for any stray references.
+            '<button class="dw-viewer__close" id="dw-viewer-close" type="button" aria-label="Close viewer">&#x2715;</button>' +
+          '</div>' +
           '<div class="dw-viewer__layout">' +
-            // LEFT: media area (iframe + manual fallback toggles + SVG fallback)
+            // LEFT: square image well + iframe + 360 badge + tier toggle pills
             '<div class="dw-viewer__media">' +
               '<div class="dw-viewer__media-frame" id="dw-viewer-media-frame">' +
                 '<iframe id="dw-viewer-frame" title="Diamond viewer" allow="autoplay; fullscreen" loading="lazy"></iframe>' +
@@ -338,28 +371,117 @@
                   '<p class="dw-viewer__fallback-msg">Live preview not yet available — Augmont catalog imagery being indexed.</p>' +
                 '</div>' +
               '</div>' +
+              // Tiny "360" pill bottom-left — only visible while video tier is active
+              '<span class="dw-viewer__360-badge" id="dw-viewer-360-badge" aria-hidden="true" hidden>360</span>' +
+              // Tier toggle pills bottom-right (manual override of auto-promotion)
               '<div class="dw-viewer__tier-controls" id="dw-viewer-tier-controls">' +
-                '<button type="button" class="dw-viewer__tier-btn" data-tier="video" aria-label="Show 360° spin">360° spin</button>' +
+                '<button type="button" class="dw-viewer__tier-btn" data-tier="video" aria-label="Show 360 spin">360</button>' +
                 '<button type="button" class="dw-viewer__tier-btn" data-tier="image" aria-label="Show photo">Photo</button>' +
                 '<button type="button" class="dw-viewer__tier-btn" data-tier="outline" aria-label="Show outline">Outline</button>' +
               '</div>' +
             '</div>' +
             // RIGHT: rich detail panel
             '<div class="dw-viewer__detail" id="dw-viewer-detail">' +
+              // Optional discount badge — only renders when MRP > price (Augmont
+              // doesn't currently expose this; conditional path stays).
+              '<span class="dw-viewer__discount" id="dw-viewer-discount" hidden></span>' +
               '<h2 class="dw-viewer__title" id="dw-viewer-title">Diamond</h2>' +
-              '<dl class="dw-viewer__specs" id="dw-viewer-specs"></dl>' +
-              '<div class="dw-viewer__price-row" id="dw-viewer-price-row">' +
-                '<p class="dw-viewer__price" id="dw-viewer-price"></p>' +
-                '<span class="dw-viewer__cert" id="dw-viewer-cert" hidden></span>' +
+              // Spec line w/ inline diamond icon: Color / Clarity / Cut
+              '<p class="dw-viewer__head-spec" id="dw-viewer-head-spec">' +
+                '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+                  '<path d="M3 6L8 1L13 6L8 14.5L3 6Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>' +
+                  '<path d="M3 6H13" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>' +
+                '</svg>' +
+                '<span id="dw-viewer-head-spec-body"></span>' +
+              '</p>' +
+              // Ships line w/ inline truck icon
+              '<p class="dw-viewer__head-spec">' +
+                '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+                  '<path d="M1 4h8v6H1z M9 6h3l2 2v2H9z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>' +
+                  '<circle cx="4" cy="11.5" r="1.2" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
+                  '<circle cx="11.5" cy="11.5" r="1.2" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
+                '</svg>' +
+                '<span class="dw-viewer__head-spec-value">Ships in 7-10 business days</span>' +
+              '</p>' +
+              // Cert badge block — boxed, hidden when no lab data
+              '<div class="dw-viewer__cert-block" id="dw-viewer-cert-block" hidden>' +
+                '<div class="dw-viewer__cert-seal" id="dw-viewer-cert-seal" aria-hidden="true"></div>' +
+                '<div class="dw-viewer__cert-info">' +
+                  '<p class="dw-viewer__cert-name" id="dw-viewer-cert-name">— Certified</p>' +
+                  '<p class="dw-viewer__cert-num" id="dw-viewer-cert-num">Certificate Number —</p>' +
+                  '<button type="button" class="dw-viewer__cert-link" id="dw-viewer-cert-link">Click to view certificate</button>' +
+                '</div>' +
               '</div>' +
-              '<p class="dw-viewer__ships">Ships in 7-10 business days</p>' +
-              '<button type="button" class="dw-btn dw-btn--solid dw-viewer__add" id="dw-viewer-add">Add to cart</button>' +
+              // Price block — left labels, right amounts
+              '<div class="dw-viewer__price-block">' +
+                '<div class="dw-viewer__price-labels">' +
+                  '<p class="dw-viewer__price-label">Price</p>' +
+                  '<p class="dw-viewer__price-sublabel">Price only for diamond</p>' +
+                '</div>' +
+                '<div class="dw-viewer__price-amounts">' +
+                  '<p class="dw-viewer__price" id="dw-viewer-price">—</p>' +
+                  '<span class="dw-viewer__price-strike-row" id="dw-viewer-price-strike-row" hidden>' +
+                    '<span class="dw-viewer__price-strike" id="dw-viewer-price-strike"></span>' +
+                    '<span class="dw-viewer__price-discount" id="dw-viewer-price-discount"></span>' +
+                  '</span>' +
+                '</div>' +
+              '</div>' +
+              // Action buttons stacked
+              '<div class="dw-viewer__actions">' +
+                '<button type="button" class="dw-btn dw-btn--solid dw-viewer__add" id="dw-viewer-add">Add to cart</button>' +
+                // "Talk to an expert" — no expert flow yet; smooth-scrolls to
+                // the Diamond details accordion as a soft fallback. Replace
+                // with a real mailto/contact form once we add that surface.
+                '<button type="button" class="dw-viewer__expert" id="dw-viewer-expert">Talk to an expert</button>' +
+              '</div>' +
             '</div>' +
           '</div>' +
-          '<p class="dw-viewer__caption" id="dw-viewer-caption">Live 360° viewer from Augmont. Stones without uploaded media will display “No video found”.</p>' +
+          // Below-the-fold: Diamond details accordion (default open). Spans
+          // full width independent of the 50/50 grid above.
+          '<div class="dw-viewer__details-section" id="dw-viewer-details-section">' +
+            '<section class="dw-viewer__accordion" id="dw-viewer-accordion" data-open="true">' +
+              '<button type="button" class="dw-viewer__accordion-trigger" id="dw-viewer-accordion-trigger" aria-expanded="true" aria-controls="dw-viewer-accordion-body">' +
+                '<span>Diamond details</span>' +
+                '<svg class="dw-viewer__accordion-chevron" viewBox="0 0 14 14" fill="none" aria-hidden="true">' +
+                  '<path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '</svg>' +
+              '</button>' +
+              '<div class="dw-viewer__accordion-body" id="dw-viewer-accordion-body">' +
+                '<dl class="dw-viewer__specs" id="dw-viewer-specs"></dl>' +
+              '</div>' +
+            '</section>' +
+          '</div>' +
+          // Legacy caption hidden via CSS — kept in DOM in case something references it.
+          '<p class="dw-viewer__caption" id="dw-viewer-caption" hidden></p>' +
         '</div>' +
       '</div>'
     );
+  }
+
+  // Inline lab seal SVGs — minimal, monogrammed octagonal seals so no
+  // external assets are loaded. One per lab + a generic fallback.
+  var LAB_SEALS = {
+    igi: '<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+           '<polygon points="22,3 35,8 40,22 35,36 22,41 9,36 4,22 9,8" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+           '<text x="22" y="26" text-anchor="middle" font-family="Instrument Sans, system-ui, sans-serif" font-size="10" font-weight="600" fill="currentColor" letter-spacing="0.5">IGI</text>' +
+         '</svg>',
+    gia: '<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+           '<circle cx="22" cy="22" r="19" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+           '<circle cx="22" cy="22" r="14" stroke="currentColor" stroke-width="0.7" fill="none"/>' +
+           '<text x="22" y="26" text-anchor="middle" font-family="Instrument Sans, system-ui, sans-serif" font-size="10" font-weight="600" fill="currentColor" letter-spacing="0.5">GIA</text>' +
+         '</svg>',
+    hrd: '<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+           '<rect x="4" y="4" width="36" height="36" rx="4" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+           '<text x="22" y="26" text-anchor="middle" font-family="Instrument Sans, system-ui, sans-serif" font-size="10" font-weight="600" fill="currentColor" letter-spacing="0.5">HRD</text>' +
+         '</svg>',
+    generic: '<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+               '<polygon points="22,4 38,12 38,32 22,40 6,32 6,12" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+               '<polygon points="22,12 32,16 32,28 22,32 12,28 12,16" stroke="currentColor" stroke-width="0.6" fill="none" opacity="0.55"/>' +
+             '</svg>'
+  };
+  function svgForLab(lab) {
+    var k = String(lab || '').toLowerCase().trim();
+    return LAB_SEALS[k] || LAB_SEALS.generic;
   }
 
   function buildCheckoutOverlayHTML() {
@@ -476,9 +598,59 @@
     root.querySelector('#dw-checkout-backdrop').addEventListener('click', closeCheckout);
     root.querySelector('#dw-checkout-form').addEventListener('submit', handleCheckoutSubmit);
 
-    // 360° viewer modal close paths
-    root.querySelector('#dw-viewer-close').addEventListener('click', closeViewer);
+    // 360° viewer modal close paths — back link (primary), legacy X button,
+    // and click-outside on the backdrop. The X is hidden via CSS but kept in
+    // the DOM in case any merchant-side script targets it.
+    if (viewerBackBtn) viewerBackBtn.addEventListener('click', function () { closeViewer(); });
+    var viewerCloseLegacy = root.querySelector('#dw-viewer-close');
+    if (viewerCloseLegacy) viewerCloseLegacy.addEventListener('click', function () { closeViewer(); });
     root.querySelector('#dw-viewer-backdrop').addEventListener('click', closeViewer);
+
+    // Accordion toggle for the "Diamond details" section. Default: open.
+    if (viewerAccordionTrg) {
+      viewerAccordionTrg.addEventListener('click', function () {
+        var open = viewerAccordion.getAttribute('data-open') === 'true';
+        var next = open ? 'false' : 'true';
+        viewerAccordion.setAttribute('data-open', next);
+        viewerAccordionTrg.setAttribute('aria-expanded', next);
+      });
+    }
+
+    // "Talk to an expert" — no real expert flow yet; smooth-scroll to the
+    // diamond details section as a sane interim. Replace once we have a
+    // contact path. Keeping it functional avoids dead-button taste tells.
+    if (viewerExpertBtn) {
+      viewerExpertBtn.addEventListener('click', function () {
+        if (!viewerDetailsSec) return;
+        // Force-open the accordion so the scroll target is visible.
+        if (viewerAccordion && viewerAccordion.getAttribute('data-open') !== 'true') {
+          viewerAccordion.setAttribute('data-open', 'true');
+          viewerAccordionTrg.setAttribute('aria-expanded', 'true');
+        }
+        try {
+          viewerDetailsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {
+          viewerDetailsSec.scrollIntoView();
+        }
+      });
+    }
+
+    // Cert link — best-effort: scrolls to details where the cert number lives.
+    // If we ever expose a per-stone certificate PDF URL, swap to window.open.
+    if (viewerCertLink) {
+      viewerCertLink.addEventListener('click', function () {
+        if (!viewerDetailsSec) return;
+        if (viewerAccordion && viewerAccordion.getAttribute('data-open') !== 'true') {
+          viewerAccordion.setAttribute('data-open', 'true');
+          viewerAccordionTrg.setAttribute('aria-expanded', 'true');
+        }
+        try {
+          viewerDetailsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {
+          viewerDetailsSec.scrollIntoView();
+        }
+      });
+    }
 
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
@@ -991,6 +1163,18 @@
       imgWrap.appendChild(badge);
     }
 
+    // "360" pill — render whenever we have a stockNum, since the modal will
+    // attempt the video tier first and auto-fall-back if unavailable. CSS
+    // shifts the pill to top-right when a discount badge is also present,
+    // so the two never collide.
+    if (stockNum) {
+      var spinBadge = document.createElement('span');
+      spinBadge.className = 'dw-card__360-badge';
+      spinBadge.textContent = '360';
+      spinBadge.setAttribute('aria-hidden', 'true');
+      imgWrap.appendChild(spinBadge);
+    }
+
     article.appendChild(imgWrap);
 
     var body = document.createElement('div');
@@ -1004,15 +1188,22 @@
     title.textContent = caratStr + 'ct ' + shape + ' Diamond';
     body.appendChild(title);
 
-    // Specs line
+    // Specs line — Color · Clarity · Cut. Middle-dot separator (Aria Morelle
+    // convention) reads more editorial than commas, and gives the card a
+    // single visual rhythm with the modal head-spec line.
     var specs = document.createElement('p');
     specs.className = 'dw-card__specs';
     var pieces = [];
-    pieces.push(specPair('Colour', color));
+    pieces.push(specPair('Color', color));
     pieces.push(specPair('Clarity', clarity));
     if (cut) pieces.push(specPair('Cut', cut));
     pieces.forEach(function (frag, i) {
-      if (i > 0) specs.appendChild(document.createTextNode(', '));
+      if (i > 0) {
+        var sep = document.createElement('span');
+        sep.className = 'dw-card__spec-sep';
+        sep.textContent = ' · ';
+        specs.appendChild(sep);
+      }
       specs.appendChild(frag);
     });
     body.appendChild(specs);
@@ -1061,10 +1252,12 @@
   }
 
   function specPair(label, value) {
+    // "Color H" (label space, value bold) — no colon. Reads cleaner inside a
+    // middle-dot-separated line, matches Aria Morelle's spec rhythm.
     var f = document.createDocumentFragment();
     var l = document.createElement('span');
     l.className = 'dw-card__spec-label';
-    l.textContent = label + ': ';
+    l.textContent = label + ' ';
     var v = document.createElement('strong');
     v.className = 'dw-card__spec-value';
     v.textContent = value;
@@ -1330,37 +1523,115 @@
     var caratStr = (d.carat != null) ? Number(d.carat).toFixed(2) : '—';
     var color    = d.color   || '—';
     var clarity  = d.clarity || '—';
-    var cut      = d.cut     || null;
+    var cut      = d.cut     ? String(d.cut) : '';
+    var polish   = d.polish  ? String(d.polish) : '';
+    var symmetry = d.symmetry ? String(d.symmetry) : '';
+    var measurements = d.measurements ? String(d.measurements) : '';
     var labRaw   = d.lab     || '';
+    var labClean = labRaw && !/^no[-\s]?cert$/i.test(labRaw) ? String(labRaw).trim() : '';
+    var labUpper = labClean ? labClean.toUpperCase() : '';
+    var certNum  = d.certificateNumber || d.certNumber || d.reportNumber || '';
+    var treatRaw = d.treatment ? String(d.treatment).toLowerCase() : '';
+    var treatLabel = treatRaw === 'natural' ? 'Natural Diamond'
+                    : treatRaw === 'lab-grown' || treatRaw === 'lab_grown' ? 'Lab-Grown Diamond'
+                    : 'Diamond';
     var price    = (d.price != null) ? Number(d.price) : null;
+    var mrp      = (d.mrp != null && Number(d.mrp) > 0) ? Number(d.mrp) : null;
     var ccy      = d.currency || cart.currency || 'USD';
 
     viewerTitle.textContent = caratStr + 'ct ' + shape + ' Diamond';
-    // Spec rows
+
+    // Header spec line: "Color H · Clarity VS2 · Cut VG"
+    while (viewerHeadSpecBody.firstChild) viewerHeadSpecBody.removeChild(viewerHeadSpecBody.firstChild);
+    var headPairs = [
+      ['Color',   color],
+      ['Clarity', clarity]
+    ];
+    if (cut) headPairs.push(['Cut', cut]);
+    headPairs.forEach(function (pair, i) {
+      if (i > 0) {
+        var sep = document.createElement('span');
+        sep.className = 'dw-viewer__head-spec-sep';
+        sep.textContent = ' · ';
+        viewerHeadSpecBody.appendChild(sep);
+      }
+      var l = document.createElement('span');
+      l.className = 'dw-viewer__head-spec-label';
+      l.textContent = pair[0] + ' ';
+      var v = document.createElement('span');
+      v.className = 'dw-viewer__head-spec-value';
+      v.textContent = pair[1];
+      viewerHeadSpecBody.appendChild(l);
+      viewerHeadSpecBody.appendChild(v);
+    });
+
+    // Discount badge — only when MRP > price (data-driven, off by default)
+    if (mrp && price && mrp > price * 1.02) {
+      var pctOff = Math.round((1 - price / mrp) * 100);
+      viewerDiscount.textContent = '-' + pctOff + '%';
+      viewerDiscount.hidden = false;
+    } else {
+      viewerDiscount.hidden = true;
+      viewerDiscount.textContent = '';
+    }
+
+    // Cert block — paint only when we actually have lab info. innerHTML use
+    // is safe: LAB_SEALS is a developer-controlled inline-SVG constant.
+    if (labClean) {
+      viewerCertSeal.innerHTML = svgForLab(labClean);
+      viewerCertName.textContent = labUpper + ' Certified';
+      viewerCertNum.textContent = 'Certificate Number ' + (certNum ? String(certNum) : '—');
+      viewerCertBlock.hidden = false;
+    } else {
+      viewerCertBlock.hidden = true;
+      viewerCertSeal.innerHTML = '';
+    }
+
+    // Price block + optional MRP strikethrough / discount inline
+    viewerPrice.textContent = price != null ? formatMoney(price, ccy) : '—';
+    if (mrp && price && mrp > price * 1.02) {
+      var pct2 = Math.round((1 - price / mrp) * 100);
+      viewerPriceStrike.textContent = formatMoney(mrp, ccy);
+      viewerPriceDiscount.textContent = '-' + pct2 + '%';
+      viewerPriceStrikeRow.hidden = false;
+    } else {
+      viewerPriceStrikeRow.hidden = true;
+      viewerPriceStrike.textContent = '';
+      viewerPriceDiscount.textContent = '';
+    }
+
+    // Diamond-details accordion specs — every Augmont field we have.
     while (viewerSpecs.firstChild) viewerSpecs.removeChild(viewerSpecs.firstChild);
     [
-      ['Carat',   caratStr],
-      ['Colour',  color],
-      ['Clarity', clarity],
-      ['Cut',     cut || '—'],
-      ['Lab',     labRaw && !/^no[-\s]?cert$/i.test(labRaw) ? String(labRaw).toUpperCase() : '—'],
-      ['Stock',   d.stockNum || '—']
+      ['Type',         treatLabel],
+      ['Shape',        shape],
+      ['Carat',        caratStr],
+      ['Colour',       color],
+      ['Clarity',      clarity],
+      ['Cut',          cut || '—'],
+      ['Polish',       polish || '—'],
+      ['Symmetry',     symmetry || '—'],
+      ['Certificate',  labUpper || '—'],
+      ['Stock Number', d.stockNum || '—'],
+      ['Measurements', measurements || '—']
     ].forEach(function (pair) {
       var dt = document.createElement('dt'); dt.textContent = pair[0];
       var dd = document.createElement('dd'); dd.textContent = String(pair[1]);
       viewerSpecs.appendChild(dt); viewerSpecs.appendChild(dd);
     });
-    viewerPrice.textContent = price != null ? formatMoney(price, ccy) : '';
-    if (labRaw && !/^no[-\s]?cert$/i.test(labRaw)) {
-      viewerCert.textContent = String(labRaw).toUpperCase() + ' Certified';
-      viewerCert.hidden = false;
-    } else {
-      viewerCert.textContent = '';
-      viewerCert.hidden = true;
+
+    // Reset accordion to default-open on every new stone open
+    if (viewerAccordion) {
+      viewerAccordion.setAttribute('data-open', 'true');
+      if (viewerAccordionTrg) viewerAccordionTrg.setAttribute('aria-expanded', 'true');
     }
 
     // Wire the modal Add-to-cart to this stone's id + the right state.
     viewerAddBtn.dataset.id = String(d.id || d.stockNum || '');
+    // The button needs both the dw-card__add class (so the cart-state CSS
+    // — is-loading/is-added/is-in-cart/is-error/is-unavailable — applies)
+    // AND the dw-viewer__add hook for layout. classList add is idempotent.
+    viewerAddBtn.classList.add('dw-card__add');
     setButtonState(viewerAddBtn, diamondIdsInCart.has(viewerAddBtn.dataset.id) ? 'in-cart' : 'idle');
 
     // Open the modal shell
@@ -1384,7 +1655,13 @@
       } catch (e) { /* history API blocked — fail silent */ }
     }
 
-    setTimeout(function () { root.querySelector('#dw-viewer-close').focus(); }, 50);
+    // Focus the visible "Back to browse" link so keyboard users land in a
+    // sensible spot. The legacy X close button is hidden via CSS, so focusing
+    // it would silently strand keyboard focus.
+    setTimeout(function () {
+      var focusTarget = viewerBackBtn || root.querySelector('#dw-viewer-close');
+      if (focusTarget) focusTarget.focus();
+    }, 50);
   }
 
   function loadViewerTier(tier) {
@@ -1398,6 +1675,9 @@
       btn.classList.toggle('is-active', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
+
+    // The 360 badge sits over the image well — visible only on the video tier.
+    if (viewer360Badge) viewer360Badge.hidden = (tier !== TIER_VIDEO);
 
     var stockNum = viewerState.diamond.stockNum;
     if (tier === TIER_OUTLINE || !stockNum) {
@@ -1450,6 +1730,7 @@
     viewerFrame.setAttribute('src', 'about:blank');
     viewerFrame.style.display = '';
     viewerFallback.hidden = true;
+    if (viewer360Badge) viewer360Badge.hidden = true;
     document.body.style.overflow = '';
 
     // Sync history: if we pushed an entry to open this modal, pop it so

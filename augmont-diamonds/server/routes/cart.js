@@ -70,11 +70,14 @@ router.post("/add", async (req, res, next) => {
       where: { shop, sessionId, diamondId: productId, status: "active" },
     });
     if (existing) {
+      // Include the cached diamond snapshot so the widget can update its
+      // pill / mini-cart without a follow-up GET /api/public/cart round-trip.
       return res.json({
         success: true,
         cartItemId: existing.id,
         augmontCartItemId: existing.augmontCartItemId,
         alreadyInCart: true,
+        diamond: existing.diamondDetails || null,
       });
     }
 
@@ -113,11 +116,17 @@ router.post("/add", async (req, res, next) => {
       throw dbErr;
     }
 
+    // Include the diamond snapshot we just persisted so the widget can
+    // update its pill / mini-cart immediately. Without this, widgets
+    // re-fetch GET /api/public/cart after every add — a second Augmont
+    // round-trip via getCart() that's the bulk of perceived "add to cart"
+    // latency. Returning the snapshot makes that follow-up optional.
     res.json({
       success: true,
       cartItemId: item.id,
       augmontCartItemId: item.augmontCartItemId,
       alreadyInCart: false,
+      diamond: diamondDetails,
     });
   } catch (err) {
     const mapped = userFacingError(err);

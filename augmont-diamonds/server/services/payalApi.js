@@ -407,8 +407,28 @@ export async function getDiamonds(filters = {}, opts = {}) {
 
 export async function getDiamondById(id) {
   if (!id) throw new AugmontError("diamond id required", { status: 400 });
+  const target = String(id);
+
+  // Fast path: the buyer just saw this diamond on the catalog page, which
+  // means it (almost always) lives in one of the recently-cached
+  // /merchant/products responses. Scan all cache entries first — this turns
+  // the typical cart-add into an O(N) in-memory scan over ~24-50 stones per
+  // cached page instead of a 21s unfiltered Augmont call.
+  for (const entry of productsCache.values()) {
+    if (entry?.data?.diamonds) {
+      const hit = entry.data.diamonds.find((d) => d.id === target);
+      if (hit) return hit;
+    }
+  }
+
+  // Slow path fallback: the diamond isn't in any cached page (e.g. server
+  // restarted after the buyer loaded the page, or the cart-add came from a
+  // deep page that has since been evicted). Hit Augmont directly. Note this
+  // hits the unfiltered "sample" endpoint which only returns 25 stones, so
+  // it will commonly fail with NOT_FOUND for production catalogs — but
+  // that's still better than the previous always-fetch behavior.
   const { diamonds } = await getDiamonds();
-  const match = diamonds.find((d) => d.id === String(id));
+  const match = diamonds.find((d) => d.id === target);
   if (!match) {
     throw new AugmontError(`Diamond ${id} not found`, { status: 404, code: "NOT_FOUND" });
   }
