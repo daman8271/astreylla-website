@@ -7,30 +7,30 @@
 
 .diamond-widget {
   /*
-   * F6 D-fix palette — visibly warm beige/cream surfaces, pure-white cards.
-   * The cream `--dw-bg-page` is the visual signature: it must read warmer
-   * than ivory at arm's length. Cards pop against it; the image well sits
-   * a half-step deeper so empty stones still feel intentional.
+   * F6 D-iter6 palette — Aria Morelle clean white / editorial gallery.
+   * Pure white page; cards distinguished by hairline border, not fill.
+   * Image well sits at neutral mid-gray so the diamond photo backdrop
+   * separates from the page without warming the entire surface.
    * Tokens still defer to merchant theme vars where it's safe to.
    */
-  --dw-bg-page:        #f5f1ea;       /* warm cream — page background */
-  --dw-bg-card:        #ffffff;       /* pure white card pops on cream */
-  --dw-bg-image-well:  #ebe6dc;       /* deeper warm tone for placeholders */
-  --dw-bg-elevated:    #faf6ee;       /* between page + card — filter band, cert block */
-  --dw-text-primary:   #1a1814;       /* warm near-black */
-  --dw-text-secondary: #6b6359;       /* warm gray for labels/captions */
-  --dw-text-faint:     #9a9183;       /* tertiary — strikethroughs, captions */
-  --dw-border-subtle:  #e3ddd0;       /* warm hairline */
-  --dw-border-strong:  #2a2520;       /* warm dark for outlines */
-  --dw-accent-red:     #c8312c;       /* warm red for discount badges */
-  --dw-hover-bg:       #efeae0;       /* subtle warm hover for pills/chips */
-  --dw-skeleton:       #e8e2d6;
-  --dw-skeleton-hi:    #f3eee4;
-  --dw-shadow-card:    0 4px 16px rgba(40, 32, 18, 0.05);
+  --dw-bg-page:        #ffffff;       /* clean white — Aria page background */
+  --dw-bg-card:        #ffffff;       /* white card; hairline border owns separation */
+  --dw-bg-image-well:  #d6d4d2;       /* neutral gray photo backdrop for stones */
+  --dw-bg-elevated:    #fafafa;       /* near-white filter band / cert block surface */
+  --dw-text-primary:   #1a1a1a;       /* neutral near-black */
+  --dw-text-secondary: #6b6b6b;       /* neutral medium gray for labels/captions */
+  --dw-text-faint:     #9b9b9b;       /* tertiary — strikethroughs, captions */
+  --dw-border-subtle:  #e5e5e5;       /* neutral hairline */
+  --dw-border-strong:  #1a1a1a;       /* solid black for outlined buttons */
+  --dw-accent-red:     #e63946;       /* Aria coral-red for -15% discount badges */
+  --dw-hover-bg:       #f5f5f5;       /* neutral subtle hover for pills/chips */
+  --dw-skeleton:       #ececec;
+  --dw-skeleton-hi:    #f5f5f5;
+  --dw-shadow-card:    0 4px 16px rgba(0, 0, 0, 0.05);
   --dw-accent:         var(--dw-text-primary); /* merchant primary_color overrides this */
-  --dw-overlay-cart:   rgba(40, 32, 18, 0.55);  /* warm scrim */
-  --dw-overlay-viewer: rgba(40, 32, 18, 0.62);  /* warm near-opaque for detail modal */
-  --dw-overlay-form:   rgba(40, 32, 18, 0.55);
+  --dw-overlay-cart:   rgba(0, 0, 0, 0.55);   /* neutral scrim */
+  --dw-overlay-viewer: rgba(0, 0, 0, 0.62);   /* neutral near-opaque for detail modal */
+  --dw-overlay-form:   rgba(0, 0, 0, 0.55);
   /* Back-compat aliases — keep older selectors rendering sensibly while we
    * migrate every rule to the new token names. */
   --dw-bg:             var(--dw-bg-page);
@@ -236,7 +236,7 @@
 .dw-pill:hover { background: var(--dw-hover-bg); border-color: var(--dw-text-primary); }
 .dw-pill:focus-visible {
   border-color: var(--dw-text-primary);
-  box-shadow: 0 0 0 3px rgba(40, 32, 18, 0.10);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
 }
 .dw-pill.is-active {
   background: var(--dw-text-primary);
@@ -592,7 +592,7 @@
 
 .dw-card {
   background: var(--dw-bg-card);
-  border-radius: 4px;
+  border-radius: 8px;
   border: 1px solid var(--dw-border-subtle);
   box-shadow: none;
   display: flex;
@@ -638,11 +638,11 @@
   background: var(--dw-accent-red);
   color: #ffffff;
   font-family: var(--dw-font-body);
-  font-size: 0.6875rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0;
-  padding: 3px 7px;
-  border-radius: 999px;
+  padding: 4px 8px;
+  border-radius: 4px;
   line-height: 1.4;
 }
 
@@ -651,7 +651,7 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(26, 24, 20, 0.85);
+  background: rgba(0, 0, 0, 0.85);
   color: #ffffff;
   font-family: var(--dw-font-body);
   font-size: 0.6875rem;
@@ -682,7 +682,7 @@
   align-items: center;
   justify-content: center;
   background: var(--dw-bg-image-well);
-  color: #c2b9a6;
+  color: #b8b8b8;
 }
 
 .dw-card__img-placeholder svg {
@@ -702,7 +702,7 @@
 
 .dw-card__title {
   font-family: var(--dw-font-body);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   /* iter5 weight bump: bring catalog card title to 600 to match the
    * heavier Aria title weight (parity with .dw-viewer__title). */
   font-weight: 600;
@@ -714,7 +714,7 @@
 
 .dw-card__specs {
   font-family: var(--dw-font-body);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--dw-text-secondary);
   margin: 0;
   line-height: 1.5;
@@ -732,7 +732,7 @@
 
 .dw-card__price {
   font-family: var(--dw-font-body);
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 700;
   color: var(--dw-text-primary);
   margin: 0;
@@ -784,8 +784,8 @@
 
 .dw-card__add {
   width: 100%;
-  min-height: 40px;
-  font-size: 0.8125rem;
+  min-height: 44px;
+  font-size: 0.875rem;
 }
 
 /* Card-level click affordance (whole card is clickable to open viewer) */
@@ -1397,7 +1397,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--dw-s7);
-  max-width: 1100px;
+  max-width: 1280px;
   width: 100%;
   margin: 0 auto;
   padding: var(--dw-s5) var(--dw-s5) var(--dw-s7);
@@ -1410,7 +1410,7 @@
   background: var(--dw-bg-image-well);
   display: flex;
   flex-direction: column;
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
   /* Square image well — locks the visual rhythm vs the right column. */
   aspect-ratio: 1 / 1;
@@ -1471,7 +1471,7 @@
   width: 50%;
   max-width: 220px;
   aspect-ratio: 1 / 1;
-  color: #c2b9a6;
+  color: #b8b8b8;
 }
 .dw-viewer__fallback-svg svg { width: 100%; height: 100%; }
 
@@ -1490,7 +1490,7 @@
   bottom: 12px;
   left: 12px;
   z-index: 2;
-  background: rgba(26, 24, 20, 0.85);
+  background: rgba(0, 0, 0, 0.85);
   color: #ffffff;
   font-family: var(--dw-font-body);
   font-size: 0.6875rem;
@@ -1557,11 +1557,11 @@
   background: var(--dw-accent-red);
   color: #ffffff;
   font-family: var(--dw-font-body);
-  font-size: 0.6875rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 600;
   letter-spacing: 0;
-  padding: 3px 8px;
-  border-radius: 999px;
+  padding: 4px 10px;
+  border-radius: 4px;
   line-height: 1.4;
   margin-bottom: var(--dw-s3);
 }
@@ -1569,19 +1569,19 @@
 
 .dw-viewer__title {
   font-family: var(--dw-font-heading);
-  font-size: 1.75rem;
-  /* A4 — Daman's iter5 ask: 600 was reading light against the cream page
-   * bg. Bump to 700 to match Aria's visual weight. Instrument Sans 700 is
-   * loaded via the Liquid block <link>. */
+  font-size: 2rem;
+  /* iter6 — Aria's modal hero clearly reads ~32-36px. Bumped from 28px
+   * to 32px to match. Weight stays at 700 (Instrument Sans 700 loaded
+   * via the Liquid block <link>). */
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   line-height: 1.1;
   color: var(--dw-text-primary);
   margin: 0 0 var(--dw-s2);
 }
 
 /* A6 — spec line per Aria measurement (image 19):
- * - 16px font, both label + value in primary color (#1a1814 / our token).
+ * - 16px font, both label + value in primary color (#1a1a1a / our token).
  * - Diamond icon SVG ~16x16, 4px right margin to sit flush before "Color".
  * - `gap: 0` on the row; spacing is owned by per-span margins so middle-dot
  *   separators stay tight against label/value pairs.
@@ -1628,7 +1628,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--dw-font-body);
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 400;
   color: var(--dw-text-secondary);
   margin: 0 0 var(--dw-s2);
@@ -1665,7 +1665,7 @@
 .dw-viewer__cert-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .dw-viewer__cert-name {
   font-family: var(--dw-font-body);
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--dw-text-primary);
   margin: 0;
@@ -1673,13 +1673,13 @@
 }
 .dw-viewer__cert-num {
   font-family: var(--dw-font-body);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--dw-text-secondary);
   margin: 0;
 }
 .dw-viewer__cert-link {
   font-family: var(--dw-font-body);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--dw-text-primary);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -1710,15 +1710,15 @@
 }
 .dw-viewer__price-label {
   font-family: var(--dw-font-body);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
   color: var(--dw-text-primary);
   margin: 0;
   letter-spacing: -0.005em;
 }
 .dw-viewer__price-sublabel {
   font-family: var(--dw-font-body);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--dw-text-secondary);
   margin: 0;
 }
@@ -1730,7 +1730,7 @@
 }
 .dw-viewer__price {
   font-family: var(--dw-font);
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--dw-text-primary);
   margin: 0;
@@ -1742,7 +1742,7 @@
   align-items: baseline;
   gap: 6px;
   font-family: var(--dw-font-body);
-  font-size: 0.75rem;
+  font-size: 0.9375rem;
 }
 .dw-viewer__price-strike {
   color: var(--dw-text-faint);
@@ -1843,11 +1843,13 @@
 }
 
 /* SECONDARY — Talk to an expert. Outline only. NEVER flips to solid on
- * hover (would compete with the primary). Hover = warm subtle fill. */
+ * hover (would compete with the primary). Hover = neutral subtle fill.
+ * iter6: height normalized to 52px to match the primary CTA — Aria's
+ * stacked CTAs share the same height; differentiation comes from fill. */
 .dw-viewer__expert {
   width: 100%;
-  min-height: 48px;
-  font-size: 0.9375rem;
+  min-height: 52px;
+  font-size: 1rem;
   font-weight: 500;
   background: transparent;
   color: var(--dw-text-primary);
@@ -1873,7 +1875,7 @@
 }
 .dw-viewer__expert:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(40, 32, 18, 0.10);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
 }
 
 /* ---- INSIDE THE RIGHT COLUMN: Diamond details accordion ----
@@ -1938,7 +1940,7 @@
 .dw-viewer__accordion-trigger:hover { opacity: 0.88; }
 .dw-viewer__accordion-trigger:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(40, 32, 18, 0.10);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
   border-radius: 2px;
 }
 .dw-viewer__accordion-chevron {
@@ -1966,11 +1968,11 @@
   display: grid;
   grid-template-columns: max-content 1fr;
   column-gap: var(--dw-s4);
-  row-gap: 6px;
+  row-gap: 8px;
 }
 .dw-viewer__specs dt {
   font-family: var(--dw-font);
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 400;
   color: var(--dw-text-secondary);
   letter-spacing: 0;
@@ -1978,7 +1980,7 @@
 }
 .dw-viewer__specs dd {
   font-family: var(--dw-font);
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--dw-text-primary);
   margin: 0;
