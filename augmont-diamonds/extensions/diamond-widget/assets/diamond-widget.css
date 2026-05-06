@@ -18,7 +18,7 @@
   --dw-bg-image-well:  #d6d4d2;       /* neutral gray photo backdrop for stones */
   --dw-bg-elevated:    #fafafa;       /* near-white filter band / cert block surface */
   --dw-text-primary:   #292929;       /* Aria near-black (matches Aria DevTools inspect) */
-  --dw-text-secondary: #6b6b6b;       /* neutral medium gray for labels/captions */
+  --dw-text-secondary: #292929;       /* iter9 — Aria parity: secondary text reads at full primary darkness; hierarchy via WEIGHT, not color desaturation */
   --dw-text-faint:     #9b9b9b;       /* tertiary — strikethroughs, captions */
   --dw-border-subtle:  #e5e5e5;       /* neutral hairline */
   --dw-border-strong:  #292929;       /* matches Aria text-primary for outlined buttons */
@@ -95,7 +95,10 @@
 .dw-hero__title {
   font-family: var(--dw-font-head);
   font-size: 1.875rem; /* iter7 — Aria DevTools: 30px exact */
-  font-weight: 400;
+  /* iter9 — heavier presence boost: 400 → 500. Hero title reads more
+   * confidently while staying lighter than card titles (700) and modal
+   * title (700) per the editorial weight hierarchy. */
+  font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 1.2;
   color: var(--dw-text);
@@ -136,7 +139,9 @@
   padding: 10px 4px;
   font-family: var(--dw-font-head);
   font-size: 1.25rem; /* iter7 — Aria DevTools: h2 20px */
-  font-weight: 400;
+  /* iter9 — bump 400 → 500 for slight presence; inactive distinction
+   * is now via opacity + active underline, not light weight. */
+  font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--dw-text-secondary);
   cursor: pointer;
@@ -203,7 +208,8 @@
 .dw-fgroup__label {
   font-family: var(--dw-font-body);
   font-size: 1rem; /* iter7 — Aria DevTools: h3 16px */
-  font-weight: 500;
+  /* iter9 — bump 500 → 600 for stronger filter section heading presence */
+  font-weight: 600;
   letter-spacing: 0;
   color: var(--dw-text);
   margin: var(--dw-s4) 0; /* iter7 — Aria DevTools: 16px 0 */
@@ -298,7 +304,8 @@
 
 .dw-shape-tile__label {
   display: block;
-  font-size: 0.8125rem;
+  /* iter9 — Aria DevTools (image #58): span 12px Instrument Sans #292929 */
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--dw-text-primary);
   letter-spacing: 0;
@@ -330,15 +337,23 @@
 .dw-slider__track {
   position: absolute;
   left: 0; right: 0; top: 50%;
-  height: 2px;
-  background: var(--dw-hairline);
+  /* iter9 — Aria DevTools (image #60): track 913×12, bg #3D3D3D.
+   * Thicker editorial track replaces our thin 2px hairline. */
+  height: 12px;
+  background: #3D3D3D;
   transform: translateY(-50%);
+  border-radius: 0;
 }
 
 .dw-slider__range {
   position: absolute;
-  top: 0; bottom: 0;
-  background: var(--dw-text);
+  /* iter9 — match track thickness; range is the active fill between
+   * thumbs (left/right set dynamically by JS). Same dark fill as track
+   * for the uniform Aria look. */
+  top: 50%;
+  height: 12px;
+  transform: translateY(-50%);
+  background: #3D3D3D;
 }
 
 .dw-slider__input {
@@ -690,7 +705,10 @@
 
 .dw-card__image {
   position: relative;
-  aspect-ratio: 1 / 1;
+  /* iter9 — Aria DevTools: image well 475×225 ≈ 2.11:1 landscape ratio.
+   * Square 1/1 made our cards feel taller than Aria's editorial grid;
+   * 2/1 matches the wider, shorter image well. */
+  aspect-ratio: 2 / 1;
   overflow: hidden;
   background: var(--dw-bg-image-well);
   border-radius: 0;
@@ -1655,15 +1673,14 @@
 
 .dw-viewer__title {
   font-family: var(--dw-font-heading);
-  font-size: 2rem;
-  /* iter6 — Aria's modal hero clearly reads ~32-36px. Bumped from 28px
-   * to 32px to match. Weight stays at 700 (Instrument Sans 700 loaded
-   * via the Liquid block <link>). */
+  /* iter9 — Aria DevTools (image #63): h2 28px, margin 0 0 12px.
+   * iter6 over-bumped to 32px; correcting to Aria-exact 28px. */
+  font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.1;
   color: var(--dw-text-primary);
-  margin: 0 0 var(--dw-s2);
+  margin: 0 0 var(--dw-s3);
 }
 
 /* A6 — spec line per Aria measurement (image 19):
@@ -1700,7 +1717,9 @@
 }
 .dw-viewer__head-spec-value {
   color: var(--dw-text-primary);
-  font-weight: 500;
+  /* iter9 — heavier presence per user feedback: head spec values
+   * (Color: H, Clarity: VVS2, Cut: EX) read bold against label weight 400. */
+  font-weight: 700;
 }
 .dw-viewer__head-spec-sep {
   color: var(--dw-text-faint);
