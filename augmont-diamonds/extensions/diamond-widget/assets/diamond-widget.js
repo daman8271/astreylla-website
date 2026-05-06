@@ -370,8 +370,10 @@
   // ─── DETAIL MODAL HTML (Aria Morelle clone) ──────────────────────────────
   // Structure mirrors the Nivoda-beta diamond detail page:
   //   - Sticky topbar w/ "Back to browse"
-  //   - 50/50 grid: image well (left) + spec/price/buttons (right)
-  //   - Below grid: "Diamond details" accordion (default open)
+  //   - 50/50 grid: image well (sticky-left) + spec/price/buttons + details
+  //     accordion (right column, scrolls). The "Diamond details" accordion
+  //     lives INSIDE the right column (after the expert button) per iter5;
+  //     before iter5 it sat as a full-width sibling below the grid.
   // The 3-tier media tier-controls + auto-promotion logic is preserved exactly;
   // only the surrounding chrome was rebuilt. Static SVG icons are embedded
   // (truck, diamond, chevron, lab seal) so no external asset requests fire.
@@ -410,7 +412,9 @@
                 '<button type="button" class="dw-viewer__tier-btn" data-tier="outline" aria-label="Show outline">Outline</button>' +
               '</div>' +
             '</div>' +
-            // RIGHT: rich detail panel
+            // RIGHT: rich detail panel — title, spec line, ships, cert, price,
+            // buttons, and (iter5) the Diamond details accordion last so it
+            // flows in the right-column scroll under the buttons.
             '<div class="dw-viewer__detail" id="dw-viewer-detail">' +
               // Optional discount badge — only renders when MRP > price (Augmont
               // doesn't currently expose this; conditional path stays).
@@ -424,14 +428,16 @@
                 '</svg>' +
                 '<span id="dw-viewer-head-spec-body"></span>' +
               '</p>' +
-              // Ships line w/ inline truck icon
-              '<p class="dw-viewer__head-spec">' +
+              // Ships line w/ inline truck icon — uses dedicated `dw-viewer__ships`
+              // class (Agent A iter5 CSS) so it can be styled independently
+              // from the Color/Clarity/Cut head-spec line.
+              '<p class="dw-viewer__ships">' +
                 '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
                   '<path d="M1 4h8v6H1z M9 6h3l2 2v2H9z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>' +
                   '<circle cx="4" cy="11.5" r="1.2" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
                   '<circle cx="11.5" cy="11.5" r="1.2" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
                 '</svg>' +
-                '<span class="dw-viewer__head-spec-value" id="dw-viewer-ships">Ships in 7-10 business days</span>' +
+                '<span class="dw-viewer__ships-value" id="dw-viewer-ships">Ships in 7-10 business days</span>' +
               '</p>' +
               // Cert badge block — boxed, hidden when no lab data
               '<div class="dw-viewer__cert-block" id="dw-viewer-cert-block" hidden>' +
@@ -456,30 +462,34 @@
                   '</span>' +
                 '</div>' +
               '</div>' +
-              // Action buttons stacked
+              // Action buttons stacked. Add to cart is the loud primary
+              // (dw-btn--solid); "Talk to an expert" is a subtle outline.
               '<div class="dw-viewer__actions">' +
                 '<button type="button" class="dw-btn dw-btn--solid dw-viewer__add" id="dw-viewer-add">Add to cart</button>' +
-                // "Talk to an expert" — no expert flow yet; smooth-scrolls to
-                // the Diamond details accordion as a soft fallback. Replace
-                // with a real mailto/contact form once we add that surface.
+                // "Talk to an expert" — opens a pre-filled mailto: with the
+                // stone summary (handler in attachListeners). Anti-emoji.
                 '<button type="button" class="dw-viewer__expert" id="dw-viewer-expert">Talk to an expert</button>' +
               '</div>' +
-            '</div>' +
-          '</div>' +
-          // Below-the-fold: Diamond details accordion (default open). Spans
-          // full width independent of the 50/50 grid above.
-          '<div class="dw-viewer__details-section" id="dw-viewer-details-section">' +
-            '<section class="dw-viewer__accordion" id="dw-viewer-accordion" data-open="true">' +
-              '<button type="button" class="dw-viewer__accordion-trigger" id="dw-viewer-accordion-trigger" aria-expanded="true" aria-controls="dw-viewer-accordion-body">' +
-                '<span>Diamond details</span>' +
-                '<svg class="dw-viewer__accordion-chevron" viewBox="0 0 14 14" fill="none" aria-hidden="true">' +
-                  '<path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-                '</svg>' +
-              '</button>' +
-              '<div class="dw-viewer__accordion-body" id="dw-viewer-accordion-body">' +
-                '<dl class="dw-viewer__specs" id="dw-viewer-specs"></dl>' +
+              // Diamond details accordion (default open) — iter5 placement:
+              // INSIDE the right column under the buttons, scrolls with the
+              // page while the LEFT image well stays sticky. Pre-iter5 this
+              // sat as a full-width sibling below the 2-col grid; Agent A's
+              // CSS supports both placements (`.dw-viewer__detail .dw-viewer__details-section`
+              // gets `grid-column: auto` so it doesn't bleed across columns).
+              '<div class="dw-viewer__details-section" id="dw-viewer-details-section">' +
+                '<section class="dw-viewer__accordion" id="dw-viewer-accordion" data-open="true">' +
+                  '<button type="button" class="dw-viewer__accordion-trigger" id="dw-viewer-accordion-trigger" aria-expanded="true" aria-controls="dw-viewer-accordion-body">' +
+                    '<span>Diamond details</span>' +
+                    '<svg class="dw-viewer__accordion-chevron" viewBox="0 0 14 14" fill="none" aria-hidden="true">' +
+                      '<path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                    '</svg>' +
+                  '</button>' +
+                  '<div class="dw-viewer__accordion-body" id="dw-viewer-accordion-body">' +
+                    '<dl class="dw-viewer__specs" id="dw-viewer-specs"></dl>' +
+                  '</div>' +
+                '</section>' +
               '</div>' +
-            '</section>' +
+            '</div>' +
           '</div>' +
           // Legacy caption hidden via CSS — kept in DOM in case something references it.
           '<p class="dw-viewer__caption" id="dw-viewer-caption" hidden></p>' +
@@ -513,6 +523,15 @@
     var k = String(lab || '').toLowerCase().trim();
     return LAB_SEALS[k] || LAB_SEALS.generic;
   }
+
+  // Inline checkmark glyph for the cart button "Added" / "In cart" states.
+  // Anti-emoji rule (taste.md §2): no unicode '✓'. Two-line check, currentColor
+  // so it inherits the surrounding button text colour. 12px box pairs with
+  // the 14px button text without overhanging the cap-height.
+  var CHECK_SVG =
+    '<svg class="dw-btn__check" viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false">' +
+      '<path d="M2.5 6.2L5 8.7L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
 
   function buildCheckoutOverlayHTML() {
     return (
@@ -646,22 +665,28 @@
       });
     }
 
-    // "Talk to an expert" — no real expert flow yet; smooth-scroll to the
-    // diamond details section as a sane interim. Replace once we have a
-    // contact path. Keeping it functional avoids dead-button taste tells.
+    // "Talk to an expert" — opens a pre-filled mailto: with the current
+    // stone's summary so the buyer doesn't have to retype anything. The
+    // accordion no longer holds this fallback (it sits in the right column
+    // now and is already visible by default per iter5 placement).
     if (viewerExpertBtn) {
       viewerExpertBtn.addEventListener('click', function () {
-        if (!viewerDetailsSec) return;
-        // Force-open the accordion so the scroll target is visible.
-        if (viewerAccordion && viewerAccordion.getAttribute('data-open') !== 'true') {
-          viewerAccordion.setAttribute('data-open', 'true');
-          viewerAccordionTrg.setAttribute('aria-expanded', 'true');
-        }
-        try {
-          viewerDetailsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } catch (e) {
-          viewerDetailsSec.scrollIntoView();
-        }
+        if (!viewerState.diamond) return;
+        var d = viewerState.diamond;
+        var subject = 'Question about diamond ' + (d.stockNum || '');
+        var carat   = d.carat != null ? Number(d.carat).toFixed(2) : '';
+        var shape   = capShape(d.shape || 'Diamond');
+        var price   = d.price != null ? formatMoney(d.price, d.currency || cart.currency || 'USD') : '';
+        var body    = "Hi,\n\nI'm interested in this diamond:\n" +
+                      "  Stock " + (d.stockNum || '—') + "\n" +
+                      "  " + carat + 'ct ' + shape + ' ' + diamondTypeLabel(d) + "\n" +
+                      "  " + price + "\n\nCould you help me?\n\nThanks";
+        // TODO: swap email when Estrella domain is live (sales@estrella.diamonds
+        // or similar). Placeholder won't deliver but does open the user's
+        // mail client with the message ready, which is the desired UX.
+        var href = 'mailto:sales@example.com?subject=' + encodeURIComponent(subject) +
+                   '&body=' + encodeURIComponent(body);
+        window.location.href = href;
       });
     }
 
@@ -1414,10 +1439,38 @@
         if (!res.ok) return res.json().catch(function () { return {}; }).then(function (b) { throw { kind: 'fail', body: b }; });
         return res.json();
       })
-      .then(function () {
+      .then(function (data) {
         setButtonState(btn, 'added');
         diamondIdsInCart.add(diamondId);
-        return fetchCart();
+        // The /api/public/cart/add response now includes the diamond
+        // snapshot (`data.diamond`) and the cart item id (`data.cartItemId`)
+        // — see server/routes/cart.js. When present we patch local cart
+        // state directly so the cart pill / mini-cart updates instantly
+        // without the redundant GET /cart round-trip. If anything looks off
+        // (idempotent re-add returning a stale snapshot, missing fields)
+        // we fall back to fetchCart() which re-syncs from the server.
+        if (data && data.diamond && data.cartItemId && Array.isArray(cart.items)) {
+          var alreadyTracked = cart.items.some(function (it) { return it.id === data.cartItemId; });
+          if (!alreadyTracked) {
+            cart.items.push({
+              id: data.cartItemId,
+              augmontCartItemId: data.augmontCartItemId,
+              diamondId: diamondId,
+              diamond: data.diamond
+            });
+            cart.count = cart.items.length;
+            cart.total = Math.round(((cart.total || 0) + Number(data.diamond.price || 0)) * 100) / 100;
+            // Per-stone currency may differ from the cart-level currency;
+            // keep the existing cart.currency unless empty (defensive).
+            if (!cart.currency) cart.currency = data.diamond.currency || 'USD';
+            renderCartTrigger();
+            if (cartPanel.classList.contains('is-open')) renderCartPanel();
+            markCardsInCart();
+          }
+        } else {
+          // Server didn't include the snapshot — fall back to the cart GET.
+          return fetchCart();
+        }
       })
       .then(function () {
         setTimeout(function () { setButtonState(btn, 'in-cart'); }, 1400);
@@ -1894,13 +1947,33 @@
     btn.classList.remove('is-loading', 'is-added', 'is-error', 'is-in-cart', 'is-unavailable');
     btn.disabled = false;
     btn.dataset.busy = '0';
+    // The "added" / "in-cart" states pair an inline check SVG with a label.
+    // innerHTML is safe — CHECK_SVG is a developer-controlled constant; the
+    // label is hard-coded (no user input flowing into the markup). Other
+    // states stay on textContent for clarity + assurance.
     switch (kind) {
-      case 'loading':     btn.classList.add('is-loading');     btn.disabled = true;  btn.dataset.busy = '1'; btn.textContent = 'Adding…'; break;
-      case 'added':       btn.classList.add('is-added');                              btn.textContent = 'Added ✓'; break;
-      case 'in-cart':     btn.classList.add('is-in-cart');                            btn.textContent = 'In cart'; break;
-      case 'error':       btn.classList.add('is-error');                              btn.textContent = 'Try again'; break;
-      case 'unavailable': btn.classList.add('is-unavailable'); btn.disabled = true;   btn.textContent = 'Cart not available'; break;
-      default:            btn.textContent = 'Add to cart';
+      case 'loading':
+        btn.classList.add('is-loading'); btn.disabled = true; btn.dataset.busy = '1';
+        btn.textContent = 'Adding…';
+        break;
+      case 'added':
+        btn.classList.add('is-added');
+        btn.innerHTML = CHECK_SVG + '<span class="dw-btn__label">Added</span>';
+        break;
+      case 'in-cart':
+        btn.classList.add('is-in-cart');
+        btn.innerHTML = CHECK_SVG + '<span class="dw-btn__label">In cart</span>';
+        break;
+      case 'error':
+        btn.classList.add('is-error');
+        btn.textContent = 'Try again';
+        break;
+      case 'unavailable':
+        btn.classList.add('is-unavailable'); btn.disabled = true;
+        btn.textContent = 'Cart not available';
+        break;
+      default:
+        btn.textContent = 'Add to cart';
     }
   }
 

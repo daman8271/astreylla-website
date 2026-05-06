@@ -703,7 +703,9 @@
 .dw-card__title {
   font-family: var(--dw-font-body);
   font-size: 0.9375rem;
-  font-weight: 500;
+  /* iter5 weight bump: bring catalog card title to 600 to match the
+   * heavier Aria title weight (parity with .dw-viewer__title). */
+  font-weight: 600;
   line-height: 1.4;
   letter-spacing: -0.005em;
   color: var(--dw-text-primary);
@@ -1410,9 +1412,26 @@
   flex-direction: column;
   border-radius: 4px;
   overflow: hidden;
-  position: relative;
   /* Square image well — locks the visual rhythm vs the right column. */
   aspect-ratio: 1 / 1;
+  /* A1 — Sticky LEFT column.
+   * The viewer scroll container is `.dw-viewer` (overflow-y: auto). The
+   * sticky topbar inside the panel is ~69px tall (16+36+16+1). 88px = topbar
+   * height + ~19px breathing gap so the image sits flush below the bar
+   * once the right column starts scrolling past it.
+   *
+   * `align-self: start` on the grid item caps the sticky element's
+   * height to its content (square image well + tier controls) so the right
+   * column can grow taller without forcing the image to stretch.
+   *
+   * Mobile breakpoint below resets to `position: static` since the layout
+   * stacks single-column at ≤768px and the image already sits on top. */
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  /* Hardware-accelerated stacking context — sticky needs `position` set,
+   * but no transform/opacity animations are introduced here. */
+  z-index: 1;
 }
 
 .dw-viewer__media-frame {
@@ -1551,33 +1570,78 @@
 .dw-viewer__title {
   font-family: var(--dw-font-heading);
   font-size: 1.75rem;
-  font-weight: 600;
+  /* A4 — Daman's iter5 ask: 600 was reading light against the cream page
+   * bg. Bump to 700 to match Aria's visual weight. Instrument Sans 700 is
+   * loaded via the Liquid block <link>. */
+  font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.1;
   color: var(--dw-text-primary);
   margin: 0 0 var(--dw-s2);
 }
 
+/* A6 — spec line per Aria measurement (image 19):
+ * - 16px font, both label + value in primary color (#1a1814 / our token).
+ * - Diamond icon SVG ~16x16, 4px right margin to sit flush before "Color".
+ * - `gap: 0` on the row; spacing is owned by per-span margins so middle-dot
+ *   separators stay tight against label/value pairs.
+ * - Label: weight 400, 4px right margin before its value.
+ * - Value: weight 500 (visually heavier than label "Cut" in Aria's shot).
+ * - `flex-wrap: wrap` keeps the line graceful on narrow viewports. */
 .dw-viewer__head-spec {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   font-family: var(--dw-font);
-  font-size: 0.875rem;
-  color: var(--dw-text-secondary);
+  font-size: 1rem;
+  color: var(--dw-text-primary);
   margin: 0 0 6px;
   letter-spacing: 0;
   flex-wrap: wrap;
+  line-height: 1.4;
 }
 .dw-viewer__head-spec svg {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  color: var(--dw-text-primary);
+  margin: 0 4px 0 0;
+}
+.dw-viewer__head-spec-label {
+  color: var(--dw-text-primary);
+  font-weight: 400;
+  margin: 0 4px 0 0;
+}
+.dw-viewer__head-spec-value {
+  color: var(--dw-text-primary);
+  font-weight: 500;
+}
+.dw-viewer__head-spec-sep {
+  color: var(--dw-text-faint);
+  padding: 0 6px;
+}
+
+/* Ships line — truck icon + "Ships by {Month Day}". 16px to match the
+ * head-spec line so the two read as a single typographic stack. */
+.dw-viewer__ships {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--dw-text-secondary);
+  margin: 0 0 var(--dw-s2);
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+.dw-viewer__ships svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
   color: var(--dw-text-secondary);
 }
-.dw-viewer__head-spec-label { color: var(--dw-text-secondary); font-weight: 400; }
-.dw-viewer__head-spec-value { color: var(--dw-text-primary); font-weight: 500; }
-.dw-viewer__head-spec-sep { color: var(--dw-text-faint); padding: 0 2px; }
+.dw-viewer__ships[hidden] { display: none; }
 
 /* Cert badge block — boxed surface w/ lab seal SVG */
 .dw-viewer__cert-block {
@@ -1686,51 +1750,169 @@
 }
 .dw-viewer__price-discount { color: var(--dw-accent-red); font-weight: 600; }
 
-/* Action buttons — full-width, stacked */
+/* Action buttons — full-width, stacked.
+ *
+ * A3 — button hierarchy reversal (iter5).
+ * "Add to cart" is the loud PRIMARY (filled black, 52px tall). "Talk to an
+ * expert" is a subtle SECONDARY (outline only, no flip-to-solid hover —
+ * because flipping to solid would compete with the primary and read as a
+ * second loud CTA, which is the bug Daman flagged).
+ *
+ * Specificity note: `.dw-viewer__add` is rendered by JS with the same
+ * base class hooks (`.dw-btn`, sometimes `.dw-btn--outline`) as the
+ * catalog card add button. We OVERRIDE that here by chaining
+ * `.dw-btn.dw-viewer__add` so the loud-primary look wins regardless of
+ * whether JS added the outline modifier. */
 .dw-viewer__actions {
   display: flex;
   flex-direction: column;
   gap: var(--dw-s2);
   margin-top: var(--dw-s4);
 }
-.dw-viewer__add {
+
+/* PRIMARY — Add to cart in the viewer modal */
+.dw-viewer__add,
+.dw-btn.dw-viewer__add {
   width: 100%;
   min-height: 52px;
   font-size: 1rem;
   font-weight: 600;
   border-radius: 4px;
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  border: 1px solid var(--dw-text-primary);
+  font-family: var(--dw-font-btn);
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease,
+              border-color 0.15s ease, opacity 0.15s ease;
 }
+.dw-viewer__add:hover,
+.dw-btn.dw-viewer__add:hover {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  opacity: 0.88;
+}
+.dw-viewer__add:active,
+.dw-btn.dw-viewer__add:active {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  opacity: 0.94;
+  transform: translateY(1px);
+}
+
+/* Viewer add-button states — every state must remain visibly distinct
+ * against the cream `--dw-bg-page` of the modal panel. */
+.dw-viewer__add.is-loading {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  border-color: var(--dw-text-primary);
+  opacity: 0.85;
+  cursor: wait;
+}
+.dw-viewer__add.is-added {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  border-color: var(--dw-text-primary);
+}
+/* In-cart: the legibility fix Daman called out. Outline + warm elevated
+ * fill instead of pure white-on-white card bg. Reads clearly against the
+ * cream page. */
+.dw-viewer__add.is-in-cart {
+  background: var(--dw-bg-elevated);
+  color: var(--dw-text-primary);
+  border: 1px solid var(--dw-text-primary);
+  cursor: default;
+}
+.dw-viewer__add.is-in-cart:hover {
+  background: var(--dw-bg-elevated);
+  color: var(--dw-text-primary);
+  opacity: 1;
+}
+.dw-viewer__add.is-error {
+  background: var(--dw-accent-red);
+  color: #ffffff;
+  border-color: var(--dw-accent-red);
+}
+.dw-viewer__add.is-unavailable {
+  background: var(--dw-bg-elevated);
+  color: var(--dw-text-faint);
+  border: 1px solid var(--dw-border-subtle);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* SECONDARY — Talk to an expert. Outline only. NEVER flips to solid on
+ * hover (would compete with the primary). Hover = warm subtle fill. */
 .dw-viewer__expert {
   width: 100%;
   min-height: 48px;
   font-size: 0.9375rem;
   font-weight: 500;
-  background: var(--dw-bg-card);
+  background: transparent;
   color: var(--dw-text-primary);
   border: 1px solid var(--dw-text-primary);
   border-radius: 4px;
   cursor: pointer;
   font-family: var(--dw-font-btn);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .dw-viewer__expert:hover {
-  background: var(--dw-text-primary);
-  color: var(--dw-bg-card);
+  background: var(--dw-hover-bg);
+  color: var(--dw-text-primary);
+}
+.dw-viewer__expert:active {
+  background: var(--dw-hover-bg);
+  color: var(--dw-text-primary);
+  transform: translateY(1px);
+}
+.dw-viewer__expert:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40, 32, 18, 0.10);
 }
 
-/* ---- BELOW THE FOLD: Diamond details accordion ---- */
-
+/* ---- INSIDE THE RIGHT COLUMN: Diamond details accordion ----
+ *
+ * A5 — iter5: accordion has been moved INSIDE the right column (`.dw-viewer__detail`)
+ * by Agent B. It's no longer a separate full-width grid child. CSS now
+ * supports either placement gracefully:
+ *   - When `.dw-viewer__details-section` is a child of `.dw-viewer__detail`,
+ *     it renders inline with the rest of the right-column flow.
+ *   - The legacy fallback (still as a grid child) keeps `grid-column: 1 / -1`
+ *     so older DOM doesn't break during the migration window.
+ *
+ * Visual spec from Aria image 16:
+ *   - header padding: 12px 0 (no horizontal padding — it's already in column)
+ *   - header weight: 600, font-size ~18px (1.125rem)
+ *   - no divider lines between rows; row gap owns the rhythm
+ *   - chevron rotates 180° on open
+ */
 .dw-viewer__details-section {
+  /* When still rendered at the layout root (legacy DOM), span both columns. */
   grid-column: 1 / -1;
-  max-width: 1100px;
   width: 100%;
-  margin: 0 auto;
-  padding: 0 var(--dw-s5) var(--dw-s7);
+  margin: var(--dw-s5) 0 0;
+  padding: 0;
+}
+/* When nested INSIDE the right column (iter5 DOM), grid-column doesn't apply
+ * (it's not a grid child) and the section flows full-width inside the column. */
+.dw-viewer__detail .dw-viewer__details-section {
+  margin-top: var(--dw-s5);
+  padding: 0;
 }
 
 .dw-viewer__accordion {
-  border-top: 1px solid var(--dw-border-subtle);
-  padding-top: var(--dw-s4);
+  /* Aria has no underline divider — spacing alone owns the separation.
+   * We keep a hairline above only when it follows other content directly,
+   * but the right column already has a price-block top border above the
+   * actions, so no further divider is needed here. */
+  border-top: 0;
+  padding-top: 0;
 }
 
 .dw-viewer__accordion-trigger {
@@ -1741,7 +1923,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  /* Aria measured: 12px 0 — no horizontal padding because the section
+   * already sits inside the right column padding/margins. */
+  padding: 12px 0;
   font-family: var(--dw-font-heading);
   font-size: 1.125rem;
   font-weight: 600;
@@ -1749,10 +1933,18 @@
   color: var(--dw-text-primary);
   cursor: pointer;
   text-align: left;
+  line-height: 1.3;
+}
+.dw-viewer__accordion-trigger:hover { opacity: 0.88; }
+.dw-viewer__accordion-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40, 32, 18, 0.10);
+  border-radius: 2px;
 }
 .dw-viewer__accordion-chevron {
   width: 14px;
   height: 14px;
+  flex-shrink: 0;
   transition: transform 0.18s ease;
   color: var(--dw-text-secondary);
 }
@@ -1761,56 +1953,81 @@
 }
 
 .dw-viewer__accordion-body {
-  padding: var(--dw-s4) 0 0;
+  padding: var(--dw-s2) 0 var(--dw-s3);
 }
 .dw-viewer__accordion[data-open="false"] .dw-viewer__accordion-body {
   display: none;
 }
 
+/* Spec rows — two-column dt/dd grid, label LEFT muted, value RIGHT primary.
+ * No horizontal dividers (Aria image 16). 6-8px row gap, 13-14px font. */
 .dw-viewer__specs {
   margin: 0;
   display: grid;
   grid-template-columns: max-content 1fr;
-  column-gap: var(--dw-s5);
-  row-gap: 8px;
+  column-gap: var(--dw-s4);
+  row-gap: 6px;
 }
 .dw-viewer__specs dt {
   font-family: var(--dw-font);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 400;
   color: var(--dw-text-secondary);
   letter-spacing: 0;
+  line-height: 1.4;
 }
 .dw-viewer__specs dd {
   font-family: var(--dw-font);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--dw-text-primary);
   margin: 0;
   letter-spacing: 0;
   text-align: right;
+  line-height: 1.4;
 }
 
 /* Old caption no longer used in the rebuilt modal */
 .dw-viewer__caption { display: none; }
 
-/* ---- Mobile: stack to single column ---- */
-
+/* ---- Mobile: stack to single column ----
+ *
+ * A7 — at ≤768px the modal collapses to one column with the image on top
+ * and spec content below in normal flow. Sticky behavior is DISABLED here
+ * since the image already leads the page; making it sticky would only
+ * push the rest of the content off-screen on small viewports. The modal
+ * uses a single page-level scroll (the `.dw-viewer` overflow-y: auto
+ * established at the top of this section).
+ */
 @media (max-width: 768px) {
   .dw-viewer__topbar { padding: var(--dw-s3) var(--dw-s4); }
   .dw-viewer__layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
     gap: var(--dw-s5);
     padding: var(--dw-s4) var(--dw-s4) var(--dw-s5);
   }
-  .dw-viewer__media { aspect-ratio: 1 / 1; }
+  .dw-viewer__media {
+    aspect-ratio: 1 / 1;
+    /* Disable sticky on mobile — image is already on top. */
+    position: static;
+    top: auto;
+    align-self: auto;
+    z-index: auto;
+  }
   .dw-viewer__title { font-size: 1.375rem; }
   .dw-viewer__price { font-size: 1.25rem; }
+  .dw-viewer__head-spec { font-size: 0.9375rem; }
   .dw-viewer__details-section {
-    padding: 0 var(--dw-s4) var(--dw-s7);
+    padding: 0;
+    margin-top: var(--dw-s4);
+  }
+  .dw-viewer__detail .dw-viewer__details-section {
+    margin-top: var(--dw-s4);
   }
   .dw-viewer__add { min-height: 48px; }
   .dw-viewer__expert { min-height: 44px; }
+  .dw-viewer__accordion-trigger { font-size: 1rem; padding: 12px 0; }
 }
 
 /* ─── REDUCED MOTION ──────────────────────────────────────────────────────── */
