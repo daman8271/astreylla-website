@@ -99,6 +99,35 @@
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
+  // Aria Morelle convention: title labels stones as "{carat}ct {Shape} Lab Grown Diamond"
+  // (their natural variants would say "Natural Diamond"). Augmont's normalized
+  // diamond response doesn't surface `treatment`, so default to Lab Grown — that
+  // matches the catalog (~99.99% LGD per Phase A). If `d.treatment` ever becomes
+  // available, this picks up automatically.
+  function diamondTypeLabel(d) {
+    var t = d && d.treatment ? String(d.treatment).toLowerCase() : '';
+    if (t === 'natural') return 'Natural Diamond';
+    return 'Lab Grown Diamond';
+  }
+
+  // "Ships by May 20" — Aria Morelle uses a computed date, not a generic
+  // window. We promise 14 days from today so the date stays inside the
+  // 7-10 business-day commitment with weekend buffer.
+  function computedShipsByDate() {
+    try {
+      var d = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+      return new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(d);
+    } catch (e) {
+      // If Intl unavailable, fall back to the previous generic copy. Caller
+      // formats around this with "Ships by " / "Ships in" prefix accordingly.
+      return null;
+    }
+  }
+  function shipsLineCopy() {
+    var date = computedShipsByDate();
+    return date ? 'Ships by ' + date : 'Ships in 7-10 business days';
+  }
+
   // ─── STATE ────────────────────────────────────────────────────────────────
   var state = {
     shape: '',
@@ -183,6 +212,7 @@
   var viewerCertName     = root.querySelector('#dw-viewer-cert-name');
   var viewerCertNum      = root.querySelector('#dw-viewer-cert-num');
   var viewerCertLink     = root.querySelector('#dw-viewer-cert-link');
+  var viewerShips        = root.querySelector('#dw-viewer-ships');
   var viewerAddBtn       = root.querySelector('#dw-viewer-add');
   var viewerExpertBtn    = root.querySelector('#dw-viewer-expert');
   var viewerBackBtn      = root.querySelector('#dw-viewer-back');
@@ -401,7 +431,7 @@
                   '<circle cx="4" cy="11.5" r="1.2" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
                   '<circle cx="11.5" cy="11.5" r="1.2" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
                 '</svg>' +
-                '<span class="dw-viewer__head-spec-value">Ships in 7-10 business days</span>' +
+                '<span class="dw-viewer__head-spec-value" id="dw-viewer-ships">Ships in 7-10 business days</span>' +
               '</p>' +
               // Cert badge block — boxed, hidden when no lab data
               '<div class="dw-viewer__cert-block" id="dw-viewer-cert-block" hidden>' +
@@ -1128,7 +1158,7 @@
     article.setAttribute('data-carat', caratStr);
     article.setAttribute('role', 'button');
     article.setAttribute('tabindex', '0');
-    article.setAttribute('aria-label', 'View ' + caratStr + 'ct ' + shape + ' Diamond in 360°');
+    article.setAttribute('aria-label', 'View ' + caratStr + 'ct ' + shape + ' ' + diamondTypeLabel(d) + ' in 360°');
 
     // Image well
     var imgWrap = document.createElement('div');
@@ -1185,7 +1215,7 @@
     // disambiguates whichever label the merchant cares about.
     var title = document.createElement('p');
     title.className = 'dw-card__title';
-    title.textContent = caratStr + 'ct ' + shape + ' Diamond';
+    title.textContent = caratStr + 'ct ' + shape + ' ' + diamondTypeLabel(d);
     body.appendChild(title);
 
     // Specs line — Color · Clarity · Cut. Middle-dot separator (Aria Morelle
@@ -1194,9 +1224,11 @@
     var specs = document.createElement('p');
     specs.className = 'dw-card__specs';
     var pieces = [];
+    // Aria Morelle keeps Cut visible with a literal '-' when missing
+    // rather than dropping the column. Match.
     pieces.push(specPair('Color', color));
     pieces.push(specPair('Clarity', clarity));
-    if (cut) pieces.push(specPair('Cut', cut));
+    pieces.push(specPair('Cut', cut || '-'));
     pieces.forEach(function (frag, i) {
       if (i > 0) {
         var sep = document.createElement('span');
@@ -1236,7 +1268,7 @@
     // for visual parity with Nivoda. Plain text, no emoji (taste.md rule).
     var ships = document.createElement('p');
     ships.className = 'dw-card__ships';
-    ships.textContent = 'Ships in 7-10 business days';
+    ships.textContent = shipsLineCopy();
     body.appendChild(ships);
 
     // Add to cart
@@ -1531,23 +1563,24 @@
     var labClean = labRaw && !/^no[-\s]?cert$/i.test(labRaw) ? String(labRaw).trim() : '';
     var labUpper = labClean ? labClean.toUpperCase() : '';
     var certNum  = d.certificateNumber || d.certNumber || d.reportNumber || '';
-    var treatRaw = d.treatment ? String(d.treatment).toLowerCase() : '';
-    var treatLabel = treatRaw === 'natural' ? 'Natural Diamond'
-                    : treatRaw === 'lab-grown' || treatRaw === 'lab_grown' ? 'Lab-Grown Diamond'
-                    : 'Diamond';
+    // Default to "Lab Grown Diamond" when treatment is absent — Augmont's
+    // catalog is overwhelmingly LGD and Aria Morelle uses this convention
+    // in card + modal titles + spec table Type field.
+    var treatLabel = diamondTypeLabel(d);
     var price    = (d.price != null) ? Number(d.price) : null;
     var mrp      = (d.mrp != null && Number(d.mrp) > 0) ? Number(d.mrp) : null;
     var ccy      = d.currency || cart.currency || 'USD';
 
-    viewerTitle.textContent = caratStr + 'ct ' + shape + ' Diamond';
+    viewerTitle.textContent = caratStr + 'ct ' + shape + ' ' + treatLabel;
+    if (viewerShips) viewerShips.textContent = shipsLineCopy();
 
     // Header spec line: "Color H · Clarity VS2 · Cut VG"
     while (viewerHeadSpecBody.firstChild) viewerHeadSpecBody.removeChild(viewerHeadSpecBody.firstChild);
     var headPairs = [
       ['Color',   color],
-      ['Clarity', clarity]
+      ['Clarity', clarity],
+      ['Cut',     cut || '-']
     ];
-    if (cut) headPairs.push(['Cut', cut]);
     headPairs.forEach(function (pair, i) {
       if (i > 0) {
         var sep = document.createElement('span');
@@ -1635,7 +1668,7 @@
     setButtonState(viewerAddBtn, diamondIdsInCart.has(viewerAddBtn.dataset.id) ? 'in-cart' : 'idle');
 
     // Open the modal shell
-    viewerPanel.setAttribute('aria-label', caratStr + 'ct ' + shape + ' Diamond detail');
+    viewerPanel.setAttribute('aria-label', caratStr + 'ct ' + shape + ' ' + treatLabel + ' detail');
     viewerPanel.hidden = false;
     document.body.style.overflow = 'hidden';
 
@@ -1817,7 +1850,7 @@
       info.className = 'dw-cart-item__info';
       var title = document.createElement('p');
       title.className = 'dw-cart-item__title';
-      title.textContent = (d.carat || '—') + 'ct ' + capShape(d.shape || 'Diamond');
+      title.textContent = (d.carat || '—') + 'ct ' + capShape(d.shape || 'Diamond') + ' ' + diamondTypeLabel(d);
       var meta = document.createElement('p');
       meta.className = 'dw-cart-item__meta';
       meta.textContent = (d.color || '—') + ' · ' + (d.clarity || '—');
