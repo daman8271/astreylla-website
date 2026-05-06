@@ -250,19 +250,18 @@
     return (
       '<section class="dw-filters" role="search" aria-label="Filter diamonds">' +
         '<div class="dw-filters__grid">' +
-          // LEFT col: Shape + Colour + Cut + Certificate
+          // iter9 — Aria reading order Shape→Carats→Colour→Clarity→Cut→Cert
+          // mapped into our 2-col grid as a snake: left reads Shape, Colour,
+          // Clarity; right reads Carats, Cut, Certificate, hasImage.
           '<div class="dw-filters__col">' +
             buildShapeTilesHTML() +
             buildPillGroup('Colour', 'colors', COLORS, true) +
-            buildPillGroup('Cut', 'cuts', CUTS, true) +
-            buildPillGroup('Certificate', 'certificates', CERTIFICATES, true) +
+            buildPillGroup('Clarity', 'clarities', CLARITIES, true) +
           '</div>' +
-          // RIGHT col: Carat + Clarity + hasImage toggle
-          // Price filter removed in C-iter1: Augmont upstream does not
-          // support price filtering at any naming convention.
           '<div class="dw-filters__col">' +
             buildSliderGroup('Carats', 'carat', CARAT_MIN, CARAT_MAX, CARAT_STEP, 'ct') +
-            buildPillGroup('Clarity', 'clarities', CLARITIES, true) +
+            buildPillGroup('Cut', 'cuts', CUTS, true) +
+            buildPillGroup('Certificate', 'certificates', CERTIFICATES, true) +
             buildHasImageToggleHTML() +
           '</div>' +
         '</div>' +

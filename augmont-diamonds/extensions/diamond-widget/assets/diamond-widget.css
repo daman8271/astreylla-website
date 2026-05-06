@@ -126,7 +126,8 @@
   align-items: stretch;
   gap: var(--dw-s5);
   max-width: 1280px;
-  margin: 0 auto var(--dw-s4);
+  /* iter9 — tighten bottom margin 16→12 to match Aria nat-lab-toggle rhythm */
+  margin: 0 auto var(--dw-s3);
   padding-bottom: var(--dw-s2);
   border-bottom: 1px solid var(--dw-hairline);
 }
@@ -172,19 +173,20 @@
 /* ─── FILTERS ─────────────────────────────────────────────────────────────── */
 
 .dw-filters {
-  /* iter8 — flat document flow per Aria reference: filter section sits on
-   * the same pure white page bg, no boxed surround. Depth comes from line
-   * (the bottom hairline divider on .dw-filters__grid), not from a fill. */
+  /* iter9 — flat document flow per Aria. Drop vertical padding so the band
+   * breathes against the page bg; horizontal padding 16px keeps content
+   * away from the page edge on narrower viewports. */
   margin: 0 auto var(--dw-s6);
   max-width: 1280px;
-  padding: var(--dw-s5);
+  padding: 0 var(--dw-s4);
 }
 
 .dw-filters__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--dw-s7);
-  padding-bottom: var(--dw-s4);
+  /* iter9 — 12px bottom rhythm before the divider/chips line (was 16) */
+  padding-bottom: var(--dw-s3);
   border-bottom: 1px solid var(--dw-border-subtle);
 }
 /* When chips are visible they sit below the divider; if hidden the divider
@@ -197,8 +199,21 @@
 .dw-filters__col {
   display: flex;
   flex-direction: column;
-  gap: var(--dw-s6); /* iter8 — generous breathing between filter groups (32px) */
-  padding: 0 15px; /* iter7 — Aria DevTools: filter wrapper horizontal padding */
+  /* iter9 — section gap 32 → 24; rhythm now lives on the grid gap, the
+   * filter-band wrapper padding, and the h3 label margin — not on a per-col
+   * horizontal padding (carry-over from iter7, dropped). */
+  gap: var(--dw-s5);
+}
+
+/* iter9 — at tablet widths the 2-col grid feels cramped (matches Aria's
+ * responsive-768 capture where the band collapses to a single stack).
+ * Restore generous 32px section gap inside the now-stacked column. */
+@media (max-width: 768px) {
+  .dw-filters__grid {
+    grid-template-columns: 1fr;
+    gap: var(--dw-s6);
+  }
+  .dw-filters__col { gap: var(--dw-s6); }
 }
 
 .dw-fgroup {
@@ -214,7 +229,9 @@
   font-weight: 600;
   letter-spacing: 0;
   color: var(--dw-text);
-  margin: var(--dw-s4) 0; /* iter7 — Aria DevTools: 16px 0 */
+  /* iter9 — 0 0 12 0; label sits tight above its controls, vertical breath
+   * comes from .dw-filters__col gap, not from label margin. */
+  margin: 0 0 var(--dw-s3) 0;
 }
 
 /* ─── PILL GROUPS ─────────────────────────────────────────────────────────── */
@@ -230,13 +247,17 @@
   -webkit-appearance: none;
   background: var(--dw-bg-card);
   border: 1px solid var(--dw-border-subtle);
-  border-radius: 8px;
+  /* iter9 — Aria editorial pill: tighter metrics. radius 8→6, font 13→14,
+   * padding 10/14→8/12, min-height 44→36 so pills sit in the band like
+   * Aria's compact filter chips rather than buttons. .dw-shape-tile keeps
+   * its own size overrides (94×80) below — these changes don't reach it. */
+  border-radius: 6px;
   color: var(--dw-text-primary);
   font-family: var(--dw-font-btn);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  padding: 10px 14px;
-  min-height: 44px;
+  padding: 8px 12px;
+  min-height: 36px;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   outline: none;
@@ -412,9 +433,12 @@
   gap: 4px;
   background: var(--dw-bg-card);
   border: 1px solid var(--dw-border);
-  border-radius: 6px;
-  padding: 2px 8px;
+  /* iter9 — Aria .slider-inputs input exact: 4px radius, 3/6 padding,
+   * ~135px max so the input pair sits compact under the slider rail. */
+  border-radius: 4px;
+  padding: 3px 6px;
   flex: 1;
+  max-width: 135px;
   min-width: 0;
   transition: border-color 0.15s ease;
 }
@@ -431,7 +455,9 @@
   color: var(--dw-text);
   width: 100%;
   min-width: 0;
-  padding: 6px 0;
+  /* iter9 — text-align end + tighter vertical padding per Aria slider-inputs */
+  padding: 4px 0;
+  text-align: end;
   letter-spacing: 0;
   -moz-appearance: textfield;
 }
@@ -517,9 +543,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--dw-s2);
-  margin-top: var(--dw-s5);
-  padding-top: var(--dw-s4);
+  /* iter9 — Aria .active-filter-wrapper exact: gap 15, margin 15, padding 15 */
+  gap: 15px;
+  margin-top: 15px;
+  padding-top: 15px;
   border-top: 1px solid var(--dw-hairline);
 }
 .dw-chips[hidden] { display: none; }
