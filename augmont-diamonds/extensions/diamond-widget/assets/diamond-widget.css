@@ -22,7 +22,7 @@
   --dw-text-faint:     #9b9b9b;       /* tertiary — strikethroughs, captions */
   --dw-border-subtle:  #e5e5e5;       /* neutral hairline */
   --dw-border-strong:  #292929;       /* matches Aria text-primary for outlined buttons */
-  --dw-accent-red:     #e63946;       /* Aria coral-red for -15% discount badges */
+  --dw-accent-red:     #ce2c31;       /* iter12 — Aria EXACT extracted from .discount-percentage rule in nivoda-connect react-app.js bundle */
   --dw-hover-bg:       #f5f5f5;       /* neutral subtle hover for pills/chips */
   --dw-skeleton:       #ececec;
   --dw-skeleton-hi:    #f5f5f5;
@@ -136,11 +136,11 @@
   -webkit-appearance: none;
   background: none;
   border: none;
-  padding: 10px 4px;
+  /* iter12 — Aria .nat-lab-item EXACT: padding 0 10px, min-width 120px, text-align center */
+  padding: 10px 10px;
+  min-width: 120px;
   font-family: var(--dw-font-head);
   font-size: 1.25rem; /* iter7 — Aria DevTools: h2 20px */
-  /* iter9 — bump 400 → 500 for slight presence; inactive distinction
-   * is now via opacity + active underline, not light weight. */
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--dw-text-secondary);
@@ -148,6 +148,7 @@
   position: relative;
   transition: color 0.15s ease;
   min-height: 44px;
+  text-align: center;
 }
 .dw-treatment-tab:hover { color: var(--dw-text-primary); }
 .dw-treatment-tab.is-active { color: var(--dw-text-primary); }
@@ -156,7 +157,8 @@
   position: absolute;
   left: 0; right: 0;
   bottom: -3px;
-  height: 2px;
+  /* iter12 — Aria .nat-lab-item-active: border-bottom 3px solid var(--primary-color) */
+  height: 3px;
   background: var(--dw-text-primary);
 }
 
@@ -396,33 +398,6 @@
 .dw-slider__input::-moz-range-track { background: none; border: none; }
 .dw-slider__input--max { z-index: 2; }
 .dw-slider__input--min { z-index: 3; }
-
-/* iter11 — Aria-style labeled tick row sitting under ordinal range
- * sliders (Colour / Clarity / Cut). flex space-between distributes
- * the labels evenly between the two end stops; the 9px horizontal
- * padding aligns with half the 18px thumb circle so the first/last
- * label sits centered under the thumb's stop position rather than
- * the slider track edge. */
-.dw-slider__ticks {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 12px 0 0;
-  padding: 0 9px;
-  font-family: var(--dw-font-body);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--dw-text-primary);
-  letter-spacing: 0;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.dw-slider__tick {
-  display: inline-block;
-  text-align: center;
-  white-space: nowrap;
-  flex: 0 0 auto;
-}
 
 .dw-slider__values {
   display: flex;
@@ -758,8 +733,9 @@
   background: var(--dw-accent-red);
   color: #ffffff;
   font-family: var(--dw-font-body);
-  font-size: 0.75rem;
-  font-weight: 600;
+  /* iter12 — Aria .discount-percentage exact: 14px / weight 700 */
+  font-size: 0.875rem;
+  font-weight: 700;
   letter-spacing: 0;
   padding: 4px 8px;
   border-radius: 4px;
@@ -910,11 +886,13 @@
 
 .dw-card__add {
   width: 100%;
-  min-height: 44px;
+  /* iter12 — Aria .diamond-proxy-add-to-cart EXACT: height 4em, border-radius 12px,
+   * padding 12px 6px. At our 14px button base 4em ≈ 56px — gives the CTA
+   * more presence and matches Aria's deliberate vertical rhythm. */
+  min-height: 4em;
+  border-radius: 12px;
+  padding: 12px 6px;
   font-size: 0.875rem;
-  /* iter8 — Aria DevTools: pure #000000 + bolder for editorial presence.
-   * Card add button text is darker than body text (#292929) by design —
-   * the CTA reads heavier than surrounding spec/title text. */
   color: #000000;
   font-weight: 700;
 }
@@ -1688,8 +1666,9 @@
   background: var(--dw-accent-red);
   color: #ffffff;
   font-family: var(--dw-font-body);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  /* iter12 — Aria .discount-percentage exact: 14px / weight 700 */
+  font-size: 0.875rem;
+  font-weight: 700;
   letter-spacing: 0;
   padding: 4px 10px;
   border-radius: 4px;
@@ -1830,7 +1809,8 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--dw-s4);
-  margin-top: var(--dw-s5);
+  /* iter12 — Aria .view-details-price-wrapper EXACT: margin 30px 0 */
+  margin: 30px 0 0;
   padding-top: var(--dw-s4);
   border-top: 1px solid var(--dw-border-subtle);
 }
@@ -1874,11 +1854,16 @@
   align-items: baseline;
   gap: 6px;
   font-family: var(--dw-font-body);
-  font-size: 0.9375rem;
+  /* iter12 — Aria .view-details-original-price EXACT: 16px / line-height 18px */
+  font-size: 1rem;
+  line-height: 18px;
 }
 .dw-viewer__price-strike {
-  color: var(--dw-text-faint);
+  /* iter12 — Aria .view-details-original-price EXACT: color #999, weight 400 */
+  color: #999;
+  font-weight: 400;
   text-decoration: line-through;
+  margin-top: 5px;
 }
 .dw-viewer__price-discount { color: var(--dw-accent-red); font-weight: 600; }
 
@@ -1906,10 +1891,12 @@
 .dw-viewer__add,
 .dw-btn.dw-viewer__add {
   width: 100%;
-  min-height: 52px;
+  /* iter12 — Aria .diamond-proxy-add-to-cart EXACT: 4em height, 12px radius, 12px 6px padding */
+  min-height: 4em;
+  padding: 12px 6px;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 12px;
   background: var(--dw-text-primary);
   color: #ffffff;
   border: 1px solid var(--dw-text-primary);
@@ -1980,13 +1967,15 @@
  * stacked CTAs share the same height; differentiation comes from fill. */
 .dw-viewer__expert {
   width: 100%;
-  min-height: 52px;
+  /* iter12 — match primary 4em height + 12px radius for paired CTA visual */
+  min-height: 4em;
+  padding: 12px 6px;
   font-size: 1rem;
   font-weight: 500;
   background: transparent;
   color: var(--dw-text-primary);
   border: 1px solid var(--dw-text-primary);
-  border-radius: 4px;
+  border-radius: 12px;
   cursor: pointer;
   font-family: var(--dw-font-btn);
   text-decoration: none;
@@ -2105,8 +2094,9 @@
 .dw-viewer__specs dt {
   font-family: var(--dw-font);
   font-size: 1rem;
-  font-weight: 400;
-  color: var(--dw-text-secondary);
+  /* iter12 — Aria .diamond-property-label EXACT: weight 500, primary color */
+  font-weight: 500;
+  color: var(--dw-text-primary);
   letter-spacing: 0;
   line-height: 1.4;
 }
@@ -2114,7 +2104,8 @@
   font-family: var(--dw-font);
   font-size: 1rem;
   font-weight: 500;
-  color: var(--dw-text-primary);
+  /* iter12 — Aria .diamond-property-value EXACT: color #78716C (Tailwind stone-500) */
+  color: #78716C;
   margin: 0;
   letter-spacing: 0;
   text-align: right;
