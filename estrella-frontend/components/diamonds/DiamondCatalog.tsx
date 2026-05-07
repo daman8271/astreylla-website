@@ -177,8 +177,27 @@ export function DiamondCatalog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  // first mount
+  // first mount — also parse initial filter state from URL search params so
+  // deep links from the nav mega-menu (e.g. /diamonds?shape=Round) land
+  // pre-filtered. Only reads the params we currently link from; ignores
+  // unknown params silently.
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URL(window.location.href).searchParams;
+      const shape = sp.get("shape");
+      const treatment = sp.get("treatment");
+      if (shape || treatment) {
+        setFilters((f) => ({
+          ...f,
+          ...(shape ? { shape } : {}),
+          ...(treatment === "lab-grown" || treatment === "natural"
+            ? { treatment: treatment as FilterState["treatment"] }
+            : {}),
+        }));
+        // setFilters triggers the debounced refetch — no manual call needed
+        return;
+      }
+    }
     refetch(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
