@@ -7,7 +7,6 @@ import { RingStudioMini } from "@/components/ring-studio/RingStudioMini";
 import { ValueStrip } from "@/components/value-strip/ValueStrip";
 import { AboutSection } from "@/components/about/AboutSection";
 import { ExpressDiamondsBand } from "@/components/express-band/ExpressDiamondsBand";
-import { TestimonialsRow } from "@/components/testimonials/TestimonialsRow";
 
 export default function Home() {
   return (
@@ -21,7 +20,6 @@ export default function Home() {
       <ValueStrip />
       <AboutSection />
       <ExpressDiamondsBand />
-      <TestimonialsRow />
     </>
   );
 }
