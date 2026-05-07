@@ -41,30 +41,32 @@ export function VideoHero() {
       />
 
       <div
-        className="estrella-container"
         style={{
           position: "relative",
           height: "100%",
+          width: "100%",
+          maxWidth: 1080,
+          marginInline: "auto",
+          padding: "32px",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "center",
           color: "#ffffff",
-          maxWidth: "var(--max-content-width)",
         }}
       >
-        <div style={{ maxWidth: 600 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
           <p
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              letterSpacing: "0.18em",
+              fontSize: 14,
+              letterSpacing: "0.04em",
               textTransform: "uppercase",
               color: "#ffffff",
-              marginBottom: 24,
-              fontWeight: 500,
-              maxWidth: "52ch",
-              lineHeight: 1.5,
+              marginBottom: 8,
+              fontWeight: 400,
+              maxWidth: "62ch",
+              lineHeight: 1.4,
             }}
           >
             Build your ring &mdash; pick a setting first, or pair it to a centre stone.
@@ -74,17 +76,39 @@ export function VideoHero() {
               fontFamily: "var(--font-display)",
               fontStyle: "italic",
               fontWeight: 400,
-              fontSize: "clamp(40px, 7vw, 64px)",
-              lineHeight: 1.05,
-              letterSpacing: "-0.01em",
+              fontSize: 30,
+              lineHeight: 1.2,
+              letterSpacing: 0,
               color: "#ffffff",
-              marginBottom: 36,
-              maxWidth: "16ch",
+              margin: 0,
+              maxWidth: "20ch",
             }}
           >
             Design the ring you have always imagined.
           </h1>
-          <Link href="/diamonds" className="estrella-btn estrella-btn--pill-white">
+          <Link
+            href="/diamonds"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 200,
+              height: 67,
+              padding: "0 40px",
+              marginTop: 32,
+              background: "#ffffff",
+              color: "#292929",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              border: 0,
+              borderRadius: 0,
+              transition: "transform 200ms ease, box-shadow 200ms ease",
+            }}
+            className="hover:scale-[1.02] hover:shadow-lg"
+          >
             Shop Now
           </Link>
         </div>
