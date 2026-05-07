@@ -2,7 +2,7 @@ import "@/components/diamonds/diamonds.css";
 import { DiamondCatalog } from "@/components/diamonds/DiamondCatalog";
 
 export const metadata = {
-  title: "Loose Diamonds — Augmont",
+  title: "Only Diamonds — Augmont",
   description:
     "Browse our curated collection of certified lab-grown loose diamonds, jeweller-direct.",
 };

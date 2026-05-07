@@ -62,7 +62,7 @@ export default function GemstonesPage() {
             Meanwhile, our diamond catalogue is fully stocked.
           </p>
           <Link href="/diamonds" className="estrella-btn estrella-btn--primary">
-            Browse Loose Diamonds
+            Browse Only Diamonds
           </Link>
         </div>
       </section>

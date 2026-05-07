@@ -174,7 +174,7 @@
   // iter11 — descriptive subtitle below the heading, Aria parity.
   root.innerHTML =
     '<header class="dw-hero">' +
-      '<p class="dw-hero__eyebrow">Loose Diamonds</p>' +
+      '<p class="dw-hero__eyebrow">Only Diamonds</p>' +
       '<h2 class="dw-hero__title">Browse Our Collection</h2>' +
       '<p class="dw-hero__subtitle">Browse our curated collection and use the filters to narrow down by shape, colour, clarity, cut and price.</p>' +
     '</header>' +
