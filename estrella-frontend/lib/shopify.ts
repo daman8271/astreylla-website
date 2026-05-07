@@ -10,10 +10,37 @@ const publicAccessToken =
   process.env.SHOPIFY_STOREFRONT_TOKEN ||
   "";
 
-export const shopifyClient = createStorefrontApiClient({
-  storeDomain,
-  apiVersion: "2025-10",
-  publicAccessToken,
+// Lazy + tolerant: createStorefrontApiClient throws on construction when
+// publicAccessToken is empty. Building this module at top level means any
+// preview environment missing the env var fails the entire `next build`
+// (including unrelated pages, via shared chunks like _not-found). Defer
+// construction until first use; pages that don't call into Shopify build
+// and run fine, and Shopify-dependent routes still error loudly at request
+// time when the token is missing.
+type ShopifyClient = ReturnType<typeof createStorefrontApiClient>;
+let _client: ShopifyClient | null = null;
+
+function getClient(): ShopifyClient {
+  if (_client) return _client;
+  if (!publicAccessToken) {
+    throw new Error(
+      "Shopify Storefront token is not configured. Set NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN."
+    );
+  }
+  _client = createStorefrontApiClient({
+    storeDomain,
+    apiVersion: "2025-10",
+    publicAccessToken,
+  });
+  return _client;
+}
+
+export const shopifyClient: ShopifyClient = new Proxy({} as ShopifyClient, {
+  get(_t, prop) {
+    const client = getClient();
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
+    return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(client) : value;
+  },
 });
 
 export type Money = { amount: string; currencyCode: string };
