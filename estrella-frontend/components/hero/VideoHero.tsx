@@ -20,7 +20,8 @@ export function VideoHero() {
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
+        poster="/hero-poster.jpg"
         aria-hidden="true"
         style={{
           position: "absolute",
