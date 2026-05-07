@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "About — Estrella",
-  description: "Estrella is a wholesale-direct lab-grown diamond house.",
+  title: "About — Augmont",
+  description: "Augmont is a wholesale-direct lab-grown diamond house.",
 };
 
 export default function AboutPage() {
@@ -36,7 +36,7 @@ export default function AboutPage() {
               marginBottom: 16,
             }}
           >
-            About Estrella
+            About Augmont
           </h1>
         </div>
       </section>
@@ -90,7 +90,7 @@ export default function AboutPage() {
             }}
           >
             <p>
-              We started Estrella because the diamond market is overdue for
+              We started Augmont because the diamond market is overdue for
               honesty. Layers of distributors, retail markups and unclear
               certifications have made it harder than it should be to buy a
               fairly priced stone.

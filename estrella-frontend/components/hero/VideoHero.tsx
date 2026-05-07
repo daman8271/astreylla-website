@@ -1,68 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { HeroPosterFallback } from "./HeroPosterFallback";
 
 export function VideoHero() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [reduced, setReduced] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(mq.matches);
-    onChange();
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
   return (
     <section
       style={{
         position: "relative",
         width: "100%",
-        height: "80vh",
-        minHeight: 480,
+        height: "85vh",
+        minHeight: 560,
         overflow: "hidden",
-        background: "#0a0a0a",
+        background:
+          "var(--hero-bg-image), linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
-      aria-label="Estrella diamonds — hero"
+      aria-label="Augmont diamonds — hero"
     >
-      <HeroPosterFallback />
-
-      {!reduced && !videoFailed && (
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster="/hero-poster.svg"
-          aria-hidden="true"
-          onError={() => setVideoFailed(true)}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        >
-          <source src="/hero-loop.webm" type="video/webm" />
-          <source src="/hero-loop.mp4" type="video/mp4" />
-        </video>
-      )}
-
       <div
         aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.45) 100%)",
+            "linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.0) 100%)",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)",
+          backgroundSize: "3px 3px",
+          opacity: 0.6,
+          mixBlendMode: "overlay",
         }}
       />
 
@@ -74,42 +48,45 @@ export function VideoHero() {
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
-          justifyContent: "flex-end",
-          paddingBlock: "clamp(40px, 8vw, 96px)",
+          justifyContent: "center",
           color: "#ffffff",
+          maxWidth: "var(--max-content-width)",
         }}
       >
-        <h1
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(40px, 7vw, 72px)",
-            lineHeight: 1.05,
-            letterSpacing: "-0.01em",
-            color: "#ffffff",
-            maxWidth: "16ch",
-            marginBottom: 20,
-            textShadow: "0 2px 20px rgba(0,0,0,0.4)",
-          }}
-        >
-          Lab-grown diamonds,
-          <br />
-          jeweller-direct.
-        </h1>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 18,
-            lineHeight: 1.5,
-            color: "rgba(255,255,255,0.88)",
-            maxWidth: "44ch",
-            marginBottom: 32,
-          }}
-        >
-          Browse certified loose diamonds at wholesale prices.
-        </p>
-        <Link href="/diamonds" className="estrella-btn estrella-btn--primary">
-          Browse Collection
-        </Link>
+        <div style={{ maxWidth: 600 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              color: "#ffffff",
+              marginBottom: 16,
+              fontWeight: 500,
+              maxWidth: "52ch",
+              lineHeight: 1.5,
+            }}
+          >
+            Build your ring &mdash; pick a setting first, or pair it to a centre stone.
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontStyle: "italic",
+              fontSize: "clamp(40px, 7vw, 64px)",
+              lineHeight: 1.05,
+              letterSpacing: "-0.005em",
+              color: "#ffffff",
+              marginBottom: 36,
+              maxWidth: "16ch",
+            }}
+          >
+            Design the ring you have always imagined.
+          </h1>
+          <Link href="/diamonds" className="estrella-btn estrella-btn--pill-white">
+            Shop Now
+          </Link>
+        </div>
       </div>
     </section>
   );

@@ -6,13 +6,19 @@
   --brand-bg: #ffffff;
   --brand-bg-warm: #faf6ee;
   --brand-bg-section: #f7f6f3;
+  --bg-cream: #f7f5f0;
+  --bg-charcoal: #1a1a1a;
+  --bg-navy: #1c2438;
+  --text-on-dark: #ffffff;
   --brand-text-primary: #1a1a1a;
   --brand-text-secondary: #5a5a5a;
   --brand-text-muted: #9b9b9b;
-  --brand-accent-gold: #c9a961;
+  --brand-accent-gold: #b59a6f;
   --brand-accent-red: #e63946;
   --brand-border-subtle: #e5e5e5;
   --brand-border-strong: #1a1a1a;
+  --hero-bg-image:
+    linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
 
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(0, 0, 0, 0.06);
@@ -127,6 +133,39 @@ img, svg, video { display: block; max-width: 100%; }
   border-color: rgba(255, 255, 255, 0.6);
 }
 .estrella-btn--ghost:hover { background: rgba(255, 255, 255, 0.08); }
+
+.estrella-btn--pill-white {
+  background: #ffffff;
+  color: var(--brand-text-primary);
+  border-radius: var(--radius-pill);
+  padding: 16px 40px;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.estrella-btn--pill-white:hover { background: #f0eee9; }
+
+.estrella-btn--pill-outline {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-pill);
+  padding: 16px 40px;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.estrella-btn--pill-outline:hover { background: rgba(255, 255, 255, 0.08); }
+
+.estrella-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-text-muted);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

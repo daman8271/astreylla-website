@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Color Diamonds — Estrella",
+  title: "Color Diamonds — Augmont",
   description: "Fancy color lab-grown diamonds. Coming soon.",
 };
 

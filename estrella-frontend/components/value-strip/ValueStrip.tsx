@@ -23,7 +23,7 @@ export function ValueStrip() {
     <section
       className="estrella-section"
       style={{ background: "var(--brand-bg-warm)" }}
-      aria-label="Why Estrella"
+      aria-label="Why Augmont"
     >
       <div className="estrella-container">
         <ul
@@ -49,23 +49,24 @@ export function ValueStrip() {
               <span
                 aria-hidden="true"
                 style={{
-                  width: 44,
-                  height: 44,
+                  width: 36,
+                  height: 36,
                   borderRadius: "var(--radius-pill)",
-                  background: "rgba(201, 169, 97, 0.12)",
+                  background: "rgba(181, 154, 111, 0.14)",
                   color: "var(--brand-accent-gold)",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Icon size={22} strokeWidth={1.5} />
+                <Icon size={18} strokeWidth={1.5} />
               </span>
               <h3
                 style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 24,
-                  letterSpacing: "0.005em",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  letterSpacing: "0.01em",
                   color: "var(--brand-text-primary)",
                 }}
               >
@@ -74,7 +75,7 @@ export function ValueStrip() {
               <p
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: 15,
+                  fontSize: 14,
                   lineHeight: 1.6,
                   color: "var(--brand-text-secondary)",
                   maxWidth: "32ch",

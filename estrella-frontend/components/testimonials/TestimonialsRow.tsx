@@ -7,7 +7,7 @@ const TESTIMONIALS = [
   },
   {
     quote:
-      "Five custom commissions, five flawless stones. Estrella is now the only wholesale partner my workshop uses.",
+      "Five custom commissions, five flawless stones. Augmont is now the only wholesale partner my workshop uses.",
     author: "Arjun Mehra",
     role: "Bench Jeweller, London",
   },

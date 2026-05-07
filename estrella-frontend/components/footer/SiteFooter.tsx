@@ -1,40 +1,39 @@
+"use client";
+
 import Link from "next/link";
 
-const COL_SHOP = [
-  { href: "/diamonds", label: "Loose Diamonds" },
-  { href: "/color-diamonds", label: "Color Diamonds" },
-  { href: "/gemstones", label: "Gemstones" },
+const COL_LEARN = [
+  { href: "#", label: "Email Us" },
+  { href: "#", label: "Plans" },
+];
+
+const COL_DIAMONDS = [
+  { href: "/diamonds", label: "Natural Diamonds" },
+  { href: "/diamonds", label: "Lab Grown Diamonds" },
+  { href: "/color-diamonds", label: "Colored Diamonds" },
+  { href: "/color-diamonds", label: "Colored Natural Gemstones" },
+];
+
+const COL_BRIDAL = [
   { href: "/engagement", label: "Engagement Rings" },
+  { href: "/diamonds", label: "Wedding Bands" },
+  { href: "/diamonds", label: "Anniversary" },
 ];
 
-const COL_EDUCATION = [
+const COL_HELP = [
   { href: "#", label: "Diamond Buying Guide" },
-  { href: "#", label: "4 Cs Explained" },
-  { href: "#", label: "Lab-Grown vs Natural" },
-  { href: "#", label: "Care & Cleaning" },
-];
-
-const COL_COMPANY = [
-  { href: "/about", label: "About" },
-  { href: "#", label: "Contact" },
-  { href: "#", label: "Privacy Policy" },
-  { href: "#", label: "Terms of Service" },
+  { href: "#", label: "Gemstones Guide" },
+  { href: "#", label: "Emerald Gemstones" },
+  { href: "#", label: "Sapphire Gemstones" },
+  { href: "#", label: "Ruby Gemstones" },
 ];
 
 function InstagramIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" />
-    </svg>
-  );
-}
-
-function TwitterIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-      <path d="M4 4 L20 20 M20 4 L4 20" strokeLinecap="round" />
     </svg>
   );
 }
@@ -44,93 +43,167 @@ export function SiteFooter() {
   return (
     <footer
       style={{
-        background: "var(--brand-text-primary)",
-        color: "#ffffff",
+        background: "#fafaf7",
+        color: "#292929",
         marginTop: "auto",
       }}
     >
       <div
-        className="estrella-container"
-        style={{ paddingBlock: "clamp(48px, 6vw, 96px)" }}
+        style={{
+          padding: "40px 32px 0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderBottom: "1px solid var(--brand-border-subtle)",
+        }}
       >
-        <div
-          className="grid"
+        <Link
+          href="/"
+          aria-label="Augmont — home"
           style={{
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: 48,
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            letterSpacing: "0.08em",
+            color: "#292929",
+            paddingBlock: 24,
           }}
         >
-          <div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 28,
-                letterSpacing: "0.04em",
-                marginBottom: 16,
-              }}
-            >
-              ESTRELLA
-            </div>
-            <p
-              style={{
-                fontSize: 14,
-                color: "rgba(255,255,255,0.7)",
-                lineHeight: 1.6,
-                maxWidth: 240,
-              }}
-            >
-              Lab-grown diamonds, jeweller-direct. Certified, ethical,
-              wholesale-priced.
-            </p>
-          </div>
+          AUGMONT
+        </Link>
+      </div>
 
-          <FooterCol title="Shop" links={COL_SHOP} />
-          <FooterCol title="Education" links={COL_EDUCATION} />
-          <FooterCol title="Company" links={COL_COMPANY} />
+      <div
+        className="estrella-container"
+        style={{
+          paddingTop: 56,
+          paddingBottom: 40,
+          display: "grid",
+          gridTemplateColumns:
+            "minmax(220px, 1.2fr) repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 48,
+        }}
+      >
+        <div>
+          <p
+            style={{
+              fontFamily: "var(--font-display)",
+              fontStyle: "italic",
+              fontSize: 18,
+              color: "#292929",
+              marginBottom: 4,
+            }}
+          >
+            Subscribe <span style={{ fontStyle: "normal" }}>now</span>
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              color: "#5a5a5a",
+              marginBottom: 16,
+            }}
+          >
+            Learn more about us and our reviews
+          </p>
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            style={{
+              display: "flex",
+              alignItems: "stretch",
+              border: "1px solid #292929",
+              maxWidth: 360,
+            }}
+          >
+            <label htmlFor="footer-email" className="sr-only">
+              Email address
+            </label>
+            <input
+              id="footer-email"
+              type="email"
+              placeholder="ENTER YOUR EMAIL"
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: 0,
+                outline: "none",
+                padding: "12px 14px",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                letterSpacing: "0.12em",
+                color: "#292929",
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                background: "#292929",
+                color: "#ffffff",
+                border: 0,
+                padding: "12px 22px",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                letterSpacing: "0.16em",
+                fontWeight: 500,
+              }}
+            >
+              JOIN
+            </button>
+          </form>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              color: "#9b9b9b",
+              marginTop: 12,
+            }}
+          >
+            By subscribing, you agree to our terms &amp; conditions.
+          </p>
         </div>
 
+        <FooterCol title="LEARN & GROW" links={COL_LEARN} />
+        <FooterCol title="DIAMONDS & GEMSTONES" links={COL_DIAMONDS} />
+        <FooterCol title="BRIDAL & ENGAGEMENT" links={COL_BRIDAL} />
+        <FooterCol title="HELP & GUIDE" links={COL_HELP} />
+      </div>
+
+      <div
+        style={{
+          borderTop: "1px solid var(--brand-border-subtle)",
+        }}
+      >
         <div
+          className="estrella-container"
           style={{
-            marginTop: 64,
-            paddingTop: 24,
-            borderTop: "1px solid rgba(255,255,255,0.12)",
+            paddingBlock: 20,
             display: "flex",
             flexWrap: "wrap",
-            gap: 24,
             justifyContent: "space-between",
             alignItems: "center",
+            gap: 24,
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            color: "#5a5a5a",
           }}
         >
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
-            © {year} Estrella. All rights reserved.
-          </span>
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-            <a
-              href="#"
-              aria-label="Instagram"
-              style={{ color: "rgba(255,255,255,0.7)" }}
-              className="hover:!text-white transition-colors"
-            >
+            <span>USD $</span>
+            <span style={{ color: "#292929" }}>hello@augmont.example</span>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <PaymentChip>VISA</PaymentChip>
+            <PaymentChip>MC</PaymentChip>
+            <PaymentChip>AMEX</PaymentChip>
+            <PaymentChip>PAYPAL</PaymentChip>
+            <PaymentChip>DISC</PaymentChip>
+          </div>
+
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <a href="#" aria-label="Instagram" style={{ color: "#292929" }}>
               <InstagramIcon />
             </a>
-            <a
-              href="#"
-              aria-label="X / Twitter"
-              style={{ color: "rgba(255,255,255,0.7)" }}
-              className="hover:!text-white transition-colors"
-            >
-              <TwitterIcon />
-            </a>
-            <span
-              style={{
-                fontSize: 12,
-                color: "rgba(255,255,255,0.4)",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-              }}
-            >
-              VISA · MC · AMEX · PAYPAL
-            </span>
+            <span>© Copyright, Augmont, {year}.</span>
           </div>
         </div>
       </div>
@@ -152,24 +225,33 @@ function FooterCol({
           fontFamily: "var(--font-sans)",
           fontSize: 12,
           fontWeight: 600,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: "#ffffff",
+          letterSpacing: "0.14em",
+          color: "#292929",
           marginBottom: 20,
         }}
       >
         {title}
       </h4>
-      <ul style={{ display: "flex", flexDirection: "column", gap: 12, padding: 0, margin: 0, listStyle: "none" }}>
+      <ul
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          padding: 0,
+          margin: 0,
+          listStyle: "none",
+        }}
+      >
         {links.map((l) => (
           <li key={`${title}-${l.label}`}>
             <Link
               href={l.href}
               style={{
+                fontFamily: "var(--font-sans)",
                 fontSize: 14,
-                color: "rgba(255,255,255,0.7)",
+                color: "#5a5a5a",
               }}
-              className="hover:!text-white transition-colors"
+              className="hover:!text-[#292929] transition-colors"
             >
               {l.label}
             </Link>
@@ -177,5 +259,31 @@ function FooterCol({
         ))}
       </ul>
     </div>
+  );
+}
+
+function PaymentChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minWidth: 36,
+        height: 22,
+        padding: "0 6px",
+        background: "#ffffff",
+        border: "1px solid var(--brand-border-subtle)",
+        borderRadius: 3,
+        fontFamily: "var(--font-sans)",
+        fontSize: 9,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        color: "#5a5a5a",
+      }}
+    >
+      {children}
+    </span>
   );
 }

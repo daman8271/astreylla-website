@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Engagement Rings — Estrella",
+  title: "Engagement Rings — Augmont",
   description: "Custom engagement settings paired with certified lab-grown diamonds. Coming soon.",
 };
 

@@ -1,7 +1,7 @@
 import { DiamondWidgetEmbed } from "@/components/widget-embed/DiamondWidgetEmbed";
 
 export const metadata = {
-  title: "Loose Diamonds — Estrella",
+  title: "Loose Diamonds — Augmont",
   description:
     "Browse our curated collection of certified lab-grown loose diamonds, jeweller-direct.",
 };

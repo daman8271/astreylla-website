@@ -25,9 +25,30 @@ export function AboutSection() {
             borderRadius: "var(--radius-md)",
             overflow: "hidden",
             background:
-              "linear-gradient(135deg, #2c2c2c 0%, #4a4a4a 50%, #1a1a1a 100%)",
+              "linear-gradient(135deg, #2a2a2a 0%, #4a4a4a 45%, #1a1a1a 100%)",
           }}
         >
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage:
+                "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)",
+              backgroundSize: "3px 3px",
+              opacity: 0.7,
+              mixBlendMode: "overlay",
+            }}
+          />
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "radial-gradient(ellipse at 30% 35%, rgba(255,255,255,0.10), transparent 60%)",
+            }}
+          />
           <div
             style={{
               position: "absolute",
@@ -41,7 +62,7 @@ export function AboutSection() {
               letterSpacing: "0.16em",
             }}
           >
-            ESTRELLA
+            AUGMONT
           </div>
         </div>
 
@@ -85,7 +106,7 @@ export function AboutSection() {
             }}
           >
             <p>
-              Estrella was built around a single conviction — buying a diamond
+              Augmont was built around a single conviction &mdash; buying a diamond
               should not require navigating a maze of markups. We work direct
               with cutters and wholesale labs, then pass the savings through to
               independent jewellers and discerning customers alike.

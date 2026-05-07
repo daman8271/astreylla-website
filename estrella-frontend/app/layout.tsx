@@ -3,6 +3,9 @@ import { Source_Serif_4, Italiana, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/nav/SiteHeader";
 import { SiteFooter } from "@/components/footer/SiteFooter";
+import { CartProvider } from "@/components/cart/CartProvider";
+import { CartDrawer } from "@/components/cart/CartDrawer";
+import { getCartAction } from "@/lib/cart-actions";
 
 const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
@@ -26,14 +29,15 @@ const instrumentSans = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Estrella — Lab-grown diamonds, jeweller-direct",
+  title: "Augmont — Lab-grown diamonds, jeweller-direct",
   description:
     "Browse certified loose diamonds at wholesale prices. GIA & IGI certified, lab-grown excellence, direct jeweller pricing.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const initialCart = await getCartAction();
   return (
     <html lang="en">
       <body
@@ -44,11 +48,14 @@ export default function RootLayout({
           flexDirection: "column",
         }}
       >
-        <SiteHeader />
-        <main id="main" style={{ flex: 1 }}>
-          {children}
-        </main>
-        <SiteFooter />
+        <CartProvider initialCart={initialCart}>
+          <SiteHeader />
+          <main id="main" style={{ flex: 1 }}>
+            {children}
+          </main>
+          <SiteFooter />
+          <CartDrawer />
+        </CartProvider>
       </body>
     </html>
   );
