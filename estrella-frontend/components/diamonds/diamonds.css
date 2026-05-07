@@ -808,3 +808,95 @@
   color: #5a5750;
   margin: 0;
 }
+
+/* ─── DARK MODE OVERRIDES ──────────────────────────────────────────────
+   Pragmatic blanket overrides — flips the most common hardcoded colors
+   used throughout the diamond catalog without rewriting every rule. */
+[data-theme="dark"] .ds,
+[data-theme="dark"] .ds * {
+  border-color: var(--brand-border-subtle);
+}
+
+/* Text — push every #292929 / #5a5750 to the themed equivalents. */
+[data-theme="dark"] [class*="ds-"] {
+  color: var(--brand-text-primary);
+}
+[data-theme="dark"] .ds-card,
+[data-theme="dark"] .ds-card *,
+[data-theme="dark"] .ds-detail,
+[data-theme="dark"] .ds-detail * {
+  color: var(--brand-text-primary);
+}
+
+/* Page background. */
+[data-theme="dark"] .ds {
+  background: var(--brand-bg);
+}
+
+/* Card and surface tints. */
+[data-theme="dark"] .ds-card {
+  background: var(--surface-soft);
+  border-color: var(--brand-border-subtle);
+}
+[data-theme="dark"] .ds-card__media,
+[data-theme="dark"] .ds-card__placeholder {
+  background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
+}
+
+/* Filters / sliders. */
+[data-theme="dark"] .ds-filter,
+[data-theme="dark"] .ds-filters,
+[data-theme="dark"] .ds-filterbar {
+  background: var(--brand-bg);
+  border-color: var(--brand-border-subtle);
+}
+[data-theme="dark"] .ds-slider__track,
+[data-theme="dark"] [class*="slider-track"] {
+  background: #2f2f2f;
+}
+[data-theme="dark"] .ds-slider__thumb,
+[data-theme="dark"] [class*="slider-thumb"] {
+  background: var(--brand-text-primary);
+  border-color: var(--brand-bg);
+}
+
+/* Cert / info pills that used cream/off-white. */
+[data-theme="dark"] .ds-cert,
+[data-theme="dark"] .ds-pill,
+[data-theme="dark"] .ds-chip {
+  background: #1c1c1c;
+  border-color: var(--brand-border-subtle);
+  color: var(--brand-text-primary);
+}
+
+/* Detail page sections. */
+[data-theme="dark"] .ds-detail,
+[data-theme="dark"] .ds-detail__missing {
+  background: var(--brand-bg);
+  color: var(--brand-text-primary);
+}
+[data-theme="dark"] .ds-detail__missing h2,
+[data-theme="dark"] .ds-detail__missing p {
+  color: var(--brand-text-primary);
+}
+
+/* Inputs inside the catalog. */
+[data-theme="dark"] .ds input[type="text"],
+[data-theme="dark"] .ds input[type="number"],
+[data-theme="dark"] .ds input[type="search"],
+[data-theme="dark"] .ds select {
+  background: #1a1a1a;
+  color: var(--brand-text-primary);
+  border-color: var(--brand-border-subtle);
+}
+[data-theme="dark"] .ds input::placeholder {
+  color: var(--brand-text-muted);
+}
+
+/* Active / selected pills. */
+[data-theme="dark"] .ds-pill[aria-pressed="true"],
+[data-theme="dark"] .ds-pill--active,
+[data-theme="dark"] .ds-chip--active {
+  background: var(--brand-text-primary);
+  color: var(--brand-bg);
+}

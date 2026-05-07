@@ -89,7 +89,7 @@ export function SiteFooter() {
               fontFamily: "var(--font-display)",
               fontStyle: "italic",
               fontSize: 18,
-              color: "#292929",
+              color: "var(--brand-text-primary)",
               marginBottom: 4,
             }}
           >
@@ -99,7 +99,7 @@ export function SiteFooter() {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 14,
-              color: "#5a5a5a",
+              color: "var(--brand-text-secondary)",
               marginBottom: 16,
             }}
           >
@@ -110,7 +110,7 @@ export function SiteFooter() {
             style={{
               display: "flex",
               alignItems: "stretch",
-              border: "1px solid #292929",
+              border: "1px solid var(--brand-text-primary)",
               maxWidth: 360,
             }}
           >
@@ -130,14 +130,14 @@ export function SiteFooter() {
                 fontFamily: "var(--font-sans)",
                 fontSize: 12,
                 letterSpacing: "0.12em",
-                color: "#292929",
+                color: "var(--brand-text-primary)",
               }}
             />
             <button
               type="submit"
               style={{
-                background: "#292929",
-                color: "#ffffff",
+                background: "var(--brand-text-primary)",
+                color: "var(--brand-bg)",
                 border: 0,
                 padding: "12px 22px",
                 fontFamily: "var(--font-sans)",
@@ -153,7 +153,7 @@ export function SiteFooter() {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 11,
-              color: "#9b9b9b",
+              color: "var(--brand-text-muted)",
               marginTop: 12,
             }}
           >
@@ -259,7 +259,7 @@ function FooterCol({
                 fontWeight: 400,
                 color: "var(--brand-text-secondary)",
               }}
-              className="hover:!text-[#1a1a1a] transition-colors"
+              className="footer-link transition-colors"
             >
               {l.label}
             </Link>
@@ -281,14 +281,14 @@ function PaymentChip({ children }: { children: React.ReactNode }) {
         minWidth: 36,
         height: 22,
         padding: "0 6px",
-        background: "#ffffff",
+        background: "var(--brand-bg)",
         border: "1px solid var(--brand-border-subtle)",
         borderRadius: 3,
         fontFamily: "var(--font-sans)",
         fontSize: 9,
         fontWeight: 700,
         letterSpacing: "0.08em",
-        color: "#5a5a5a",
+        color: "var(--brand-text-secondary)",
       }}
     >
       {children}

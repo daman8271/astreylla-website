@@ -126,7 +126,7 @@ export function DiamondsOnSale() {
             lineHeight: 1.2,
             letterSpacing: "0.02em",
             textAlign: "center",
-            color: "#292929",
+            color: "var(--brand-text-primary)",
             marginBottom: "clamp(48px, 6vw, 80px)",
             textTransform: "uppercase",
           }}

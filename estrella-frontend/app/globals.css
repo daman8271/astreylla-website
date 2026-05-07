@@ -47,6 +47,31 @@
   --radius-pill: 9999px;
 }
 
+[data-theme="dark"] {
+  --brand-bg: #0e0e0e;
+  --brand-bg-warm: #141414;
+  --brand-bg-section: #181818;
+  --bg-cream: #141414;
+
+  --brand-text-primary: #f5f5f5;
+  --brand-text-secondary: #b5b5b5;
+  --brand-text-muted: #7a7a7a;
+
+  --brand-accent-gold: #c9a96a;
+  --brand-border-subtle: #2a2a2a;
+  --brand-border-strong: #f5f5f5;
+
+  --glass-bg: rgba(14, 14, 14, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  /* Card / surface tints used in best-sellers, products etc. */
+  --surface-soft: #1c1c1c;
+}
+
+:root {
+  --surface-soft: #f5f5f5;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -64,6 +89,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 280ms ease, color 280ms ease;
 }
 
 h1, h2, h3, h4 {
@@ -196,6 +222,8 @@ img, svg, video { display: block; max-width: 100%; }
 }
 .estrella-eyebrow--on-dark { color: rgba(255, 255, 255, 0.85); }
 
+.footer-link:hover { color: var(--brand-text-primary) !important; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -203,3 +231,4 @@ img, svg, video { display: block; max-width: 100%; }
   }
   html { scroll-behavior: auto; }
 }
+

@@ -26,7 +26,7 @@ const PRODUCTS = [
 ] as const;
 
 function RingGlyph({ kind }: { kind: string }) {
-  const stroke = "#1a1a1a";
+  const stroke = "currentColor";
   if (kind === "cluster") {
     return (
       <svg viewBox="0 0 200 200" aria-hidden="true" style={{ width: "100%", height: "100%" }}>
@@ -171,7 +171,8 @@ export function BestSellersRow() {
             <article
               key={p.sku}
               style={{
-                background: "#f5f5f5",
+                background: "var(--surface-soft)",
+                color: "var(--brand-text-primary)",
                 borderRadius: "var(--radius-sm)",
                 padding: 32,
                 scrollSnapAlign: "start",

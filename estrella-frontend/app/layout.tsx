@@ -5,7 +5,14 @@ import { SiteHeader } from "@/components/nav/SiteHeader";
 import { SiteFooter } from "@/components/footer/SiteFooter";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { getCartAction } from "@/lib/cart-actions";
+
+// Runs before React hydration so the saved theme is applied before paint —
+// otherwise the page flashes light then snaps to dark on mount.
+const themeBootstrapScript = `
+(function(){try{var t=localStorage.getItem('estrella-theme');if(t!=='dark'&&t!=='light'){t='light';}document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){}})();
+`;
 
 const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
@@ -39,7 +46,12 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const initialCart = await getCartAction();
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: themeBootstrapScript }}
+        />
+      </head>
       <body
         className={`${sourceSerif.variable} ${italiana.variable} ${instrumentSans.variable}`}
         style={{
@@ -48,14 +60,16 @@ export default async function RootLayout({
           flexDirection: "column",
         }}
       >
-        <CartProvider initialCart={initialCart}>
-          <SiteHeader />
-          <main id="main" style={{ flex: 1 }}>
-            {children}
-          </main>
-          <SiteFooter />
-          <CartDrawer />
-        </CartProvider>
+        <ThemeProvider>
+          <CartProvider initialCart={initialCart}>
+            <SiteHeader />
+            <main id="main" style={{ flex: 1 }}>
+              {children}
+            </main>
+            <SiteFooter />
+            <CartDrawer />
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
