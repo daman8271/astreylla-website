@@ -2,9 +2,9 @@ import { fetchProducts } from "@/lib/shopify-server";
 import { ProductCard } from "@/components/products/ProductCard";
 
 export const metadata = {
-  title: "All Products — Estrella",
+  title: "Shop — Augmont",
   description:
-    "The full Estrella collection — lab-grown diamonds, certified jewellery, and curated gemstones, all jeweller-direct.",
+    "The full Augmont collection — lab-grown diamonds, certified jewellery, and curated gemstones, jeweller-direct.",
 };
 
 export const revalidate = 60;
@@ -40,7 +40,7 @@ export default async function ProductsPage({
     <>
       <section
         style={{
-          background: "var(--brand-bg-warm, #f5efe6)",
+          background: "var(--brand-bg-warm)",
           paddingTop: "calc(72px + clamp(32px, 6vw, 80px))",
           paddingBottom: "clamp(32px, 5vw, 64px)",
         }}
@@ -67,7 +67,7 @@ export default async function ProductsPage({
               marginBottom: 16,
             }}
           >
-            All Products
+            Shop
           </h1>
           <p
             style={{
@@ -89,7 +89,7 @@ export default async function ProductsPage({
         style={{
           paddingTop: "clamp(32px, 4vw, 56px)",
           paddingBottom: "clamp(64px, 8vw, 120px)",
-          background: "var(--brand-bg, #fbf8f3)",
+          background: "var(--brand-bg)",
         }}
       >
         <div className="estrella-container">
@@ -112,7 +112,7 @@ export default async function ProductsPage({
               <strong>Could not load products.</strong>
               <p style={{ marginTop: 8, fontSize: 13 }}>
                 Check that <code>NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN</code> is
-                set in <code>.env.local</code>. Detail: {loadError}
+                set. Detail: {loadError}
               </p>
             </div>
           ) : products.length === 0 ? (
