@@ -69,7 +69,7 @@ export function VideoHero() {
               whiteSpace: "nowrap",
             }}
           >
-            Build your ring &mdash; pick a setting first, or pair it to a centre stone.
+            Your destination for eternal shine
           </p>
           <h1
             style={{
