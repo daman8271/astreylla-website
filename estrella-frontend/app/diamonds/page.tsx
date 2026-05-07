@@ -45,7 +45,7 @@ export default function DiamondsPage() {
               marginBottom: 16,
             }}
           >
-            Loose Diamonds
+            Only Diamonds
           </h1>
           <p
             style={{
