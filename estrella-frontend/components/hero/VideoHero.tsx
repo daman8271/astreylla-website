@@ -11,13 +11,29 @@ export function VideoHero() {
         height: "85vh",
         minHeight: 560,
         overflow: "hidden",
-        background:
-          "var(--hero-bg-image), linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        background: "#0d0d0d",
       }}
-      aria-label="Augmont diamonds — hero"
+      aria-label="Astreylla — hero"
     >
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          zIndex: 0,
+        }}
+      >
+        <source src="/hero.mp4" type="video/mp4" />
+      </video>
       <div
         aria-hidden="true"
         style={{
@@ -25,24 +41,14 @@ export function VideoHero() {
           inset: 0,
           background:
             "linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.0) 100%)",
-        }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage:
-            "radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)",
-          backgroundSize: "3px 3px",
-          opacity: 0.6,
-          mixBlendMode: "overlay",
+          zIndex: 1,
         }}
       />
 
       <div
         style={{
           position: "relative",
+          zIndex: 2,
           height: "100%",
           width: "100%",
           maxWidth: 1080,
