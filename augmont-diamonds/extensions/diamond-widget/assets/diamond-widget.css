@@ -245,21 +245,20 @@
 .dw-filters__col {
   display: flex;
   flex-direction: column;
-  /* iter11 — Aria parity: 24→48px between filter sections; the bumped
-   * label typography needs more vertical breath, and the new section
-   * dividers (border-top on .dw-fgroup:not(:first-child)) need room. */
-  gap: var(--dw-s7);
+  /* iter11 v15.5 — gap 48 → 20px absolute. Combined with the divider's
+   * 20px padding-top below, the visible space between section A's last
+   * control and section B's label is ~40px (20 gap + 1 hairline + 20
+   * padding-top). Tighter than v15 which had ~72px. */
+  gap: 20px;
 }
 
 /* iter11 — hairline divider between every filter section in a column.
- * First .dw-fgroup in each column has no top border so the divider only
- * appears BETWEEN sections, not above the first. padding-top mirrors the
- * column gap so the divider sits midway in the visual gap rather than
- * hugging the next section's label. */
+ * v15.5 — drop the negative margin-top hack. With the column gap at 20px
+ * and padding-top at 20px, the divider sits cleanly mid-gap and section
+ * spacing is exactly 40px. */
 .dw-filters__col .dw-fgroup + .dw-fgroup {
   border-top: 1px solid var(--dw-border-subtle);
-  padding-top: var(--dw-s6);
-  margin-top: calc(0px - var(--dw-s2)); /* pull the section back up so divider doesn't double the column gap */
+  padding-top: 20px;
 }
 
 /* iter9 — at tablet widths the 2-col grid feels cramped (matches Aria's
@@ -347,7 +346,21 @@
  * .is-active rule below overrides with a subtle inset highlight instead.
  */
 .dw-shape-tiles {
+  /* iter11 v15.5 — switch from flex-wrap to grid. With v15 tiles bumped
+   * to 155×140, flex-wrap was producing 3 tiles per row in our ~600px
+   * column instead of Aria's 5. Grid forces 5 columns at desktop, scales
+   * down on tablet/mobile, and lets each tile's WIDTH come from the
+   * column rather than an absolute pin (height is still pinned in px).
+   */
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+}
+@media (max-width: 1023px) {
+  .dw-shape-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 639px) {
+  .dw-shape-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 .dw-pill.dw-shape-tile {
@@ -355,13 +368,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* iter11 — Aria parity: tiles 94×80 → 155×140. Closer to a square
-   * (1.1:1 vs 1.175:1) gives the shape silhouette more presence. Padding
-   * and icon size scale up in proportion. */
-  width: 155px;
-  height: 140px;
-  padding: 12px 8px;
-  gap: 10px;
+  /* iter11 v15.5 — pin height in absolute px so the rem cascade from
+   * v15's font-size:16 baseline can't expand tiles. Width is grid-managed
+   * so removed. Padding 12/8 → 16px uniform; gap 10 → 8 (label sits a
+   * touch closer to the icon). */
+  width: auto;
+  height: 130px;
+  padding: 16px;
+  gap: 8px;
   background: rgba(0, 0, 0, 0.012);
   border: 1px solid var(--dw-border-subtle);
   border-radius: 8px;
@@ -374,9 +388,10 @@
 }
 
 .dw-shape-tile__icon {
-  /* iter11 — icon 32→52px to fill the larger tile proportionally */
-  width: 52px;
-  height: 52px;
+  /* iter11 v15.5 — icon 52→64px absolute to fill the new tile better.
+   * Pinned in px (not em) so the rem cascade can't expand it. */
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -390,8 +405,10 @@
 
 .dw-shape-tile__label {
   display: block;
-  /* iter9 — Aria DevTools (image #58): span 12px Instrument Sans #292929 */
-  font-size: 0.75rem;
+  /* iter11 v15.5 — pin label 13px absolute. rem-based 0.75rem (12px@16
+   * html base) was theme-dependent; 13px is the design intent across
+   * all merchant themes regardless of html base. */
+  font-size: 13px;
   font-weight: 500;
   color: var(--dw-text-primary);
   letter-spacing: 0;
@@ -488,9 +505,10 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--dw-s2);
-  /* iter11 — tighten slider→input gap 16→12 so the inputs feel anchored
-   * to the rail above instead of floating in their own block. */
-  margin-top: var(--dw-s3);
+  /* iter11 v15.5 — slider→input gap pinned to 16px absolute. v15
+   * tightened to 12 then this iter restored to 16 to give the bumped
+   * 22px input numbers more breathing room above. */
+  margin-top: 16px;
 }
 .dw-slider__numwrap {
   display: inline-flex;
@@ -519,9 +537,10 @@
   border: 0;
   outline: none;
   font-family: var(--dw-font);
-  /* iter11 — Aria parity: input number 14→24px so the value reads at the
-   * same scale as the section labels above. */
-  font-size: 1.5rem;
+  /* iter11 v15.5 — input number pinned to 22px absolute. rem-based 1.5rem
+   * was scaling theme-dependently and pushing the input box wider than
+   * intended on themes with html-base ≠ 16. */
+  font-size: 22px;
   font-weight: 500;
   color: var(--dw-text);
   width: 100%;
@@ -540,9 +559,10 @@
 }
 .dw-slider__numunit {
   font-family: var(--dw-font);
-  /* iter11 — bump unit text 12→16px to scale with the bumped 24px number.
-   * Still smaller than the number itself for hierarchy. */
-  font-size: 1rem;
+  /* iter11 v15.5 — unit text pinned to 14px absolute (was 1rem).
+   * Used for the price slider's "$" prefix; sized smaller than the
+   * 22px number so hierarchy reads number-dominant. */
+  font-size: 14px;
   font-weight: 400;
   color: var(--dw-text-muted);
   letter-spacing: 0;
@@ -564,7 +584,10 @@
 .dw-slider__field .dw-slider__numwrap { flex: 1; }
 .dw-slider__field-unit {
   font-family: var(--dw-font);
-  font-size: 1rem;
+  /* iter11 v15.5 — pin "ct" external label to 14px absolute. Was 1rem
+   * which on a theme with html-base 14 rendered tiny; absolute px is
+   * theme-independent. */
+  font-size: 14px;
   font-weight: 400;
   color: var(--dw-text-muted);
   letter-spacing: 0;
