@@ -65,8 +65,8 @@ export function VideoHero() {
               color: "#ffffff",
               marginBottom: 8,
               fontWeight: 400,
-              maxWidth: "62ch",
               lineHeight: 1.4,
+              whiteSpace: "nowrap",
             }}
           >
             Build your ring &mdash; pick a setting first, or pair it to a centre stone.
@@ -81,7 +81,7 @@ export function VideoHero() {
               letterSpacing: 0,
               color: "#ffffff",
               margin: 0,
-              maxWidth: "20ch",
+              whiteSpace: "nowrap",
             }}
           >
             Design the ring you have always imagined.
