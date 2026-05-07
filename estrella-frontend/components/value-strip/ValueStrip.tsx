@@ -49,8 +49,8 @@ export function ValueStrip() {
               <span
                 aria-hidden="true"
                 style={{
-                  width: 36,
-                  height: 36,
+                  width: 32,
+                  height: 32,
                   borderRadius: "var(--radius-pill)",
                   background: "rgba(181, 154, 111, 0.14)",
                   color: "var(--brand-accent-gold)",
@@ -59,15 +59,16 @@ export function ValueStrip() {
                   justifyContent: "center",
                 }}
               >
-                <Icon size={18} strokeWidth={1.5} />
+                <Icon size={20} strokeWidth={1.5} />
               </span>
               <h3
                 style={{
                   fontFamily: "var(--font-sans)",
                   fontSize: 16,
                   fontWeight: 600,
-                  letterSpacing: "0.01em",
+                  letterSpacing: 0,
                   color: "var(--brand-text-primary)",
+                  margin: 0,
                 }}
               >
                 {title}

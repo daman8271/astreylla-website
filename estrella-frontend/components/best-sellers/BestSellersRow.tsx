@@ -90,7 +90,10 @@ export function BestSellersRow() {
             id="best-sellers-heading"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "clamp(28px, 3.5vw, 36px)",
+              fontWeight: 400,
+              fontSize: "clamp(28px, 4vw, 40px)",
+              lineHeight: 1.1,
+              letterSpacing: "-0.01em",
               color: "var(--brand-text-primary)",
             }}
           >
@@ -216,14 +219,22 @@ export function BestSellersRow() {
               }}
             >
               <span>
-                {p.name}{" "}
-                <span style={{ color: "var(--brand-text-muted)" }}>
+                <span style={{ fontWeight: 500 }}>{p.name}</span>{" "}
+                <span style={{ color: "var(--brand-text-secondary)", fontWeight: 400 }}>
                   ({p.sku})
                 </span>
               </span>
               <span style={{ whiteSpace: "nowrap" }}>
-                <span style={{ color: "var(--brand-text-muted)" }}>From </span>
-                {p.priceFrom}
+                <span
+                  style={{
+                    color: "var(--brand-text-secondary)",
+                    fontWeight: 400,
+                    fontSize: 13,
+                  }}
+                >
+                  From{" "}
+                </span>
+                <span style={{ fontWeight: 500 }}>{p.priceFrom}</span>
               </span>
             </li>
           ))}

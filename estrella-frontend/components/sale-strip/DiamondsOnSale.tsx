@@ -119,14 +119,14 @@ export function DiamondsOnSale() {
         <h2
           id="on-sale-heading"
           style={{
-            fontFamily: "var(--font-display)",
-            fontStyle: "italic",
-            fontWeight: 400,
-            fontSize: "clamp(22px, 2.4vw, 30px)",
-            letterSpacing: "0.02em",
+            fontFamily: "var(--font-sans)",
+            fontStyle: "normal",
+            fontWeight: 500,
+            fontSize: 12,
+            letterSpacing: "0.2em",
             textAlign: "center",
-            color: "var(--brand-text-primary)",
-            marginBottom: "clamp(48px, 6vw, 88px)",
+            color: "var(--brand-text-secondary)",
+            marginBottom: "clamp(48px, 6vw, 80px)",
             textTransform: "uppercase",
           }}
         >

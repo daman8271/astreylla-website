@@ -57,11 +57,11 @@ export function VideoHero() {
           <p
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 14,
-              letterSpacing: "0.16em",
+              fontSize: 12,
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "#ffffff",
-              marginBottom: 16,
+              marginBottom: 24,
               fontWeight: 500,
               maxWidth: "52ch",
               lineHeight: 1.5,
@@ -73,9 +73,10 @@ export function VideoHero() {
             style={{
               fontFamily: "var(--font-display)",
               fontStyle: "italic",
+              fontWeight: 400,
               fontSize: "clamp(40px, 7vw, 64px)",
               lineHeight: 1.05,
-              letterSpacing: "-0.005em",
+              letterSpacing: "-0.01em",
               color: "#ffffff",
               marginBottom: 36,
               maxWidth: "16ch",

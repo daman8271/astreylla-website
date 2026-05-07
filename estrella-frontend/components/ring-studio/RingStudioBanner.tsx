@@ -45,21 +45,24 @@ export function RingStudioBanner() {
             id="ring-studio-banner-heading"
             style={{
               fontFamily: "var(--font-display)",
-              fontStyle: "italic",
-              fontSize: "clamp(28px, 3.6vw, 38px)",
+              fontStyle: "normal",
+              fontWeight: 400,
+              fontSize: "clamp(24px, 3vw, 32px)",
               lineHeight: 1.2,
+              letterSpacing: "-0.01em",
               color: "#ffffff",
-              marginBottom: 24,
+              marginBottom: 16,
               maxWidth: "20ch",
             }}
           >
-            Custom rings, made to mark the moment.
+            Custom rings, made to{" "}
+            <em style={{ fontStyle: "italic" }}>mark the moment</em>.
           </h2>
           <div
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: 18,
-              letterSpacing: "0.16em",
+              fontSize: 14,
+              letterSpacing: "0.15em",
               color: "rgba(255,255,255,0.85)",
               marginBottom: 32,
             }}

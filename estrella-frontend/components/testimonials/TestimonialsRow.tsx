@@ -32,9 +32,10 @@ export function TestimonialsRow() {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 12,
-              letterSpacing: "0.16em",
+              fontWeight: 500,
+              letterSpacing: "0.2em",
               textTransform: "uppercase",
-              color: "var(--brand-text-muted)",
+              color: "var(--brand-text-secondary)",
               marginBottom: 12,
             }}
           >
@@ -44,7 +45,11 @@ export function TestimonialsRow() {
             id="testimonials-heading"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "clamp(32px, 4.5vw, 48px)",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(28px, 3.5vw, 40px)",
+              lineHeight: 1.1,
+              letterSpacing: "-0.01em",
               color: "var(--brand-text-primary)",
             }}
           >
@@ -68,7 +73,7 @@ export function TestimonialsRow() {
               style={{
                 background: "var(--brand-bg)",
                 border: "1px solid var(--brand-border-subtle)",
-                borderRadius: "var(--radius-lg)",
+                borderRadius: "var(--radius-sm)",
                 padding: 32,
                 display: "flex",
                 flexDirection: "column",
@@ -77,10 +82,11 @@ export function TestimonialsRow() {
             >
               <p
                 style={{
-                  fontFamily: "var(--font-serif)",
+                  fontFamily: "var(--font-sans)",
                   fontStyle: "italic",
-                  fontSize: 17,
-                  lineHeight: 1.6,
+                  fontWeight: 400,
+                  fontSize: 15,
+                  lineHeight: 1.5,
                   color: "var(--brand-text-primary)",
                 }}
               >
@@ -101,7 +107,8 @@ export function TestimonialsRow() {
                   style={{
                     fontFamily: "var(--font-sans)",
                     fontSize: 13,
-                    color: "var(--brand-text-muted)",
+                    fontWeight: 400,
+                    color: "var(--brand-text-secondary)",
                     marginTop: 2,
                   }}
                 >

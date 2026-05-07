@@ -62,7 +62,9 @@ export function RingStudioMini() {
           style={{
             fontFamily: "var(--font-display)",
             fontStyle: "italic",
-            fontSize: "clamp(20px, 2.4vw, 28px)",
+            fontWeight: 400,
+            fontSize: 24,
+            letterSpacing: "-0.01em",
             color: "#ffffff",
           }}
         >
@@ -102,23 +104,18 @@ export function RingStudioMini() {
                 style={{
                   position: "absolute",
                   left: 24,
-                  top: 24,
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 14,
-                  letterSpacing: "0.02em",
+                  bottom: 24,
+                  fontFamily: "var(--font-display)",
+                  fontStyle: "normal",
+                  fontWeight: 400,
+                  fontSize: 24,
+                  lineHeight: 1.2,
+                  letterSpacing: "-0.01em",
                   color: "var(--brand-text-primary)",
                 }}
               >
                 {t.label}{" "}
-                <span
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontStyle: "italic",
-                    fontSize: 18,
-                  }}
-                >
-                  {t.italicLabel}
-                </span>
+                <em style={{ fontStyle: "italic" }}>{t.italicLabel}</em>
               </span>
             </Link>
           ))}

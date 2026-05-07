@@ -64,7 +64,10 @@ export function CategoryTilesGrid() {
             id="categories-heading"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "clamp(28px, 3.5vw, 36px)",
+              fontWeight: 400,
+              fontSize: "clamp(28px, 4vw, 40px)",
+              lineHeight: 1.1,
+              letterSpacing: "-0.01em",
               color: "var(--brand-text-primary)",
               fontStyle: "normal",
             }}
@@ -122,11 +125,12 @@ export function CategoryTilesGrid() {
                 <div
                   style={{
                     position: "absolute",
-                    left: 20,
-                    bottom: 20,
+                    left: 24,
+                    bottom: 24,
                     fontFamily: "var(--font-sans)",
-                    fontSize: 13,
-                    letterSpacing: "0.04em",
+                    fontSize: 14,
+                    fontWeight: 400,
+                    letterSpacing: 0,
                     color: "#ffffff",
                   }}
                 >

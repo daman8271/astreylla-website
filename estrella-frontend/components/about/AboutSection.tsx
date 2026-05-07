@@ -71,10 +71,11 @@ export function AboutSection() {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 12,
-              letterSpacing: "0.16em",
+              fontWeight: 500,
+              letterSpacing: "0.2em",
               textTransform: "uppercase",
-              color: "var(--brand-text-muted)",
-              marginBottom: 16,
+              color: "var(--brand-text-secondary)",
+              marginBottom: 12,
             }}
           >
             Our story
@@ -83,8 +84,11 @@ export function AboutSection() {
             id="about-heading"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "clamp(32px, 4.5vw, 48px)",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(32px, 4vw, 44px)",
               lineHeight: 1.1,
+              letterSpacing: "-0.01em",
               color: "var(--brand-text-primary)",
               marginBottom: 24,
               maxWidth: "16ch",
@@ -94,15 +98,16 @@ export function AboutSection() {
           </h2>
           <div
             style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: 17,
-              lineHeight: 1.7,
-              color: "var(--brand-text-secondary)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 16,
+              fontWeight: 400,
+              lineHeight: 1.6,
+              color: "var(--brand-text-primary)",
               marginBottom: 32,
               display: "flex",
               flexDirection: "column",
               gap: 16,
-              maxWidth: "52ch",
+              maxWidth: 540,
             }}
           >
             <p>
@@ -117,7 +122,7 @@ export function AboutSection() {
               margins — just the diamond, properly graded, fairly priced.
             </p>
           </div>
-          <Link href="/about" className="estrella-btn estrella-btn--outline">
+          <Link href="/about" className="estrella-btn estrella-btn--pill-dark">
             Learn More
           </Link>
         </div>

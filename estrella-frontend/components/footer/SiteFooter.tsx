@@ -43,8 +43,8 @@ export function SiteFooter() {
   return (
     <footer
       style={{
-        background: "#fafaf7",
-        color: "#292929",
+        background: "var(--bg-cream)",
+        color: "var(--brand-text-primary)",
         marginTop: "auto",
       }}
     >
@@ -63,8 +63,8 @@ export function SiteFooter() {
           style={{
             fontFamily: "var(--font-display)",
             fontSize: 22,
-            letterSpacing: "0.08em",
-            color: "#292929",
+            letterSpacing: "0.15em",
+            color: "var(--brand-text-primary)",
             paddingBlock: 24,
           }}
         >
@@ -182,13 +182,15 @@ export function SiteFooter() {
             alignItems: "center",
             gap: 24,
             fontFamily: "var(--font-sans)",
-            fontSize: 13,
-            color: "#5a5a5a",
+            fontSize: 12,
+            color: "var(--brand-text-secondary)",
           }}
         >
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <span>USD $</span>
-            <span style={{ color: "#292929" }}>hello@augmont.example</span>
+            <span style={{ color: "var(--brand-text-primary)" }}>
+              hello@augmont.example
+            </span>
           </div>
 
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -200,10 +202,14 @@ export function SiteFooter() {
           </div>
 
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-            <a href="#" aria-label="Instagram" style={{ color: "#292929" }}>
+            <a
+              href="#"
+              aria-label="Instagram"
+              style={{ color: "var(--brand-text-primary)" }}
+            >
               <InstagramIcon />
             </a>
-            <span>© Copyright, Augmont, {year}.</span>
+            <span>© Copyright, Augmont Beta, {year}.</span>
           </div>
         </div>
       </div>
@@ -225,8 +231,9 @@ function FooterCol({
           fontFamily: "var(--font-sans)",
           fontSize: 12,
           fontWeight: 600,
-          letterSpacing: "0.14em",
-          color: "#292929",
+          letterSpacing: "0.15em",
+          textTransform: "uppercase",
+          color: "var(--brand-text-primary)",
           marginBottom: 20,
         }}
       >
@@ -249,9 +256,10 @@ function FooterCol({
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: 14,
-                color: "#5a5a5a",
+                fontWeight: 400,
+                color: "var(--brand-text-secondary)",
               }}
-              className="hover:!text-[#292929] transition-colors"
+              className="hover:!text-[#1a1a1a] transition-colors"
             >
               {l.label}
             </Link>

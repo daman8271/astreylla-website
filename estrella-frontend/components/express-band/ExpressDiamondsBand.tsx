@@ -61,7 +61,7 @@ export function ExpressDiamondsBand() {
         background:
           "linear-gradient(135deg, #1a1a1a 0%, #262626 50%, #111111 100%)",
         color: "#ffffff",
-        paddingBlock: 96,
+        paddingBlock: 100,
         position: "relative",
         overflow: "hidden",
       }}
@@ -98,22 +98,26 @@ export function ExpressDiamondsBand() {
             id="express-heading"
             style={{
               fontFamily: "var(--font-display)",
-              fontStyle: "italic",
-              fontSize: "clamp(28px, 3.6vw, 38px)",
+              fontStyle: "normal",
+              fontWeight: 400,
+              fontSize: "clamp(28px, 4vw, 40px)",
               lineHeight: 1.15,
+              letterSpacing: "-0.01em",
               color: "#ffffff",
               marginBottom: 16,
               maxWidth: "20ch",
             }}
           >
-            From order to door in <span style={{ fontStyle: "italic" }}>five days</span>.
+            From order to door in{" "}
+            <em style={{ fontStyle: "italic" }}>five days</em>.
           </h2>
           <p
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 15,
+              fontSize: 14,
+              fontWeight: 400,
               lineHeight: 1.6,
-              color: "rgba(255,255,255,0.78)",
+              color: "rgba(255,255,255,0.8)",
               marginBottom: 32,
               maxWidth: "44ch",
             }}
@@ -122,7 +126,7 @@ export function ExpressDiamondsBand() {
           </p>
           <Link
             href="/diamonds"
-            className="estrella-btn estrella-btn--pill-outline"
+            className="estrella-btn estrella-btn--pill-white"
           >
             Shop Express Diamonds
           </Link>
