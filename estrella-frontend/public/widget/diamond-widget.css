@@ -1,0 +1,2359 @@
+/* ─── DIAMOND WIDGET ──────────────────────────────────────────────────────
+ * Aesthetic target: flat / gallery (Nivoda Beta reference). Monochrome
+ * neutrals; sole accent (red) used only on discount markers. Typography
+ * inherits from the merchant's storefront via CSS custom properties — no
+ * hardcoded font-family names so each theme keeps its own voice.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.diamond-widget {
+  /*
+   * F6 D-iter6 palette — Aria Morelle clean white / editorial gallery.
+   * Pure white page; cards distinguished by hairline border, not fill.
+   * Image well sits at neutral mid-gray so the diamond photo backdrop
+   * separates from the page without warming the entire surface.
+   * Tokens still defer to merchant theme vars where it's safe to.
+   */
+  --dw-bg-page:        #ffffff;       /* clean white — Aria page background */
+  --dw-bg-card:        #ffffff;       /* white card; hairline border owns separation */
+  --dw-bg-image-well:  #d6d4d2;       /* neutral gray photo backdrop for stones */
+  --dw-bg-elevated:    #fafafa;       /* near-white filter band / cert block surface */
+  --dw-text-primary:   #292929;       /* Aria near-black (matches Aria DevTools inspect) */
+  --dw-text-secondary: #292929;       /* iter9 — Aria parity: secondary text reads at full primary darkness; hierarchy via WEIGHT, not color desaturation */
+  --dw-text-faint:     #9b9b9b;       /* tertiary — strikethroughs, captions */
+  --dw-border-subtle:  #e5e5e5;       /* neutral hairline */
+  --dw-border-strong:  #292929;       /* matches Aria text-primary for outlined buttons */
+  --dw-accent-red:     #ce2c31;       /* iter12 — Aria EXACT extracted from .discount-percentage rule in nivoda-connect react-app.js bundle */
+  --dw-hover-bg:       #f5f5f5;       /* neutral subtle hover for pills/chips */
+  --dw-skeleton:       #ececec;
+  --dw-skeleton-hi:    #f5f5f5;
+  --dw-shadow-card:    0 4px 16px rgba(0, 0, 0, 0.05);
+  --dw-accent:         var(--dw-text-primary); /* merchant primary_color overrides this */
+  --dw-overlay-cart:   rgba(0, 0, 0, 0.55);   /* neutral scrim */
+  --dw-overlay-viewer: rgba(0, 0, 0, 0.62);   /* neutral near-opaque for detail modal */
+  --dw-overlay-form:   rgba(0, 0, 0, 0.55);
+  /* Back-compat aliases — keep older selectors rendering sensibly while we
+   * migrate every rule to the new token names. */
+  --dw-bg:             var(--dw-bg-page);
+  --dw-text:           var(--dw-text-primary);
+  --dw-text-muted:     var(--dw-text-secondary);
+  --dw-border:         var(--dw-border-subtle);
+  --dw-image-well:     var(--dw-bg-image-well);
+  --dw-hairline:       var(--dw-border-subtle);
+  --dw-shadow-overlay: var(--dw-overlay-cart);
+
+  /* Spacing */
+  --dw-s1: 4px;
+  --dw-s2: 8px;
+  --dw-s3: 12px;
+  --dw-s4: 16px;
+  --dw-s5: 24px;
+  --dw-s6: 32px;
+  --dw-s7: 48px;
+  --dw-s8: 64px;
+
+  /*
+   * Typography — Instrument Sans is loaded via the Liquid block; if it
+   * doesn't load (offline merchant, slow CDN), fall back to merchant theme
+   * vars, then to a clean system stack. Single typeface family across the
+   * whole widget per Nivoda's convention.
+   */
+  --dw-font:         'Instrument Sans', var(--font-body-family, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --dw-font-heading: 'Instrument Sans', var(--font-heading-family, var(--dw-font));
+  --dw-font-btn:     'Instrument Sans', var(--font-button-family, var(--dw-font));
+  /* Back-compat aliases (older selectors still reference these) */
+  --dw-font-body:    var(--dw-font);
+  --dw-font-head:    var(--dw-font-heading);
+
+  font-family: var(--dw-font);
+  /* iter11 — explicit 16px baseline. Some merchant themes set html
+   * font-size to 14px (87.5%), which made our rem-defined typography render
+   * smaller than intended. Setting font-size locally on the widget root
+   * lets em-descendants and any unstyled text default to a sane size; the
+   * rem-based rules below stay anchored to <html> (theme-controlled) so
+   * we still get to opt in/out per element. Items 2-9 below bump specific
+   * elements explicitly to escape theme-rem dependence. */
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--dw-text-primary);
+  background: var(--dw-bg-page);
+  padding: var(--dw-s7) var(--dw-s5) var(--dw-s8);
+  box-sizing: border-box;
+  line-height: 1.4;
+
+  /* iter10 — viewport break-out so the widget escapes the merchant theme's
+   * page-width container (typically 1200px) and Aria-style fills more of
+   * the viewport. The standard breakout pattern: width is the viewport,
+   * margin-left is the negative offset from the centered parent edge.
+   * Internal blocks below clamp to max-width: 1600px so on huge monitors
+   * we don't go absurdly wide.
+   *
+   * Risk: parents with overflow: hidden will clip the breakout. If a
+   * merchant theme breaks under this, the safety net is the widget still
+   * gets its centered max-width on internal blocks — content stays sane.
+   * Mobile/tablet: at viewports ≤ 1280 the negative margin clamps to
+   * effectively zero and the layout is identical to pre-iter10. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  position: relative;
+}
+
+.diamond-widget *,
+.diamond-widget *::before,
+.diamond-widget *::after { box-sizing: inherit; }
+
+/* ─── HERO ────────────────────────────────────────────────────────────────── */
+
+.dw-hero {
+  text-align: center;
+  margin-bottom: var(--dw-s6);
+}
+.dw-hero__eyebrow {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dw-text);
+  margin: 0 0 var(--dw-s2);
+}
+.dw-hero__title {
+  font-family: var(--dw-font-head);
+  /* iter11 — Aria parity: hero heading scales 36→56px responsive.
+   * "Browse Our Collection" is shorter than Aria's "The World's Largest
+   * Collection" so we land at 56px desktop (vs Aria's ~64px) and shrink
+   * proportionally on narrow viewports. */
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  /* iter9 — heavier presence boost: 400 → 500. Hero title reads more
+   * confidently while staying lighter than card titles (700) and modal
+   * title (700) per the editorial weight hierarchy. */
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+  color: var(--dw-text);
+  margin: 0;
+}
+
+/* iter11 — hero subtitle. New element; rendered just under the title.
+ * Aria's reference uses descriptive copy below the heading so the page
+ * orients the buyer before the filters/grid below. */
+.dw-hero__subtitle {
+  font-family: var(--dw-font-body);
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--dw-text-secondary);
+  max-width: 720px;
+  margin: var(--dw-s3) auto 0;
+  letter-spacing: 0;
+}
+
+/* ─── CONFIG ERROR ────────────────────────────────────────────────────────── */
+
+.dw-config-error {
+  padding: var(--dw-s5);
+  background: var(--dw-image-well);
+  color: var(--dw-text);
+  font-size: 0.875rem;
+  text-align: center;
+  border: 1px solid var(--dw-hairline);
+}
+
+/* ─── TREATMENT TABS ──────────────────────────────────────────────────────── */
+/* Sits above the filter band. Active tab renders with an under-stroke
+ * (matches Nivoda's "Natural / Lab Grown" treatment).
+ */
+.dw-treatment-tabs {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--dw-s5);
+  /* iter10 — 1280→1600 to match widget viewport break-out */
+  max-width: 1600px;
+  /* iter9 — tighten bottom margin 16→12 to match Aria nat-lab-toggle rhythm */
+  margin: 0 auto var(--dw-s3);
+  padding-bottom: var(--dw-s2);
+  border-bottom: 1px solid var(--dw-hairline);
+}
+
+.dw-treatment-tab {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  /* iter12 — Aria .nat-lab-item EXACT: padding 0 10px, min-width 120px, text-align center */
+  padding: 10px 10px;
+  min-width: 120px;
+  font-family: var(--dw-font-head);
+  /* iter11 — Aria parity: tabs scale 20→24px for stronger horizontal
+   * presence next to the bumped hero. Active underline stays 3px below. */
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--dw-text-secondary);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease;
+  min-height: 44px;
+  text-align: center;
+}
+.dw-treatment-tab:hover { color: var(--dw-text-primary); }
+.dw-treatment-tab.is-active { color: var(--dw-text-primary); }
+.dw-treatment-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -3px;
+  /* iter12 — Aria .nat-lab-item-active: border-bottom 3px solid var(--primary-color) */
+  height: 3px;
+  background: var(--dw-text-primary);
+}
+
+@media (max-width: 768px) {
+  .dw-treatment-tabs {
+    gap: var(--dw-s3);
+  }
+  .dw-treatment-tab { font-size: 1rem; }
+}
+
+/* ─── FILTERS ─────────────────────────────────────────────────────────────── */
+
+.dw-filters {
+  /* iter9 — flat document flow per Aria. Drop vertical padding so the band
+   * breathes against the page bg; horizontal padding 16px keeps content
+   * away from the page edge on narrower viewports.
+   * iter10 — 1280→1600 to match widget viewport break-out. */
+  margin: 0 auto var(--dw-s6);
+  max-width: 1600px;
+  padding: 0 var(--dw-s4);
+}
+
+.dw-filters__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--dw-s7);
+  /* iter9 — 12px bottom rhythm before the divider/chips line (was 16) */
+  padding-bottom: var(--dw-s3);
+  border-bottom: 1px solid var(--dw-border-subtle);
+}
+/* When chips are visible they sit below the divider; if hidden the divider
+ * is the natural bottom edge of the grid and we don't need extra space. */
+.dw-filters:has(.dw-chips[hidden]) .dw-filters__grid {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.dw-filters__col {
+  display: flex;
+  flex-direction: column;
+  /* iter11 v15.5 — gap 48 → 20px absolute. Combined with the divider's
+   * 20px padding-top below, the visible space between section A's last
+   * control and section B's label is ~40px (20 gap + 1 hairline + 20
+   * padding-top). Tighter than v15 which had ~72px. */
+  gap: 20px;
+}
+
+/* iter11 — hairline divider between every filter section in a column.
+ * v15.5 — drop the negative margin-top hack. With the column gap at 20px
+ * and padding-top at 20px, the divider sits cleanly mid-gap and section
+ * spacing is exactly 40px. */
+.dw-filters__col .dw-fgroup + .dw-fgroup {
+  border-top: 1px solid var(--dw-border-subtle);
+  padding-top: 20px;
+}
+
+/* iter9 — at tablet widths the 2-col grid feels cramped (matches Aria's
+ * responsive-768 capture where the band collapses to a single stack).
+ * Restore generous 32px section gap inside the now-stacked column. */
+@media (max-width: 768px) {
+  .dw-filters__grid {
+    grid-template-columns: 1fr;
+    gap: var(--dw-s6);
+  }
+  .dw-filters__col { gap: var(--dw-s6); }
+}
+
+.dw-fgroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-s2);
+}
+
+.dw-fgroup__label {
+  font-family: var(--dw-font-body);
+  /* iter11 — Aria parity: 16→18px for stronger section heading presence
+   * next to the bumped tabs (24px). Hierarchy: tabs 24 > labels 18 > body 16. */
+  font-size: 1.125rem;
+  /* iter9 — bump 500 → 600 for stronger filter section heading presence */
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--dw-text);
+  /* iter9 — 0 0 12 0; label sits tight above its controls, vertical breath
+   * comes from .dw-filters__col gap, not from label margin. */
+  margin: 0 0 var(--dw-s3) 0;
+}
+
+/* ─── PILL GROUPS ─────────────────────────────────────────────────────────── */
+
+.dw-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dw-s2);
+}
+
+.dw-pill {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-border-subtle);
+  /* iter9 — Aria editorial pill: tighter metrics. radius 8→6, font 13→14,
+   * padding 10/14→8/12, min-height 44→36 so pills sit in the band like
+   * Aria's compact filter chips rather than buttons. .dw-shape-tile keeps
+   * its own size overrides (94×80) below — these changes don't reach it. */
+  border-radius: 6px;
+  color: var(--dw-text-primary);
+  font-family: var(--dw-font-btn);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  min-height: 36px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  outline: none;
+  line-height: 1.2;
+}
+.dw-pill:hover { background: var(--dw-hover-bg); border-color: var(--dw-text-primary); }
+.dw-pill:focus-visible {
+  border-color: var(--dw-text-primary);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
+}
+.dw-pill.is-active {
+  background: var(--dw-text-primary);
+  color: var(--dw-bg-card);
+  border-color: var(--dw-text-primary);
+}
+
+/* ─── SHAPE TILES ─────────────────────────────────────────────────────────────
+ * iter7 — Aria-style 94×80 tiles for the Shape filter. Buttons share the
+ * .dw-pill class with text pills so the existing click listener and sync
+ * (in diamond-widget.js) keep working unchanged; .dw-shape-tile is the
+ * visual modifier that swaps to the tile look.
+ *
+ * Reference (Aria DevTools inspect): tile 94×80, bg rgba(0,0,0,0.012)
+ * (= #00000003), centered SVG silhouette + text label below.
+ *
+ * .dw-pill.is-active flips to a dark fill (correct for text pills) which
+ * would obscure the SVG silhouette here, so the .dw-pill.dw-shape-tile
+ * .is-active rule below overrides with a subtle inset highlight instead.
+ */
+.dw-shape-tiles {
+  /* iter11 v15.5 — switch from flex-wrap to grid. With v15 tiles bumped
+   * to 155×140, flex-wrap was producing 3 tiles per row in our ~600px
+   * column instead of Aria's 5. Grid forces 5 columns at desktop, scales
+   * down on tablet/mobile, and lets each tile's WIDTH come from the
+   * column rather than an absolute pin (height is still pinned in px).
+   */
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 1023px) {
+  .dw-shape-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 639px) {
+  .dw-shape-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.dw-pill.dw-shape-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* iter11 v15.5 — pin height in absolute px so the rem cascade from
+   * v15's font-size:16 baseline can't expand tiles. Width is grid-managed
+   * so removed. Padding 12/8 → 16px uniform; gap 10 → 8 (label sits a
+   * touch closer to the icon). */
+  width: auto;
+  height: 130px;
+  padding: 16px;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.012);
+  border: 1px solid var(--dw-border-subtle);
+  border-radius: 8px;
+  color: var(--dw-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.2;
+  min-height: 0;
+}
+
+.dw-shape-tile__icon {
+  /* iter11 v15.5 — icon 52→64px absolute to fill the new tile better.
+   * Pinned in px (not em) so the rem cascade can't expand it. */
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dw-text-primary);
+}
+.dw-shape-tile__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.dw-shape-tile__label {
+  display: block;
+  /* iter11 v15.5 — pin label 13px absolute. rem-based 0.75rem (12px@16
+   * html base) was theme-dependent; 13px is the design intent across
+   * all merchant themes regardless of html base. */
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dw-text-primary);
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+}
+
+.dw-pill.dw-shape-tile:hover {
+  background: var(--dw-hover-bg);
+  border-color: var(--dw-text-primary);
+  color: var(--dw-text-primary);
+}
+
+.dw-pill.dw-shape-tile.is-active {
+  background: var(--dw-hover-bg);
+  color: var(--dw-text-primary);
+  border-color: var(--dw-text-primary);
+  box-shadow: inset 0 0 0 1px var(--dw-text-primary);
+}
+
+/* ─── SLIDERS (dual-thumb) ────────────────────────────────────────────────── */
+
+.dw-slider {
+  position: relative;
+  height: 32px;
+  margin: 6px 0 0;
+}
+
+.dw-slider__track {
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  /* iter9 — Aria DevTools (image #60): track 913×12, bg #3D3D3D.
+   * Thicker editorial track replaces our thin 2px hairline. */
+  height: 12px;
+  background: #3D3D3D;
+  transform: translateY(-50%);
+  border-radius: 0;
+}
+
+.dw-slider__range {
+  position: absolute;
+  /* iter9 — match track thickness; range is the active fill between
+   * thumbs (left/right set dynamically by JS). Same dark fill as track
+   * for the uniform Aria look. */
+  top: 50%;
+  height: 12px;
+  transform: translateY(-50%);
+  background: #3D3D3D;
+}
+
+.dw-slider__input {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 32px;
+  background: none;
+  pointer-events: none;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  margin: 0;
+}
+
+/* WebKit thumb */
+.dw-slider__input::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--dw-bg);
+  border: 1.5px solid var(--dw-text);
+  cursor: grab;
+  margin-top: 0;
+}
+.dw-slider__input::-webkit-slider-thumb:active { cursor: grabbing; }
+/* Firefox thumb */
+.dw-slider__input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--dw-bg);
+  border: 1.5px solid var(--dw-text);
+  cursor: grab;
+}
+.dw-slider__input::-moz-range-track { background: none; border: none; }
+.dw-slider__input--max { z-index: 2; }
+.dw-slider__input--min { z-index: 3; }
+
+.dw-slider__values {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--dw-s2);
+  /* iter11 v15.5 — slider→input gap pinned to 16px absolute. v15
+   * tightened to 12 then this iter restored to 16 to give the bumped
+   * 22px input numbers more breathing room above. */
+  margin-top: 16px;
+}
+.dw-slider__numwrap {
+  display: inline-flex;
+  align-items: center;
+  /* iter11 — drop inter-item gap inside the wrap so $-prefix and number
+   * read as a single string ("$10,000") rather than "$  10,000". */
+  gap: 0;
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-border);
+  /* iter9 — Aria .slider-inputs input exact: 4px radius, 3/6 padding.
+   * iter11 — bump padding 3/6→6/10 to balance the bumped 24px number font. */
+  border-radius: 4px;
+  padding: 6px 10px;
+  flex: 1;
+  /* iter11 — bump max-width 135→150 to fit the larger number type without
+   * truncating "10,000" on the price input. */
+  max-width: 150px;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+.dw-slider__numwrap:focus-within { border-color: var(--dw-text); }
+.dw-slider__num {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-family: var(--dw-font);
+  /* iter11 v15.5 — input number pinned to 22px absolute. rem-based 1.5rem
+   * was scaling theme-dependently and pushing the input box wider than
+   * intended on themes with html-base ≠ 16. */
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--dw-text);
+  width: 100%;
+  min-width: 0;
+  /* iter9 — text-align end + tighter vertical padding per Aria slider-inputs */
+  padding: 0;
+  text-align: end;
+  letter-spacing: 0;
+  -moz-appearance: textfield;
+  line-height: 1.2;
+}
+.dw-slider__num::-webkit-outer-spin-button,
+.dw-slider__num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.dw-slider__numunit {
+  font-family: var(--dw-font);
+  /* iter11 v15.5 — unit text pinned to 14px absolute (was 1rem).
+   * Used for the price slider's "$" prefix; sized smaller than the
+   * 22px number so hierarchy reads number-dominant. */
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--dw-text-muted);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+.dw-slider__val-sep { color: var(--dw-text-faint); padding: 0 var(--dw-s1); flex-shrink: 0; }
+
+/* iter11 — external "ct" unit (carat slider). Sits OUTSIDE the numwrap to
+ * the right of the input box, separated by a small horizontal gap.
+ * Replaces the previous in-box unit suffix so the box contains only the
+ * number (matches Aria's reference where the "ct" label sits external). */
+.dw-slider__field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dw-s2);
+  flex: 1;
+  min-width: 0;
+}
+.dw-slider__field .dw-slider__numwrap { flex: 1; }
+.dw-slider__field-unit {
+  font-family: var(--dw-font);
+  /* iter11 v15.5 — pin "ct" external label to 14px absolute. Was 1rem
+   * which on a theme with html-base 14 rendered tiny; absolute px is
+   * theme-independent. */
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--dw-text-muted);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+/* iter10 — Aria $-prefix unit for the price slider numwrap. The existing
+ * .dw-slider__numunit sits AFTER the input (suffix, "ct"); when the unit
+ * span is rendered BEFORE the input we want it to read as a prefix ("$").
+ * iter11 — also tighten the right margin so "$10,000" reads as one token. */
+.dw-slider__numunit--prefix {
+  order: -1;
+  margin-right: 2px;
+}
+
+/* ─── GRADED SLIDER (iter10) ──────────────────────────────────────────────────
+ * Variant of .dw-slider for discrete-grade attributes (color/clarity/cut).
+ * Same dual-thumb mechanics as the carat slider — only difference is the
+ * track is followed by a row of grade tick labels instead of a number-input
+ * pair, and the .dw-slider__values block is suppressed so the slider stays
+ * compact under the section h3.
+ *
+ * Tick labels are evenly distributed via flex; first label sits at 0% and
+ * the last at 100% so they align with the slider's min/max thumb positions.
+ */
+.dw-slider--graded .dw-slider__values { display: none; }
+
+.dw-slider__ticks {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* iter11 — tighten tick row gap 12→8 so labels read as part of the
+   * slider rather than orphaned below it. */
+  margin-top: var(--dw-s2);
+  padding: 0 6px; /* roughly half a thumb-width so labels align under thumbs at the extremes */
+}
+
+.dw-slider__tick {
+  font-family: var(--dw-font-body);
+  /* iter11 — Aria parity: tick labels 12→14px so they read clearly under
+   * the rail without straining the eye. */
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dw-text-primary);
+  letter-spacing: 0.02em;
+  flex: 0 0 auto;
+  text-align: center;
+  line-height: 1;
+}
+
+/* ─── hasImage TOGGLE ─────────────────────────────────────────────────────── */
+/* CSS-only switch: peer-style label wraps an <input type=checkbox> +
+ * track/thumb spans. Track recolors when input is :checked.
+ */
+.dw-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dw-s3);
+  cursor: pointer;
+  user-select: none;
+  min-height: 44px;
+}
+.dw-toggle__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+.dw-toggle__track {
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+  background: var(--dw-hairline);
+  border: 1px solid var(--dw-hairline);
+  border-radius: 999px;
+  position: relative;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.dw-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--dw-bg);
+  border-radius: 50%;
+  transition: transform 0.18s ease, background-color 0.18s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.dw-toggle__input:checked + .dw-toggle__track {
+  background: var(--dw-text);
+  border-color: var(--dw-text);
+}
+.dw-toggle__input:checked + .dw-toggle__track .dw-toggle__thumb {
+  transform: translateX(16px);
+}
+.dw-toggle__input:focus-visible + .dw-toggle__track {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+.dw-toggle__label {
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--dw-text);
+  letter-spacing: 0;
+}
+
+/* ─── ACTIVE FILTER CHIPS ─────────────────────────────────────────────────── */
+
+.dw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* iter9 — Aria .active-filter-wrapper exact: gap 15, margin 15, padding 15 */
+  gap: 15px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--dw-hairline);
+}
+.dw-chips[hidden] { display: none; }
+
+.dw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dw-s2);
+  background: rgba(0, 0, 0, 0.01);
+  border: 1px solid var(--dw-hairline);
+  border-radius: 8px;
+  color: var(--dw-text);
+  font-family: var(--dw-font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  padding: 6px 8px 6px 12px;
+  min-height: 32px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.dw-chip:hover { border-color: var(--dw-text); }
+.dw-chip__x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  color: var(--dw-text-muted);
+}
+.dw-chip__clear {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--dw-text);
+  font-family: var(--dw-font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 6px 8px;
+  margin-left: var(--dw-s2);
+}
+.dw-chip__clear:hover { color: var(--dw-text); opacity: 0.7; }
+
+/* ─── RESULTS BAR ─────────────────────────────────────────────────────────── */
+
+.dw-results-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--dw-s4);
+  /* iter10 — 1280→1600 to match widget viewport break-out */
+  max-width: 1600px;
+  margin: 0 auto var(--dw-s4);
+  padding: var(--dw-s4) 0;
+}
+
+.dw-results-bar__count {
+  font-family: var(--dw-font-body);
+  font-size: 0.9375rem;
+  color: var(--dw-text);
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.dw-results-bar__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dw-s2);
+}
+
+.dw-results-bar__sort-label {
+  font-family: var(--dw-font-body);
+  font-size: 0.8125rem;
+  color: var(--dw-text-muted);
+}
+
+.dw-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-hairline);
+  border-radius: 8px;
+  color: var(--dw-text);
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  padding: 8px 32px 8px 12px;
+  min-height: 36px;
+  cursor: pointer;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23292929' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.15s ease;
+}
+.dw-select:hover,
+.dw-select:focus { border-color: var(--dw-text); }
+
+/* ─── BUTTONS ─────────────────────────────────────────────────────────────── */
+
+.dw-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: var(--dw-font-btn);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  border-radius: 8px;
+  padding: 12px 20px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  outline: none;
+  line-height: 1.2;
+  text-align: center;
+}
+.dw-btn:focus-visible { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08); }
+
+.dw-btn--outline {
+  background: var(--dw-bg-card);
+  color: var(--dw-text);
+  border: 1px solid var(--dw-border-strong);
+  /* Subtle warm fill on hover before flipping to solid on press */
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.dw-btn--outline:hover {
+  background: var(--dw-text);
+  color: var(--dw-bg-card);
+}
+.dw-btn--outline:active {
+  background: var(--dw-text);
+  color: var(--dw-bg-card);
+}
+
+.dw-btn--solid {
+  background: var(--dw-text);
+  color: var(--dw-bg);
+  border: 1px solid var(--dw-text);
+}
+.dw-btn--solid:hover { opacity: 0.88; }
+
+/* ─── GRID ────────────────────────────────────────────────────────────────── */
+
+.dw-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--dw-s4);
+  /* iter10 — 1280→1600 to match widget viewport break-out */
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1100px) {
+  .dw-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .dw-grid { grid-template-columns: repeat(2, 1fr); gap: var(--dw-s3); }
+}
+
+/* ─── CARD ────────────────────────────────────────────────────────────────── */
+
+.dw-card {
+  background: var(--dw-bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--dw-border-subtle);
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Hardware-accelerated hover lift; never animate top/left/box-size. */
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.18s ease,
+              border-color 0.18s ease;
+  will-change: transform;
+}
+@media (hover: hover) and (min-width: 769px) {
+  .dw-card:hover,
+  .dw-card:focus-within {
+    transform: translateY(-1px);
+    box-shadow: var(--dw-shadow-card);
+    border-color: var(--dw-border-subtle);
+  }
+}
+
+.dw-card__image {
+  position: relative;
+  /* iter9 — Aria DevTools: image well 475×225 ≈ 2.11:1 landscape ratio.
+   * Square 1/1 made our cards feel taller than Aria's editorial grid;
+   * 2/1 matches the wider, shorter image well. */
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+  background: var(--dw-bg-image-well);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dw-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dw-card__badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--dw-accent-red);
+  color: #ffffff;
+  font-family: var(--dw-font-body);
+  /* iter12 — Aria .discount-percentage exact: 14px / weight 700 */
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+/* "360" pill — top-left, only when video tier media is available */
+.dw-card__360-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffffff;
+  font-family: var(--dw-font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+/* When discount + 360 badges coexist, push 360 to the right side. */
+.dw-card__badge ~ .dw-card__360-badge {
+  left: auto;
+  right: 8px;
+}
+
+/*
+ * Per-shape SVG silhouette placeholder (C-iter1 task 3.1).
+ * Augmont's image_url returns an HTML viewer page, not an image, so the
+ * <img onerror> swaps in this branded fallback instead of a broken-image
+ * icon or a stock "no image" graphic. The placeholder paints the SVG
+ * outline at ~60% of the card image well, centered, in a light gray
+ * stroke against the image-well background.
+ */
+.dw-card__img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dw-bg-image-well);
+  color: #b8b8b8;
+}
+
+.dw-card__img-placeholder svg {
+  width: 60%;
+  height: 60%;
+  max-width: 200px;
+  max-height: 200px;
+  display: block;
+}
+
+.dw-card__body {
+  padding: var(--dw-s4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dw-card__title {
+  font-family: var(--dw-font-body);
+  font-size: 1rem;
+  /* iter8 — heavier weight for editorial presence (700 not 600).
+   * Aria's card titles read with strong typographic contrast. */
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  color: var(--dw-text-primary);
+  /* iter8 — Aria DevTools: h3 margin 16px 0 */
+  margin: var(--dw-s4) 0;
+}
+
+.dw-card__specs {
+  font-family: var(--dw-font-body);
+  /* iter8 — Aria DevTools: 12px exact, margin 5px 0 */
+  font-size: 0.75rem;
+  color: var(--dw-text-primary);
+  margin: 5px 0;
+  line-height: 1.5;
+}
+/* iter8 — Aria parity: BOTH label and value at primary text color
+ * (#292929); presence comes from weight contrast (400 vs 700), not
+ * from desaturating the label to gray. */
+.dw-card__spec-label  { color: var(--dw-text-primary); font-weight: 400; }
+.dw-card__spec-value  { font-weight: 700; color: var(--dw-text-primary); }
+.dw-card__spec-sep    { color: var(--dw-text-faint); padding: 0 4px; }
+
+.dw-card__price-block {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dw-s2);
+  margin: var(--dw-s3) 0 var(--dw-s3);
+}
+
+.dw-card__price {
+  font-family: var(--dw-font-body);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--dw-text-primary);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+
+.dw-card__price-strike {
+  font-family: var(--dw-font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--dw-text-faint);
+  text-decoration: line-through;
+  margin: 0;
+}
+
+/*
+ * Certificate badge (e.g. "GIA Certified"). Renders inline alongside the
+ * price when d.lab is non-empty and != "No-cert". Outline pill, low-key —
+ * spec is consistent with Nivoda's IGI/GIA badge treatment.
+ */
+.dw-card__cert {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--dw-font-body);
+  /* iter8 — Aria DevTools: 12px exact */
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--dw-text-primary);
+  border: 1px solid var(--dw-border-strong);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: auto;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/*
+ * Ships-in line: hardcoded copy until Augmont exposes per-stone ship time.
+ * Subtle gray, smaller than card body type, no icon.
+ */
+.dw-card__ships {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--dw-text-secondary);
+  margin: 0 0 var(--dw-s3);
+  letter-spacing: 0;
+}
+
+.dw-card__add {
+  width: 100%;
+  /* iter12 — Aria .diamond-proxy-add-to-cart EXACT: height 4em, border-radius 12px,
+   * padding 12px 6px. At our 14px button base 4em ≈ 56px — gives the CTA
+   * more presence and matches Aria's deliberate vertical rhythm. */
+  min-height: 4em;
+  border-radius: 12px;
+  padding: 12px 6px;
+  font-size: 0.875rem;
+  color: #000000;
+  font-weight: 700;
+}
+
+/* Card-level click affordance (whole card is clickable to open viewer) */
+.dw-card { cursor: pointer; }
+.dw-card:focus-visible {
+  outline: 2px solid var(--dw-text);
+  outline-offset: 2px;
+}
+
+/*
+ * "View 360°" hover overlay (C-iter1 task 3.3).
+ * Hidden by default; revealed on hover ONLY on devices with real hover
+ * (skip touch screens that pretend to hover via :hover). Mobile users see
+ * no overlay — the whole card opens the modal on tap.
+ */
+.dw-card__view-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.36);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+.dw-card__view-overlay-text {
+  font-family: var(--dw-font-btn);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+@media (hover: hover) and (min-width: 769px) {
+  .dw-card:hover .dw-card__view-overlay { opacity: 1; }
+  .dw-card:focus-within .dw-card__view-overlay { opacity: 1; }
+}
+
+/* Card add button states */
+.dw-card__add.is-loading { opacity: 0.7; cursor: wait; }
+.dw-card__add.is-added {
+  background: var(--dw-text);
+  color: var(--dw-bg);
+  border-color: var(--dw-text);
+}
+.dw-card__add.is-in-cart {
+  background: var(--dw-bg-card);
+  color: var(--dw-text-muted);
+  border-color: var(--dw-border);
+  cursor: default;
+}
+.dw-card__add.is-in-cart:hover {
+  background: var(--dw-bg-card);
+  color: var(--dw-text);
+  border-color: var(--dw-text);
+}
+.dw-card__add.is-error {
+  border-color: var(--dw-accent-red);
+  color: var(--dw-accent-red);
+}
+.dw-card__add.is-unavailable {
+  background: var(--dw-bg-card);
+  color: var(--dw-text-faint);
+  border-color: var(--dw-hairline);
+  cursor: not-allowed;
+}
+
+/* ─── LOAD MORE ───────────────────────────────────────────────────────────── */
+
+.dw-loadmore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dw-s3);
+  padding: var(--dw-s7) var(--dw-s4);
+  /* iter10 — 1280→1600 to match widget viewport break-out */
+  max-width: 1600px;
+  margin: 0 auto;
+}
+.dw-loadmore[hidden] { display: none; }
+
+.dw-loadmore__count {
+  font-family: var(--dw-font-body);
+  font-size: 0.8125rem;
+  color: var(--dw-text-muted);
+  margin: 0;
+}
+
+.dw-loadmore .dw-btn { min-width: 180px; }
+
+/* ─── SKELETON LOADING ────────────────────────────────────────────────────── */
+
+@keyframes dw-shimmer {
+  0%   { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.dw-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-s2);
+}
+.dw-skeleton__image,
+.dw-skeleton__line,
+.dw-skeleton__btn {
+  background: linear-gradient(90deg, var(--dw-skeleton) 0%, var(--dw-skeleton-hi) 50%, var(--dw-skeleton) 100%);
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  animation: dw-shimmer 1.4s ease-in-out infinite;
+  border-radius: 0;
+}
+.dw-skeleton__image { aspect-ratio: 1 / 1; margin-bottom: var(--dw-s2); }
+.dw-skeleton__line { height: 14px; }
+.dw-skeleton__line--lg { height: 18px; width: 70%; }
+.dw-skeleton__line--md { height: 14px; width: 40%; }
+.dw-skeleton__btn { height: 44px; border-radius: 8px; margin-top: var(--dw-s3); }
+
+/* ─── EMPTY / ERROR ───────────────────────────────────────────────────────── */
+
+.dw-empty,
+.dw-error {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dw-s3);
+  padding: var(--dw-s8) var(--dw-s5);
+  text-align: center;
+}
+
+.dw-empty .dw-diamond-icon,
+.dw-error .dw-diamond-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--dw-text-faint);
+  margin-bottom: var(--dw-s2);
+}
+
+.dw-empty__title,
+.dw-error__title {
+  font-family: var(--dw-font-head);
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--dw-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.dw-empty__msg,
+.dw-error__msg {
+  font-family: var(--dw-font-body);
+  font-size: 0.9375rem;
+  color: var(--dw-text-muted);
+  margin: 0;
+  max-width: 40ch;
+}
+.dw-empty__reset,
+.dw-error__retry {
+  margin-top: var(--dw-s3);
+  min-width: 200px;
+}
+
+/* ─── CART TRIGGER (floating top-right) ───────────────────────────────────── */
+
+.dw-cart-trigger {
+  position: fixed;
+  top: var(--dw-s4);
+  right: var(--dw-s4);
+  z-index: 9000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dw-s2);
+  background: var(--dw-bg);
+  color: var(--dw-text);
+  border: 1px solid var(--dw-border-strong);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-height: 40px;
+  font-family: var(--dw-font-btn);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.dw-cart-trigger:hover,
+.dw-cart-trigger:focus-visible {
+  background: var(--dw-text);
+  color: var(--dw-bg);
+  outline: none;
+}
+.dw-cart-trigger__label { letter-spacing: 0; }
+.dw-cart-trigger__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* ─── CART PANEL (slide-in from right) ────────────────────────────────────── */
+
+.dw-cart-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  background: var(--dw-shadow-overlay);
+  animation: dw-fade-in 0.18s ease;
+}
+.dw-cart-backdrop[hidden] { display: none; }
+
+@keyframes dw-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.dw-cart-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(400px, 100vw);
+  z-index: 9200;
+  background: var(--dw-bg-card);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.25, 0, 0, 1);
+  border-left: 1px solid var(--dw-hairline);
+}
+.dw-cart-panel.is-open { transform: translateX(0); }
+
+.dw-cart-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--dw-s5) var(--dw-s5);
+  border-bottom: 1px solid var(--dw-hairline);
+}
+.dw-cart-panel__title {
+  font-family: var(--dw-font-head);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--dw-text);
+}
+.dw-cart-panel__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.125rem;
+  color: var(--dw-text-muted);
+  padding: 8px 10px;
+  min-height: 40px;
+  min-width: 40px;
+}
+.dw-cart-panel__close:hover { color: var(--dw-text); }
+
+.dw-cart-panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--dw-s4) var(--dw-s5);
+}
+
+.dw-cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dw-s4);
+  padding: var(--dw-s8) var(--dw-s4);
+  color: var(--dw-text-muted);
+  text-align: center;
+}
+.dw-cart-empty .dw-diamond-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--dw-text-faint);
+}
+.dw-cart-empty p { margin: 0; font-size: 0.9375rem; }
+
+.dw-cart-item {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: var(--dw-s3);
+  align-items: center;
+  padding: var(--dw-s3) 0;
+  border-bottom: 1px solid var(--dw-border);
+  transition: opacity 0.15s ease;
+}
+.dw-cart-item:last-child { border-bottom: none; }
+.dw-cart-item.is-removing { opacity: 0.4; }
+
+.dw-cart-item__image {
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  background: var(--dw-image-well);
+}
+.dw-cart-item__image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.dw-cart-item__info { min-width: 0; }
+.dw-cart-item__title {
+  font-family: var(--dw-font-body);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  margin: 0 0 2px;
+  color: var(--dw-text);
+}
+.dw-cart-item__meta {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  color: var(--dw-text-muted);
+  margin: 0 0 4px;
+  letter-spacing: 0;
+}
+.dw-cart-item__price {
+  font-family: var(--dw-font-body);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--dw-text);
+  margin: 0;
+}
+
+.dw-cart-item__remove {
+  background: none;
+  border: none;
+  color: var(--dw-text-muted);
+  font-family: var(--dw-font-body);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 6px 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dw-cart-item__remove:hover { color: var(--dw-accent-red); }
+
+.dw-cart-panel__footer {
+  border-top: 2px solid var(--dw-text);
+  padding: var(--dw-s5) var(--dw-s5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-s4);
+  background: var(--dw-bg-card);
+}
+.dw-cart-panel__footer[hidden] { display: none; }
+.dw-cart-panel__subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--dw-font);
+}
+.dw-cart-panel__subtotal span {
+  font-size: 0.875rem;
+  color: var(--dw-text-muted);
+  letter-spacing: 0;
+}
+.dw-cart-panel__subtotal strong {
+  font-family: var(--dw-font);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dw-text);
+  letter-spacing: -0.01em;
+}
+.dw-cart-panel__footer .dw-btn--solid {
+  min-height: 48px;
+  font-size: 0.9375rem;
+}
+
+/* ─── CHECKOUT OVERLAY ────────────────────────────────────────────────────── */
+
+.dw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--dw-s4);
+}
+.dw-overlay[hidden] { display: none; }
+
+.dw-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--dw-shadow-overlay);
+}
+
+.dw-overlay__panel {
+  position: relative;
+  background: var(--dw-bg-card);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--dw-s7) var(--dw-s5);
+  border: 1px solid var(--dw-hairline);
+}
+
+.dw-overlay__close {
+  position: absolute;
+  top: var(--dw-s3);
+  right: var(--dw-s3);
+  background: none;
+  border: none;
+  font-size: 1.125rem;
+  color: var(--dw-text-muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 8px;
+  min-height: 40px;
+  min-width: 40px;
+}
+.dw-overlay__close:hover { color: var(--dw-text); }
+
+.dw-overlay__title {
+  font-family: var(--dw-font-head);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--dw-text);
+  margin: 0 0 var(--dw-s2);
+  line-height: 1.1;
+}
+
+.dw-overlay__spec {
+  font-family: var(--dw-font-body);
+  font-size: 0.9375rem;
+  color: var(--dw-text-muted);
+  margin: 0 0 var(--dw-s5);
+}
+
+.dw-overlay__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-s4);
+}
+
+.dw-overlay__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-s1);
+}
+.dw-overlay__field label {
+  font-family: var(--dw-font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--dw-text);
+}
+.dw-overlay__optional { font-weight: 400; color: var(--dw-text-muted); }
+
+.dw-overlay__field input,
+.dw-overlay__field textarea {
+  background: var(--dw-bg-card);
+  border: 1px solid var(--dw-border);
+  border-radius: 8px;
+  color: var(--dw-text);
+  font-family: var(--dw-font-body);
+  font-size: 0.9375rem;
+  padding: 10px 12px;
+  min-height: 44px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.dw-overlay__field input:focus,
+.dw-overlay__field textarea:focus { border-color: var(--dw-text); }
+
+.dw-overlay__submit { width: 100%; margin-top: var(--dw-s2); }
+
+.dw-overlay__error {
+  background: rgba(229, 72, 77, 0.08);
+  border: 1px solid var(--dw-accent-red);
+  color: var(--dw-accent-red);
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  padding: var(--dw-s2) var(--dw-s3);
+  border-radius: 8px;
+  margin: 0;
+}
+
+.dw-overlay__thanks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dw-s3);
+  padding: var(--dw-s5) 0;
+  text-align: center;
+}
+.dw-overlay__thanks[hidden] { display: none; }
+.dw-overlay__thanks-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--dw-text);
+}
+.dw-overlay__thanks p {
+  font-family: var(--dw-font-body);
+  font-size: 0.9375rem;
+  color: var(--dw-text);
+  margin: 0;
+  max-width: 60ch;
+}
+
+/* ─── MOBILE — inline-stacked filters (Nivoda actual) ──────────────────────── */
+
+@media (max-width: 768px) {
+  .diamond-widget {
+    padding: var(--dw-s5) var(--dw-s3) var(--dw-s7);
+  }
+
+  .dw-hero { margin-bottom: var(--dw-s4); }
+
+  .dw-filters {
+    margin-bottom: var(--dw-s4);
+    padding-bottom: var(--dw-s4);
+  }
+
+  .dw-filters__grid {
+    grid-template-columns: 1fr;
+    gap: var(--dw-s4);
+  }
+
+  .dw-filters__col { gap: var(--dw-s4); }
+
+  .dw-results-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--dw-s2);
+  }
+  .dw-results-bar__sort { justify-content: space-between; }
+  .dw-select { flex: 1; }
+
+  .dw-cart-trigger {
+    top: 8px;
+    right: 8px;
+    padding: 6px 10px;
+  }
+  .dw-cart-panel { width: 100vw; }
+}
+
+/* ─── DETAIL MODAL — Aria Morelle clone ────────────────────────────────────
+ * Full-bleed scrim, 50/50 columns up to 1100px max. Image well left,
+ * spec-and-actions block right. Below the fold a "Diamond details"
+ * accordion lists every Augmont field. Mobile collapses to single column,
+ * image on top. The iframe + 3-tier auto-promotion logic in JS is preserved
+ * exactly — only the surrounding chrome was rebuilt.
+ */
+
+.dw-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0;
+  overflow-y: auto;
+}
+.dw-viewer[hidden] { display: none; }
+
+.dw-viewer__backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--dw-overlay-viewer);
+}
+
+.dw-viewer__panel {
+  position: relative;
+  background: var(--dw-bg-page);
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  /* Scroll happens on the panel — body scroll is locked while open. */
+}
+
+.dw-viewer__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--dw-bg-page);
+  padding: var(--dw-s4) var(--dw-s5);
+  border-bottom: 1px solid var(--dw-border-subtle);
+}
+
+.dw-viewer__back {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 6px 4px;
+  font-family: var(--dw-font-btn);
+  font-size: 0.8125rem;
+  color: var(--dw-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0;
+  min-height: 36px;
+}
+.dw-viewer__back:hover { color: var(--dw-text-primary); }
+.dw-viewer__back svg { width: 12px; height: 12px; }
+
+/* Hide the original X close button — back link replaces it on the new layout. */
+.dw-viewer__close { display: none; }
+
+.dw-viewer__layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--dw-s7);
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--dw-s5) var(--dw-s5) var(--dw-s7);
+  align-items: start;
+}
+
+/* ---- LEFT: image well + 360 badge + tier media ---- */
+
+.dw-viewer__media {
+  background: var(--dw-bg-image-well);
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  /* Square image well — locks the visual rhythm vs the right column. */
+  aspect-ratio: 1 / 1;
+  /* A1 — Sticky LEFT column.
+   * The viewer scroll container is `.dw-viewer` (overflow-y: auto). The
+   * sticky topbar inside the panel is ~69px tall (16+36+16+1). 88px = topbar
+   * height + ~19px breathing gap so the image sits flush below the bar
+   * once the right column starts scrolling past it.
+   *
+   * `align-self: start` on the grid item caps the sticky element's
+   * height to its content (square image well + tier controls) so the right
+   * column can grow taller without forcing the image to stretch.
+   *
+   * Mobile breakpoint below resets to `position: static` since the layout
+   * stacks single-column at ≤768px and the image already sits on top. */
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  /* Hardware-accelerated stacking context — sticky needs `position` set,
+   * but no transform/opacity animations are introduced here. */
+  z-index: 1;
+}
+
+.dw-viewer__media-frame {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.dw-viewer__media-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: var(--dw-bg-image-well);
+}
+
+.dw-viewer__fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dw-s3);
+  padding: var(--dw-s5);
+  text-align: center;
+  background: var(--dw-bg-image-well);
+}
+.dw-viewer__fallback[hidden] { display: none; }
+
+.dw-viewer__fallback-svg {
+  width: 50%;
+  max-width: 220px;
+  aspect-ratio: 1 / 1;
+  color: #b8b8b8;
+}
+.dw-viewer__fallback-svg svg { width: 100%; height: 100%; }
+
+.dw-viewer__fallback-msg {
+  font-family: var(--dw-font);
+  font-size: 0.8125rem;
+  color: var(--dw-text-secondary);
+  margin: 0;
+  max-width: 30ch;
+  line-height: 1.5;
+}
+
+/* Tiny "360" badge bottom-left — only visible while video tier is active */
+.dw-viewer__360-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffffff;
+  font-family: var(--dw-font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+.dw-viewer__360-badge[hidden] { display: none; }
+
+/* Tier toggle row: 360°/Photo/Outline pills sitting below the image well */
+.dw-viewer__tier-controls {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  border: 1px solid var(--dw-border-subtle);
+  backdrop-filter: blur(6px);
+}
+
+.dw-viewer__tier-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--dw-font-btn);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--dw-text-secondary);
+  padding: 6px 10px;
+  min-height: 28px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.dw-viewer__tier-btn:hover { color: var(--dw-text-primary); }
+.dw-viewer__tier-btn.is-active {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+}
+
+/* ---- RIGHT: detail panel ---- */
+
+.dw-viewer__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: transparent;
+  padding: 0;
+  /* Anchor link target for "Talk to an expert" scroll-to-details. */
+  scroll-margin-top: 80px;
+}
+
+.dw-viewer__discount {
+  display: inline-flex;
+  align-self: flex-start;
+  background: var(--dw-accent-red);
+  color: #ffffff;
+  font-family: var(--dw-font-body);
+  /* iter12 — Aria .discount-percentage exact: 14px / weight 700 */
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  padding: 4px 10px;
+  border-radius: 4px;
+  line-height: 1.4;
+  margin-bottom: var(--dw-s3);
+}
+.dw-viewer__discount[hidden] { display: none; }
+
+.dw-viewer__title {
+  font-family: var(--dw-font-heading);
+  /* iter9 — Aria DevTools (image #63): h2 28px, margin 0 0 12px.
+   * iter6 over-bumped to 32px; correcting to Aria-exact 28px. */
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  color: var(--dw-text-primary);
+  margin: 0 0 var(--dw-s3);
+}
+
+/* A6 — spec line per Aria measurement (image 19):
+ * - 16px font, both label + value in primary color (#1a1a1a / our token).
+ * - Diamond icon SVG ~16x16, 4px right margin to sit flush before "Color".
+ * - `gap: 0` on the row; spacing is owned by per-span margins so middle-dot
+ *   separators stay tight against label/value pairs.
+ * - Label: weight 400, 4px right margin before its value.
+ * - Value: weight 500 (visually heavier than label "Cut" in Aria's shot).
+ * - `flex-wrap: wrap` keeps the line graceful on narrow viewports. */
+.dw-viewer__head-spec {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-family: var(--dw-font);
+  font-size: 1rem;
+  color: var(--dw-text-primary);
+  margin: 0 0 6px;
+  letter-spacing: 0;
+  flex-wrap: wrap;
+  line-height: 1.4;
+}
+.dw-viewer__head-spec svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--dw-text-primary);
+  margin: 0 4px 0 0;
+}
+.dw-viewer__head-spec-label {
+  color: var(--dw-text-primary);
+  font-weight: 400;
+  margin: 0 4px 0 0;
+}
+.dw-viewer__head-spec-value {
+  color: var(--dw-text-primary);
+  /* iter9 — heavier presence per user feedback: head spec values
+   * (Color: H, Clarity: VVS2, Cut: EX) read bold against label weight 400. */
+  font-weight: 700;
+}
+.dw-viewer__head-spec-sep {
+  color: var(--dw-text-faint);
+  padding: 0 6px;
+}
+
+/* Ships line — truck icon + "Ships by {Month Day}". 16px to match the
+ * head-spec line so the two read as a single typographic stack. */
+.dw-viewer__ships {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--dw-font-body);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--dw-text-secondary);
+  margin: 0 0 var(--dw-s2);
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+.dw-viewer__ships svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--dw-text-secondary);
+}
+.dw-viewer__ships[hidden] { display: none; }
+
+/* Cert badge block — boxed surface w/ lab seal SVG */
+.dw-viewer__cert-block {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-s3);
+  background: var(--dw-bg-elevated);
+  border: 1px solid var(--dw-border-subtle);
+  border-radius: 12px;
+  padding: var(--dw-s3);
+  margin-top: var(--dw-s4);
+}
+.dw-viewer__cert-block[hidden] { display: none; }
+.dw-viewer__cert-seal {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  color: var(--dw-text-primary);
+}
+.dw-viewer__cert-seal svg { width: 100%; height: 100%; display: block; }
+.dw-viewer__cert-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dw-viewer__cert-name {
+  font-family: var(--dw-font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--dw-text-primary);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+.dw-viewer__cert-num {
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  color: var(--dw-text-secondary);
+  margin: 0;
+}
+.dw-viewer__cert-link {
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  color: var(--dw-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.dw-viewer__cert-link:hover { opacity: 0.75; }
+
+/* Price block — flex row aligning label-stack on left, price-stack on right */
+.dw-viewer__price-block {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--dw-s4);
+  /* iter12 — Aria .view-details-price-wrapper EXACT: margin 30px 0 */
+  margin: 30px 0 0;
+  padding-top: var(--dw-s4);
+  border-top: 1px solid var(--dw-border-subtle);
+}
+.dw-viewer__price-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dw-viewer__price-label {
+  font-family: var(--dw-font-body);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--dw-text-primary);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+.dw-viewer__price-sublabel {
+  font-family: var(--dw-font-body);
+  font-size: 0.875rem;
+  color: var(--dw-text-secondary);
+  margin: 0;
+}
+.dw-viewer__price-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.dw-viewer__price {
+  font-family: var(--dw-font);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--dw-text-primary);
+  margin: 0;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+.dw-viewer__price-strike-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--dw-font-body);
+  /* iter12 — Aria .view-details-original-price EXACT: 16px / line-height 18px */
+  font-size: 1rem;
+  line-height: 18px;
+}
+.dw-viewer__price-strike {
+  /* iter12 — Aria .view-details-original-price EXACT: color #999, weight 400 */
+  color: #999;
+  font-weight: 400;
+  text-decoration: line-through;
+  margin-top: 5px;
+}
+.dw-viewer__price-discount { color: var(--dw-accent-red); font-weight: 600; }
+
+/* Action buttons — full-width, stacked.
+ *
+ * A3 — button hierarchy reversal (iter5).
+ * "Add to cart" is the loud PRIMARY (filled black, 52px tall). "Talk to an
+ * expert" is a subtle SECONDARY (outline only, no flip-to-solid hover —
+ * because flipping to solid would compete with the primary and read as a
+ * second loud CTA, which is the bug Daman flagged).
+ *
+ * Specificity note: `.dw-viewer__add` is rendered by JS with the same
+ * base class hooks (`.dw-btn`, sometimes `.dw-btn--outline`) as the
+ * catalog card add button. We OVERRIDE that here by chaining
+ * `.dw-btn.dw-viewer__add` so the loud-primary look wins regardless of
+ * whether JS added the outline modifier. */
+.dw-viewer__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-s2);
+  margin-top: var(--dw-s4);
+}
+
+/* PRIMARY — Add to cart in the viewer modal */
+.dw-viewer__add,
+.dw-btn.dw-viewer__add {
+  width: 100%;
+  /* iter12 — Aria .diamond-proxy-add-to-cart EXACT: 4em height, 12px radius, 12px 6px padding */
+  min-height: 4em;
+  padding: 12px 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  border: 1px solid var(--dw-text-primary);
+  font-family: var(--dw-font-btn);
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease,
+              border-color 0.15s ease, opacity 0.15s ease;
+}
+.dw-viewer__add:hover,
+.dw-btn.dw-viewer__add:hover {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  opacity: 0.88;
+}
+.dw-viewer__add:active,
+.dw-btn.dw-viewer__add:active {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  opacity: 0.94;
+  transform: translateY(1px);
+}
+
+/* Viewer add-button states — every state must remain visibly distinct
+ * against the cream `--dw-bg-page` of the modal panel. */
+.dw-viewer__add.is-loading {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  border-color: var(--dw-text-primary);
+  opacity: 0.85;
+  cursor: wait;
+}
+.dw-viewer__add.is-added {
+  background: var(--dw-text-primary);
+  color: #ffffff;
+  border-color: var(--dw-text-primary);
+}
+/* In-cart: the legibility fix Daman called out. Outline + warm elevated
+ * fill instead of pure white-on-white card bg. Reads clearly against the
+ * cream page. */
+.dw-viewer__add.is-in-cart {
+  background: var(--dw-bg-elevated);
+  color: var(--dw-text-primary);
+  border: 1px solid var(--dw-text-primary);
+  cursor: default;
+}
+.dw-viewer__add.is-in-cart:hover {
+  background: var(--dw-bg-elevated);
+  color: var(--dw-text-primary);
+  opacity: 1;
+}
+.dw-viewer__add.is-error {
+  background: var(--dw-accent-red);
+  color: #ffffff;
+  border-color: var(--dw-accent-red);
+}
+.dw-viewer__add.is-unavailable {
+  background: var(--dw-bg-elevated);
+  color: var(--dw-text-faint);
+  border: 1px solid var(--dw-border-subtle);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* SECONDARY — Talk to an expert. Outline only. NEVER flips to solid on
+ * hover (would compete with the primary). Hover = neutral subtle fill.
+ * iter6: height normalized to 52px to match the primary CTA — Aria's
+ * stacked CTAs share the same height; differentiation comes from fill. */
+.dw-viewer__expert {
+  width: 100%;
+  /* iter12 — match primary 4em height + 12px radius for paired CTA visual */
+  min-height: 4em;
+  padding: 12px 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--dw-text-primary);
+  border: 1px solid var(--dw-text-primary);
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--dw-font-btn);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.dw-viewer__expert:hover {
+  background: var(--dw-hover-bg);
+  color: var(--dw-text-primary);
+}
+.dw-viewer__expert:active {
+  background: var(--dw-hover-bg);
+  color: var(--dw-text-primary);
+  transform: translateY(1px);
+}
+.dw-viewer__expert:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
+}
+
+/* ---- INSIDE THE RIGHT COLUMN: Diamond details accordion ----
+ *
+ * A5 — iter5: accordion has been moved INSIDE the right column (`.dw-viewer__detail`)
+ * by Agent B. It's no longer a separate full-width grid child. CSS now
+ * supports either placement gracefully:
+ *   - When `.dw-viewer__details-section` is a child of `.dw-viewer__detail`,
+ *     it renders inline with the rest of the right-column flow.
+ *   - The legacy fallback (still as a grid child) keeps `grid-column: 1 / -1`
+ *     so older DOM doesn't break during the migration window.
+ *
+ * Visual spec from Aria image 16:
+ *   - header padding: 12px 0 (no horizontal padding — it's already in column)
+ *   - header weight: 600, font-size ~18px (1.125rem)
+ *   - no divider lines between rows; row gap owns the rhythm
+ *   - chevron rotates 180° on open
+ */
+.dw-viewer__details-section {
+  /* When still rendered at the layout root (legacy DOM), span both columns. */
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: var(--dw-s5) 0 0;
+  padding: 0;
+}
+/* When nested INSIDE the right column (iter5 DOM), grid-column doesn't apply
+ * (it's not a grid child) and the section flows full-width inside the column. */
+.dw-viewer__detail .dw-viewer__details-section {
+  margin-top: var(--dw-s5);
+  padding: 0;
+}
+
+.dw-viewer__accordion {
+  /* Aria has no underline divider — spacing alone owns the separation.
+   * We keep a hairline above only when it follows other content directly,
+   * but the right column already has a price-block top border above the
+   * actions, so no further divider is needed here. */
+  border-top: 0;
+  padding-top: 0;
+}
+
+.dw-viewer__accordion-trigger {
+  appearance: none;
+  background: none;
+  border: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Aria measured: 12px 0 — no horizontal padding because the section
+   * already sits inside the right column padding/margins. */
+  padding: 12px 0;
+  font-family: var(--dw-font-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--dw-text-primary);
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.3;
+}
+.dw-viewer__accordion-trigger:hover { opacity: 0.88; }
+.dw-viewer__accordion-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
+  border-radius: 2px;
+}
+.dw-viewer__accordion-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+  color: var(--dw-text-secondary);
+}
+.dw-viewer__accordion[data-open="true"] .dw-viewer__accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.dw-viewer__accordion-body {
+  padding: var(--dw-s2) 0 var(--dw-s3);
+}
+.dw-viewer__accordion[data-open="false"] .dw-viewer__accordion-body {
+  display: none;
+}
+
+/* Spec rows — two-column dt/dd grid, label LEFT muted, value RIGHT primary.
+ * No horizontal dividers (Aria image 16). 6-8px row gap, 13-14px font. */
+.dw-viewer__specs {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--dw-s4);
+  row-gap: 8px;
+}
+.dw-viewer__specs dt {
+  font-family: var(--dw-font);
+  font-size: 1rem;
+  /* iter12 — Aria .diamond-property-label EXACT: weight 500, primary color */
+  font-weight: 500;
+  color: var(--dw-text-primary);
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.dw-viewer__specs dd {
+  font-family: var(--dw-font);
+  font-size: 1rem;
+  font-weight: 500;
+  /* iter12 — Aria .diamond-property-value EXACT: color #78716C (Tailwind stone-500) */
+  color: #78716C;
+  margin: 0;
+  letter-spacing: 0;
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* Old caption no longer used in the rebuilt modal */
+.dw-viewer__caption { display: none; }
+
+/* ---- Mobile: stack to single column ----
+ *
+ * A7 — at ≤768px the modal collapses to one column with the image on top
+ * and spec content below in normal flow. Sticky behavior is DISABLED here
+ * since the image already leads the page; making it sticky would only
+ * push the rest of the content off-screen on small viewports. The modal
+ * uses a single page-level scroll (the `.dw-viewer` overflow-y: auto
+ * established at the top of this section).
+ */
+@media (max-width: 768px) {
+  .dw-viewer__topbar { padding: var(--dw-s3) var(--dw-s4); }
+  .dw-viewer__layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: var(--dw-s5);
+    padding: var(--dw-s4) var(--dw-s4) var(--dw-s5);
+  }
+  .dw-viewer__media {
+    aspect-ratio: 1 / 1;
+    /* Disable sticky on mobile — image is already on top. */
+    position: static;
+    top: auto;
+    align-self: auto;
+    z-index: auto;
+  }
+  .dw-viewer__title { font-size: 1.375rem; }
+  .dw-viewer__price { font-size: 1.25rem; }
+  .dw-viewer__head-spec { font-size: 0.9375rem; }
+  .dw-viewer__details-section {
+    padding: 0;
+    margin-top: var(--dw-s4);
+  }
+  .dw-viewer__detail .dw-viewer__details-section {
+    margin-top: var(--dw-s4);
+  }
+  .dw-viewer__add { min-height: 48px; }
+  .dw-viewer__expert { min-height: 44px; }
+  .dw-viewer__accordion-trigger { font-size: 1rem; padding: 12px 0; }
+}
+
+/* ─── REDUCED MOTION ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .diamond-widget *,
+  .diamond-widget *::before,
+  .diamond-widget *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
