@@ -4,8 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, Moon, Sun, Search, ChevronDown } from "lucide-react";
-import { MegaMenu, type MegaMenuConfig } from "./MegaMenu";
+import { MegaMenu, type MegaMenuConfig, type MegaMenuItem } from "./MegaMenu";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import {
+  RoundIcon,
+  PrincessIcon,
+  OvalIcon,
+  RadiantIcon,
+  PearIcon,
+  HeartIcon,
+  MarquiseIcon,
+  EmeraldIcon,
+} from "@/components/diamonds/ShapeIcons";
 
 type NavItem = {
   href: string;
@@ -13,97 +23,270 @@ type NavItem = {
   menu?: MegaMenuConfig;
 };
 
+// ── ICON BUILDERS ─────────────────────────────────────────────────────────
+// Reuse the existing diamond shape SVGs from ShapeIcons.tsx for shape rows.
+const ShapeIcon = ({ Cmp }: { Cmp: (p: { size?: number }) => JSX.Element }) => (
+  <Cmp size={20} />
+);
+
+// Color swatch dot (filled circle with the listed color).
+const ColorDot = ({ color }: { color: string }) => (
+  <span
+    className="ds-mega__dot"
+    style={{ background: color }}
+    aria-hidden
+  />
+);
+
+// Conic-gradient swatch — used for fancy colored diamonds where each color
+// reads as a small "pie" that hints at the wider hue family.
+const ColorPie = ({ from, to }: { from: string; to: string }) => (
+  <span
+    className="ds-mega__dot"
+    style={{
+      background: `conic-gradient(from 0deg, ${from}, ${to}, ${from})`,
+    }}
+    aria-hidden
+  />
+);
+
+// Metal chip — a circle in the metal's tone with a bold 14K/18K/PT label.
+const MetalChip = ({
+  bg,
+  fg,
+  text,
+  border,
+}: {
+  bg: string;
+  fg: string;
+  text: string;
+  border?: string;
+}) => (
+  <span
+    className="ds-mega__chip"
+    style={{
+      background: bg,
+      color: fg,
+      border: border ? `1px solid ${border}` : undefined,
+    }}
+    aria-hidden
+  >
+    {text}
+  </span>
+);
+
+// Tiny outline ring/icon for "Ring Studio" entries.
+const RingStudioIcon = ({ which }: { which: "setting" | "diamond" | "labgrown" }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    {which === "setting" ? (
+      <>
+        <circle cx="12" cy="14" r="5" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M9 9 L12 4 L15 9" stroke="currentColor" strokeWidth="1.3" />
+      </>
+    ) : which === "diamond" ? (
+      <>
+        <path
+          d="M6 9 L12 3 L18 9 L12 21 Z"
+          stroke="currentColor"
+          strokeWidth="1.3"
+        />
+      </>
+    ) : (
+      <>
+        <path
+          d="M6 9 L12 3 L18 9 L12 21 Z"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeDasharray="2 1.5"
+        />
+      </>
+    )}
+  </svg>
+);
+
+// ── DIAMONDS MEGA-MENU ────────────────────────────────────────────────────
+const SHAPE_ITEM = (
+  label: string,
+  Icon: (p: { size?: number }) => JSX.Element,
+  href: string
+): MegaMenuItem => ({ label, href, icon: <ShapeIcon Cmp={Icon} /> });
+
+const DIAMOND_SHAPES_NATURAL: MegaMenuItem[] = [
+  SHAPE_ITEM("Round", RoundIcon, "/diamonds?shape=Round&treatment=natural"),
+  SHAPE_ITEM("Princess", PrincessIcon, "/diamonds?shape=Princess&treatment=natural"),
+  SHAPE_ITEM("Oval", OvalIcon, "/diamonds?shape=Oval&treatment=natural"),
+  SHAPE_ITEM("Radiant", RadiantIcon, "/diamonds?shape=Radiant&treatment=natural"),
+  SHAPE_ITEM("Pear", PearIcon, "/diamonds?shape=Pear&treatment=natural"),
+  SHAPE_ITEM("Heart", HeartIcon, "/diamonds?shape=Heart&treatment=natural"),
+  SHAPE_ITEM("Marquise", MarquiseIcon, "/diamonds?shape=Marquise&treatment=natural"),
+];
+
+const DIAMOND_SHAPES_LAB: MegaMenuItem[] = [
+  SHAPE_ITEM("Round", RoundIcon, "/diamonds?shape=Round&treatment=lab-grown"),
+  SHAPE_ITEM("Princess", PrincessIcon, "/diamonds?shape=Princess&treatment=lab-grown"),
+  SHAPE_ITEM("Oval", OvalIcon, "/diamonds?shape=Oval&treatment=lab-grown"),
+  SHAPE_ITEM("Radiant", RadiantIcon, "/diamonds?shape=Radiant&treatment=lab-grown"),
+  SHAPE_ITEM("Pear", PearIcon, "/diamonds?shape=Pear&treatment=lab-grown"),
+  SHAPE_ITEM("Heart", HeartIcon, "/diamonds?shape=Heart&treatment=lab-grown"),
+  SHAPE_ITEM("Marquise", MarquiseIcon, "/diamonds?shape=Marquise&treatment=lab-grown"),
+];
+
 const DIAMONDS_MENU: MegaMenuConfig = {
   columns: [
     {
-      heading: "Diamond shapes",
-      items: [
-        { label: "Round", href: "/diamonds?shape=Round" },
-        { label: "Princess", href: "/diamonds?shape=Princess" },
-        { label: "Cushion", href: "/diamonds?shape=Cushion" },
-        { label: "Oval", href: "/diamonds?shape=Oval" },
-        { label: "Pear", href: "/diamonds?shape=Pear" },
-        { label: "Emerald", href: "/diamonds?shape=Emerald" },
-        { label: "Marquise", href: "/diamonds?shape=Marquise" },
-        { label: "Heart", href: "/diamonds?shape=Heart" },
-        { label: "Asscher", href: "/diamonds?shape=Asscher" },
-        { label: "Radiant", href: "/diamonds?shape=Radiant" },
-      ],
-      more: { label: "Browse all shapes", href: "/diamonds" },
-    },
-    {
-      heading: "Diamond type",
-      items: [
-        { label: "Natural diamonds", href: "/diamonds?treatment=natural" },
-        { label: "Lab-grown diamonds", href: "/diamonds?treatment=lab-grown" },
-      ],
-      more: { label: "Compare types", href: "/diamonds" },
-    },
-    {
-      heading: "Popular searches",
-      items: [
-        { label: "Round 1ct", href: "/diamonds?shape=Round" },
-        { label: "Oval 1.5ct", href: "/diamonds?shape=Oval" },
-        { label: "Cushion 2ct", href: "/diamonds?shape=Cushion" },
-        { label: "Emerald 1ct", href: "/diamonds?shape=Emerald" },
+      groups: [
+        {
+          heading: "Ring Studio",
+          items: [
+            {
+              label: "Start with a setting",
+              href: "/engagement",
+              icon: <RingStudioIcon which="setting" />,
+            },
+            {
+              label: "Start with a diamond",
+              href: "/diamonds",
+              icon: <RingStudioIcon which="diamond" />,
+            },
+          ],
+        },
+        {
+          heading: "Diamonds on sale",
+          items: [
+            { label: "Diamonds under $1,000", href: "/diamonds?maxFinalPrice=1000" },
+            { label: "Diamonds under $10,000", href: "/diamonds?maxFinalPrice=10000" },
+          ],
+        },
       ],
     },
     {
-      heading: "Education",
-      items: [
-        { label: "The 4 Cs", href: "/diamonds" },
-        { label: "Cut grades", href: "/diamonds" },
-        { label: "Clarity scale", href: "/diamonds" },
-        { label: "Color guide", href: "/diamonds" },
-      ],
-      more: { label: "All guides", href: "/about" },
+      heading: "Natural diamonds",
+      items: DIAMOND_SHAPES_NATURAL,
+      more: { label: "Browse all shapes", href: "/diamonds?treatment=natural" },
+    },
+    {
+      heading: "Labgrown diamonds",
+      items: DIAMOND_SHAPES_LAB,
+      more: { label: "Browse all shapes", href: "/diamonds?treatment=lab-grown" },
     },
   ],
-  promo: {
-    eyebrow: "DIAMONDS",
-    cta: { label: "Shop now", href: "/diamonds" },
+  promos: [
+    {
+      eyebrow: "LOOSE NATURAL DIAMONDS",
+      cta: { label: "Browse all", href: "/diamonds?treatment=natural" },
+    },
+    {
+      eyebrow: "LOOSE LAB-GROWN DIAMONDS",
+      cta: { label: "Browse all", href: "/diamonds?treatment=lab-grown" },
+    },
+  ],
+  footer: {
+    heading: "Education",
+    items: [
+      { label: "Diamond buying guide", href: "/diamonds" },
+      { label: "The 4 Cs", href: "/diamonds" },
+      { label: "Cut grades", href: "/diamonds" },
+      { label: "Clarity scale", href: "/diamonds" },
+      { label: "Color guide", href: "/diamonds" },
+    ],
+    more: { label: "All guides", href: "/diamonds" },
   },
 };
+
+// ── COLORED DIAMONDS MEGA-MENU ───────────────────────────────────────────
+const COLORED_SHAPES: MegaMenuItem[] = [
+  SHAPE_ITEM("Round", RoundIcon, "/color-diamonds"),
+  SHAPE_ITEM("Princess", PrincessIcon, "/color-diamonds"),
+  SHAPE_ITEM("Oval", OvalIcon, "/color-diamonds"),
+  SHAPE_ITEM("Radiant", RadiantIcon, "/color-diamonds"),
+  SHAPE_ITEM("Pear", PearIcon, "/color-diamonds"),
+  SHAPE_ITEM("Heart", HeartIcon, "/color-diamonds"),
+];
+
+const COLORED_COLORS: MegaMenuItem[] = [
+  { label: "Yellow diamonds", href: "/color-diamonds", icon: <ColorPie from="#fadf66" to="#e8c044" /> },
+  { label: "Red diamonds", href: "/color-diamonds", icon: <ColorPie from="#e74c4c" to="#a82a2a" /> },
+  { label: "Blue diamonds", href: "/color-diamonds", icon: <ColorPie from="#5a86d6" to="#2f5fb5" /> },
+  { label: "Pink diamonds", href: "/color-diamonds", icon: <ColorPie from="#f7c4d2" to="#ec97b3" /> },
+  { label: "Green diamonds", href: "/color-diamonds", icon: <ColorPie from="#7fc06d" to="#3f8a4a" /> },
+  { label: "Purple diamonds", href: "/color-diamonds", icon: <ColorPie from="#a07cc8" to="#6c4ba0" /> },
+];
 
 const COLORED_MENU: MegaMenuConfig = {
   columns: [
     {
-      heading: "Fancy colors",
-      items: [
-        { label: "Yellow diamonds", href: "/color-diamonds" },
-        { label: "Pink diamonds", href: "/color-diamonds" },
-        { label: "Blue diamonds", href: "/color-diamonds" },
-        { label: "Green diamonds", href: "/color-diamonds" },
-        { label: "Brown diamonds", href: "/color-diamonds" },
-        { label: "Black diamonds", href: "/color-diamonds" },
+      groups: [
+        {
+          heading: "Ring Studio",
+          items: [
+            {
+              label: "Start with a setting",
+              href: "/engagement",
+              icon: <RingStudioIcon which="setting" />,
+            },
+            {
+              label: "Start with a colored diamond",
+              href: "/color-diamonds",
+              icon: <RingStudioIcon which="diamond" />,
+            },
+          ],
+        },
       ],
+    },
+    {
+      heading: "Colored diamond types",
+      items: [
+        { label: "Natural Colored Diamonds", href: "/color-diamonds" },
+        { label: "Lab-grown Colored Diamonds", href: "/color-diamonds" },
+      ],
+    },
+    {
+      heading: "Colored diamonds",
+      items: COLORED_SHAPES,
+      more: { label: "Browse all shapes", href: "/color-diamonds" },
+    },
+    {
+      heading: "Colored diamonds",
+      items: COLORED_COLORS,
       more: { label: "Browse all colors", href: "/color-diamonds" },
     },
+  ],
+  promos: [
     {
-      heading: "Intensity",
-      items: [
-        { label: "Faint", href: "/color-diamonds" },
-        { label: "Light", href: "/color-diamonds" },
-        { label: "Fancy light", href: "/color-diamonds" },
-        { label: "Fancy", href: "/color-diamonds" },
-        { label: "Fancy intense", href: "/color-diamonds" },
-        { label: "Fancy vivid", href: "/color-diamonds" },
-      ],
-    },
-    {
-      heading: "Education",
-      items: [
-        { label: "Why fancy diamonds?", href: "/about" },
-        { label: "Color rarity", href: "/about" },
-        { label: "Investment grade", href: "/about" },
-      ],
+      eyebrow: "COLORED DIAMONDS",
+      cta: { label: "Shop now", href: "/color-diamonds" },
     },
   ],
-  promo: {
-    eyebrow: "COLORED DIAMONDS",
-    cta: { label: "Shop now", href: "/color-diamonds" },
+  footer: {
+    heading: "Education",
+    items: [
+      { label: "Why colored diamonds?", href: "/color-diamonds" },
+      { label: "Color rarity", href: "/color-diamonds" },
+      { label: "Intensity grading", href: "/color-diamonds" },
+      { label: "Investment grade", href: "/color-diamonds" },
+    ],
+    more: { label: "All colored diamond guides", href: "/color-diamonds" },
   },
 };
+
+// ── GEMSTONES MEGA-MENU ──────────────────────────────────────────────────
+const GEMSTONE_SHAPES: MegaMenuItem[] = [
+  SHAPE_ITEM("Round", RoundIcon, "/gemstones"),
+  { label: "Square", href: "/gemstones", icon: <ShapeIcon Cmp={PrincessIcon} /> },
+  SHAPE_ITEM("Oval", OvalIcon, "/gemstones"),
+  SHAPE_ITEM("Emerald", EmeraldIcon, "/gemstones"),
+  SHAPE_ITEM("Pear", PearIcon, "/gemstones"),
+  SHAPE_ITEM("Heart", HeartIcon, "/gemstones"),
+];
+
+const GEMSTONE_COLORS: MegaMenuItem[] = [
+  { label: "Yellow gemstones", href: "/gemstones", icon: <ColorPie from="#fadf66" to="#e8c044" /> },
+  { label: "Red gemstones", href: "/gemstones", icon: <ColorPie from="#e74c4c" to="#a82a2a" /> },
+  { label: "Blue gemstones", href: "/gemstones", icon: <ColorPie from="#5a86d6" to="#2f5fb5" /> },
+  { label: "Pink gemstones", href: "/gemstones", icon: <ColorPie from="#f7c4d2" to="#ec97b3" /> },
+  { label: "Green gemstones", href: "/gemstones", icon: <ColorPie from="#7fc06d" to="#3f8a4a" /> },
+  { label: "Purple gemstones", href: "/gemstones", icon: <ColorPie from="#a07cc8" to="#6c4ba0" /> },
+];
 
 const GEMSTONES_MENU: MegaMenuConfig = {
   columns: [
@@ -123,78 +306,153 @@ const GEMSTONES_MENU: MegaMenuConfig = {
     },
     {
       heading: "Gemstone shapes",
-      items: [
-        { label: "Round", href: "/gemstones" },
-        { label: "Square", href: "/gemstones" },
-        { label: "Oval", href: "/gemstones" },
-        { label: "Emerald", href: "/gemstones" },
-        { label: "Pear", href: "/gemstones" },
-        { label: "Heart", href: "/gemstones" },
-      ],
+      items: GEMSTONE_SHAPES,
       more: { label: "Browse all shapes", href: "/gemstones" },
     },
     {
       heading: "Gemstone colors",
-      items: [
-        { label: "Yellow gemstones", href: "/gemstones" },
-        { label: "Red gemstones", href: "/gemstones" },
-        { label: "Blue gemstones", href: "/gemstones" },
-        { label: "Pink gemstones", href: "/gemstones" },
-        { label: "Green gemstones", href: "/gemstones" },
-        { label: "Purple gemstones", href: "/gemstones" },
-      ],
+      items: GEMSTONE_COLORS,
       more: { label: "Browse all colors", href: "/gemstones" },
     },
+  ],
+  promos: [
     {
-      heading: "Education",
-      items: [
-        { label: "Emerald guide", href: "/about" },
-        { label: "Ruby guide", href: "/about" },
-        { label: "Sapphire guide", href: "/about" },
-      ],
-      more: { label: "Browse all gemstone guides", href: "/about" },
+      eyebrow: "GEMSTONES",
+      cta: { label: "Shop now", href: "/gemstones" },
     },
   ],
-  promo: {
-    eyebrow: "GEMSTONES",
-    cta: { label: "Shop now", href: "/gemstones" },
+  footer: {
+    heading: "Education",
+    items: [
+      { label: "Emerald guide", href: "/gemstones" },
+      { label: "Ruby guide", href: "/gemstones" },
+      { label: "Sapphire guide", href: "/gemstones" },
+      { label: "Gemstone buying guide", href: "/gemstones" },
+    ],
+    more: { label: "Browse all gemstone guides", href: "/gemstones" },
   },
 };
+
+// ── ENGAGEMENT MEGA-MENU ─────────────────────────────────────────────────
+const RING_SHAPES: MegaMenuItem[] = [
+  SHAPE_ITEM("Round", RoundIcon, "/engagement"),
+  SHAPE_ITEM("Princess", PrincessIcon, "/engagement"),
+  SHAPE_ITEM("Oval", OvalIcon, "/engagement"),
+  SHAPE_ITEM("Radiant", RadiantIcon, "/engagement"),
+  SHAPE_ITEM("Pear", PearIcon, "/engagement"),
+  SHAPE_ITEM("Heart", HeartIcon, "/engagement"),
+];
+
+const RingStyleIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <circle cx="12" cy="14" r="5" stroke="currentColor" strokeWidth="1.3" />
+    <circle cx="12" cy="9" r="2" stroke="currentColor" strokeWidth="1.3" />
+  </svg>
+);
+
+const RING_STYLES: MegaMenuItem[] = [
+  { label: "Solitaire", href: "/engagement", icon: <RingStyleIcon /> },
+  { label: "Pave", href: "/engagement", icon: <RingStyleIcon /> },
+  { label: "Halo", href: "/engagement", icon: <RingStyleIcon /> },
+  { label: "Hidden Halo", href: "/engagement", icon: <RingStyleIcon /> },
+  { label: "Nature", href: "/engagement", icon: <RingStyleIcon /> },
+  { label: "Trilogy", href: "/engagement", icon: <RingStyleIcon /> },
+  { label: "Vintage", href: "/engagement", icon: <RingStyleIcon /> },
+];
+
+const RING_METALS: MegaMenuItem[] = [
+  {
+    label: "14k Yellow Gold",
+    href: "/engagement",
+    icon: <MetalChip bg="#f1d27a" fg="#7a5b1a" text="14K" />,
+  },
+  {
+    label: "18k Yellow Gold",
+    href: "/engagement",
+    icon: <MetalChip bg="#e9c25a" fg="#5a4112" text="18K" />,
+  },
+  {
+    label: "14k Rose Gold",
+    href: "/engagement",
+    icon: <MetalChip bg="#eac0b0" fg="#7a3f2c" text="14K" />,
+  },
+  {
+    label: "18k Rose Gold",
+    href: "/engagement",
+    icon: <MetalChip bg="#dba38e" fg="#5e2d1d" text="18K" />,
+  },
+  {
+    label: "14k White Gold",
+    href: "/engagement",
+    icon: <MetalChip bg="#e8e6e0" fg="#3d3d3d" text="14K" border="#cfcdc7" />,
+  },
+  {
+    label: "18k White Gold",
+    href: "/engagement",
+    icon: <MetalChip bg="#dcdad4" fg="#2c2c2c" text="18K" border="#bfbdb7" />,
+  },
+  {
+    label: "950 Platinum",
+    href: "/engagement",
+    icon: <MetalChip bg="#e2e1dc" fg="#3d3d3d" text="PT" border="#bfbdb7" />,
+  },
+];
 
 const ENGAGEMENT_MENU: MegaMenuConfig = {
   columns: [
     {
-      heading: "Ring style",
-      items: [
-        { label: "Solitaire", href: "/engagement" },
-        { label: "Halo", href: "/engagement" },
-        { label: "Three-stone", href: "/engagement" },
-        { label: "Vintage", href: "/engagement" },
-        { label: "Pavé", href: "/engagement" },
+      groups: [
+        {
+          heading: "Ring Studio",
+          items: [
+            {
+              label: "Start with a setting",
+              href: "/engagement",
+              icon: <RingStudioIcon which="setting" />,
+            },
+            {
+              label: "Start with a natural diamond",
+              href: "/diamonds?treatment=natural",
+              icon: <RingStudioIcon which="diamond" />,
+            },
+            {
+              label: "Start with a labgrown diamond",
+              href: "/diamonds?treatment=lab-grown",
+              icon: <RingStudioIcon which="labgrown" />,
+            },
+          ],
+        },
       ],
-      more: { label: "Browse all styles", href: "/engagement" },
     },
     {
-      heading: "Metal",
-      items: [
-        { label: "Yellow gold", href: "/engagement" },
-        { label: "White gold", href: "/engagement" },
-        { label: "Rose gold", href: "/engagement" },
-        { label: "Platinum", href: "/engagement" },
-      ],
+      heading: "Shop rings by shape",
+      items: RING_SHAPES,
+      more: { label: "Browse all diamonds", href: "/diamonds" },
     },
     {
-      heading: "Build your ring",
-      items: [
-        { label: "Start with a setting", href: "/engagement" },
-        { label: "Start with a diamond", href: "/diamonds" },
-      ],
-      more: { label: "Design your ring", href: "/engagement" },
+      heading: "Shop rings by style",
+      items: RING_STYLES,
+    },
+    {
+      heading: "Shop rings by metal",
+      items: RING_METALS,
     },
   ],
-  promo: {
-    eyebrow: "ENGAGEMENT",
-    cta: { label: "Design your ring", href: "/engagement" },
+  promos: [
+    {
+      eyebrow: "ENGAGEMENT RINGS",
+      cta: { label: "Shop now", href: "/engagement" },
+    },
+  ],
+  footer: {
+    heading: "Education",
+    items: [
+      { label: "Engagement ring guide", href: "/engagement" },
+      { label: "Ring sizing", href: "/engagement" },
+      { label: "Choosing a setting", href: "/engagement" },
+      { label: "Metal guide", href: "/engagement" },
+    ],
+    more: { label: "All engagement guides", href: "/about" },
   },
 };
 
@@ -203,7 +461,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/color-diamonds", label: "Colored Diamonds", menu: COLORED_MENU },
   { href: "/gemstones", label: "Gemstones", menu: GEMSTONES_MENU },
   { href: "/engagement", label: "Engagement", menu: ENGAGEMENT_MENU },
-  { href: "/about", label: "About" },
 ];
 
 const DARK_HERO_PATHS = new Set<string>(["/"]);
