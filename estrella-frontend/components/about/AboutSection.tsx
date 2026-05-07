@@ -122,8 +122,8 @@ export function AboutSection() {
               margins — just the diamond, properly graded, fairly priced.
             </p>
           </div>
-          <Link href="/about" className="estrella-btn estrella-btn--pill-dark">
-            Learn More
+          <Link href="/diamonds" className="estrella-btn estrella-btn--pill-dark">
+            Browse the collection
           </Link>
         </div>
       </div>

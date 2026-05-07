@@ -452,7 +452,7 @@ const ENGAGEMENT_MENU: MegaMenuConfig = {
       { label: "Choosing a setting", href: "/engagement" },
       { label: "Metal guide", href: "/engagement" },
     ],
-    more: { label: "All engagement guides", href: "/about" },
+    more: { label: "All engagement guides", href: "/engagement" },
   },
 };
 
