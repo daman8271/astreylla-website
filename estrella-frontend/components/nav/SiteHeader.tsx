@@ -80,17 +80,25 @@ export function SiteHeader() {
         >
           <Link
             href="/"
-            aria-label="Augmont — home"
+            aria-label="Astreylla — home"
             style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 28,
-              letterSpacing: "0.04em",
-              color: fg,
-              textShadow: onDarkHero ? "0 1px 12px rgba(0,0,0,0.35)" : "none",
-              transition: "color 200ms ease",
+              display: "inline-flex",
+              alignItems: "center",
+              textDecoration: "none",
             }}
           >
-            AUGMONT
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-astreylla.jpeg"
+              alt=""
+              aria-hidden
+              style={{
+                height: 56,
+                width: "auto",
+                maxWidth: 220,
+                display: "block",
+              }}
+            />
           </Link>
 
           <nav
