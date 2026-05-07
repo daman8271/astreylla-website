@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, Moon, Search } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/diamonds", label: "Loose Diamonds" },
@@ -126,7 +126,89 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          <div className="flex items-center" style={{ gap: 16 }}>
+          <div className="hidden md:flex items-center" style={{ gap: 20 }}>
+            {/* Mock dark-mode toggle — placeholder, not wired */}
+            <button
+              type="button"
+              aria-label="Toggle dark mode (coming soon)"
+              className="hover:opacity-70 transition-opacity"
+              style={{
+                background: "transparent",
+                border: 0,
+                color: fg,
+                padding: 8,
+                cursor: "pointer",
+              }}
+            >
+              <Moon size={18} strokeWidth={1.5} />
+            </button>
+
+            {/* Mock search — placeholder, not wired */}
+            <button
+              type="button"
+              aria-label="Search (coming soon)"
+              className="hover:opacity-70 transition-opacity"
+              style={{
+                background: "transparent",
+                border: 0,
+                color: fg,
+                padding: 8,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              <Search size={18} strokeWidth={1.5} />
+              <span>Search</span>
+            </button>
+
+            {/* Mock country / currency switcher — placeholder, not wired */}
+            <button
+              type="button"
+              aria-label="Country and currency (US)"
+              className="hover:opacity-70 transition-opacity"
+              style={{
+                background: "transparent",
+                border: 0,
+                color: fg,
+                padding: 8,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  display: "inline-block",
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  fontSize: 22,
+                  lineHeight: "22px",
+                  background: "#fff",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  textAlign: "center",
+                }}
+              >
+                🇺🇸
+              </span>
+              <span>US</span>
+            </button>
+
             <button
               type="button"
               aria-label={`Open cart${cartCount > 0 ? ` (${cartCount} items)` : ""}`}
@@ -138,57 +220,41 @@ export function SiteHeader() {
                 color: fg,
                 padding: 8,
                 position: "relative",
-                transition: "color 200ms ease",
+                cursor: "pointer",
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
               }}
             >
-              <ShoppingBag size={20} strokeWidth={1.5} />
-              {cartCount > 0 && (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    top: 2,
-                    right: 0,
-                    minWidth: 18,
-                    height: 18,
-                    padding: "0 5px",
-                    borderRadius: 999,
-                    background: onDarkHero ? "#fff" : "var(--brand-text-primary, #1a1208)",
-                    color: onDarkHero ? "var(--brand-text-primary, #1a1208)" : "#fff",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    lineHeight: "18px",
-                    textAlign: "center",
-                    letterSpacing: 0,
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.18)",
-                  }}
-                >
-                  {cartCount > 99 ? "99+" : cartCount}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen((v) => !v)}
-              className="md:hidden"
-              style={{
-                background: "transparent",
-                border: 0,
-                color: fg,
-                padding: 8,
-                transition: "color 200ms ease",
-              }}
-            >
-              {mobileOpen ? (
-                <X size={22} strokeWidth={1.5} />
-              ) : (
-                <Menu size={22} strokeWidth={1.5} />
-              )}
+              <span>Cart ({cartCount > 99 ? "99+" : cartCount})</span>
             </button>
           </div>
+
+          <button
+            type="button"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((v) => !v)}
+            className="md:hidden"
+            style={{
+              background: "transparent",
+              border: 0,
+              color: fg,
+              padding: 8,
+              transition: "color 200ms ease",
+            }}
+          >
+            {mobileOpen ? (
+              <X size={22} strokeWidth={1.5} />
+            ) : (
+              <Menu size={22} strokeWidth={1.5} />
+            )}
+          </button>
         </div>
       </header>
 
