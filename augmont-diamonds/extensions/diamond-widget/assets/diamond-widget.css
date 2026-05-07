@@ -65,6 +65,14 @@
   --dw-font-head:    var(--dw-font-heading);
 
   font-family: var(--dw-font);
+  /* iter11 — explicit 16px baseline. Some merchant themes set html
+   * font-size to 14px (87.5%), which made our rem-defined typography render
+   * smaller than intended. Setting font-size locally on the widget root
+   * lets em-descendants and any unstyled text default to a sane size; the
+   * rem-based rules below stay anchored to <html> (theme-controlled) so
+   * we still get to opt in/out per element. Items 2-9 below bump specific
+   * elements explicitly to escape theme-rem dependence. */
+  font-size: 16px;
   font-weight: 400;
   color: var(--dw-text-primary);
   background: var(--dw-bg-page);
@@ -110,7 +118,11 @@
 }
 .dw-hero__title {
   font-family: var(--dw-font-head);
-  font-size: 1.875rem; /* iter7 — Aria DevTools: 30px exact */
+  /* iter11 — Aria parity: hero heading scales 36→56px responsive.
+   * "Browse Our Collection" is shorter than Aria's "The World's Largest
+   * Collection" so we land at 56px desktop (vs Aria's ~64px) and shrink
+   * proportionally on narrow viewports. */
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
   /* iter9 — heavier presence boost: 400 → 500. Hero title reads more
    * confidently while staying lighter than card titles (700) and modal
    * title (700) per the editorial weight hierarchy. */
@@ -119,6 +131,20 @@
   line-height: 1.2;
   color: var(--dw-text);
   margin: 0;
+}
+
+/* iter11 — hero subtitle. New element; rendered just under the title.
+ * Aria's reference uses descriptive copy below the heading so the page
+ * orients the buyer before the filters/grid below. */
+.dw-hero__subtitle {
+  font-family: var(--dw-font-body);
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--dw-text-secondary);
+  max-width: 720px;
+  margin: var(--dw-s3) auto 0;
+  letter-spacing: 0;
 }
 
 /* ─── CONFIG ERROR ────────────────────────────────────────────────────────── */
@@ -158,7 +184,9 @@
   padding: 10px 10px;
   min-width: 120px;
   font-family: var(--dw-font-head);
-  font-size: 1.25rem; /* iter7 — Aria DevTools: h2 20px */
+  /* iter11 — Aria parity: tabs scale 20→24px for stronger horizontal
+   * presence next to the bumped hero. Active underline stays 3px below. */
+  font-size: 1.5rem;
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--dw-text-secondary);
@@ -217,10 +245,21 @@
 .dw-filters__col {
   display: flex;
   flex-direction: column;
-  /* iter9 — section gap 32 → 24; rhythm now lives on the grid gap, the
-   * filter-band wrapper padding, and the h3 label margin — not on a per-col
-   * horizontal padding (carry-over from iter7, dropped). */
-  gap: var(--dw-s5);
+  /* iter11 — Aria parity: 24→48px between filter sections; the bumped
+   * label typography needs more vertical breath, and the new section
+   * dividers (border-top on .dw-fgroup:not(:first-child)) need room. */
+  gap: var(--dw-s7);
+}
+
+/* iter11 — hairline divider between every filter section in a column.
+ * First .dw-fgroup in each column has no top border so the divider only
+ * appears BETWEEN sections, not above the first. padding-top mirrors the
+ * column gap so the divider sits midway in the visual gap rather than
+ * hugging the next section's label. */
+.dw-filters__col .dw-fgroup + .dw-fgroup {
+  border-top: 1px solid var(--dw-border-subtle);
+  padding-top: var(--dw-s6);
+  margin-top: calc(0px - var(--dw-s2)); /* pull the section back up so divider doesn't double the column gap */
 }
 
 /* iter9 — at tablet widths the 2-col grid feels cramped (matches Aria's
@@ -242,7 +281,9 @@
 
 .dw-fgroup__label {
   font-family: var(--dw-font-body);
-  font-size: 1rem; /* iter7 — Aria DevTools: h3 16px */
+  /* iter11 — Aria parity: 16→18px for stronger section heading presence
+   * next to the bumped tabs (24px). Hierarchy: tabs 24 > labels 18 > body 16. */
+  font-size: 1.125rem;
   /* iter9 — bump 500 → 600 for stronger filter section heading presence */
   font-weight: 600;
   letter-spacing: 0;
@@ -314,10 +355,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 94px;
-  height: 80px;
-  padding: 8px 6px;
-  gap: 6px;
+  /* iter11 — Aria parity: tiles 94×80 → 155×140. Closer to a square
+   * (1.1:1 vs 1.175:1) gives the shape silhouette more presence. Padding
+   * and icon size scale up in proportion. */
+  width: 155px;
+  height: 140px;
+  padding: 12px 8px;
+  gap: 10px;
   background: rgba(0, 0, 0, 0.012);
   border: 1px solid var(--dw-border-subtle);
   border-radius: 8px;
@@ -330,8 +374,9 @@
 }
 
 .dw-shape-tile__icon {
-  width: 32px;
-  height: 32px;
+  /* iter11 — icon 32→52px to fill the larger tile proportionally */
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -443,20 +488,26 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--dw-s2);
-  margin-top: var(--dw-s4);
+  /* iter11 — tighten slider→input gap 16→12 so the inputs feel anchored
+   * to the rail above instead of floating in their own block. */
+  margin-top: var(--dw-s3);
 }
 .dw-slider__numwrap {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  /* iter11 — drop inter-item gap inside the wrap so $-prefix and number
+   * read as a single string ("$10,000") rather than "$  10,000". */
+  gap: 0;
   background: var(--dw-bg-card);
   border: 1px solid var(--dw-border);
-  /* iter9 — Aria .slider-inputs input exact: 4px radius, 3/6 padding,
-   * ~135px max so the input pair sits compact under the slider rail. */
+  /* iter9 — Aria .slider-inputs input exact: 4px radius, 3/6 padding.
+   * iter11 — bump padding 3/6→6/10 to balance the bumped 24px number font. */
   border-radius: 4px;
-  padding: 3px 6px;
+  padding: 6px 10px;
   flex: 1;
-  max-width: 135px;
+  /* iter11 — bump max-width 135→150 to fit the larger number type without
+   * truncating "10,000" on the price input. */
+  max-width: 150px;
   min-width: 0;
   transition: border-color 0.15s ease;
 }
@@ -468,16 +519,19 @@
   border: 0;
   outline: none;
   font-family: var(--dw-font);
-  font-size: 0.875rem;
+  /* iter11 — Aria parity: input number 14→24px so the value reads at the
+   * same scale as the section labels above. */
+  font-size: 1.5rem;
   font-weight: 500;
   color: var(--dw-text);
   width: 100%;
   min-width: 0;
   /* iter9 — text-align end + tighter vertical padding per Aria slider-inputs */
-  padding: 4px 0;
+  padding: 0;
   text-align: end;
   letter-spacing: 0;
   -moz-appearance: textfield;
+  line-height: 1.2;
 }
 .dw-slider__num::-webkit-outer-spin-button,
 .dw-slider__num::-webkit-inner-spin-button {
@@ -486,7 +540,9 @@
 }
 .dw-slider__numunit {
   font-family: var(--dw-font);
-  font-size: 0.75rem;
+  /* iter11 — bump unit text 12→16px to scale with the bumped 24px number.
+   * Still smaller than the number itself for hierarchy. */
+  font-size: 1rem;
   font-weight: 400;
   color: var(--dw-text-muted);
   letter-spacing: 0;
@@ -494,11 +550,34 @@
 }
 .dw-slider__val-sep { color: var(--dw-text-faint); padding: 0 var(--dw-s1); flex-shrink: 0; }
 
+/* iter11 — external "ct" unit (carat slider). Sits OUTSIDE the numwrap to
+ * the right of the input box, separated by a small horizontal gap.
+ * Replaces the previous in-box unit suffix so the box contains only the
+ * number (matches Aria's reference where the "ct" label sits external). */
+.dw-slider__field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dw-s2);
+  flex: 1;
+  min-width: 0;
+}
+.dw-slider__field .dw-slider__numwrap { flex: 1; }
+.dw-slider__field-unit {
+  font-family: var(--dw-font);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--dw-text-muted);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
 /* iter10 — Aria $-prefix unit for the price slider numwrap. The existing
  * .dw-slider__numunit sits AFTER the input (suffix, "ct"); when the unit
- * span is rendered BEFORE the input we want it to read as a prefix ("$"). */
+ * span is rendered BEFORE the input we want it to read as a prefix ("$").
+ * iter11 — also tighten the right margin so "$10,000" reads as one token. */
 .dw-slider__numunit--prefix {
   order: -1;
+  margin-right: 2px;
 }
 
 /* ─── GRADED SLIDER (iter10) ──────────────────────────────────────────────────
@@ -517,13 +596,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: var(--dw-s3);
+  /* iter11 — tighten tick row gap 12→8 so labels read as part of the
+   * slider rather than orphaned below it. */
+  margin-top: var(--dw-s2);
   padding: 0 6px; /* roughly half a thumb-width so labels align under thumbs at the extremes */
 }
 
 .dw-slider__tick {
   font-family: var(--dw-font-body);
-  font-size: 0.75rem;
+  /* iter11 — Aria parity: tick labels 12→14px so they read clearly under
+   * the rail without straining the eye. */
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--dw-text-primary);
   letter-spacing: 0.02em;

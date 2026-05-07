@@ -171,10 +171,12 @@
   var requestSeq = 0; // guards against out-of-order responses
 
   // ─── DOM SCAFFOLD ─────────────────────────────────────────────────────────
+  // iter11 — descriptive subtitle below the heading, Aria parity.
   root.innerHTML =
     '<header class="dw-hero">' +
       '<p class="dw-hero__eyebrow">Loose Diamonds</p>' +
       '<h2 class="dw-hero__title">Browse Our Collection</h2>' +
+      '<p class="dw-hero__subtitle">Browse our curated collection and use the filters to narrow down by shape, colour, clarity, cut and price.</p>' +
     '</header>' +
     (showFilters ? buildTreatmentTabsHTML() : '') +
     (showFilters ? buildFiltersHTML() : '') +
@@ -353,6 +355,10 @@
   }
 
   function buildSliderGroup(label, key, min, max, step, unit) {
+    // iter11 — Aria parity: "ct" unit moves OUTSIDE the input box, sitting
+    // to the right of the box as a separate label. Box contains only the
+    // number. The .dw-slider__field wrapper holds (numwrap + external
+    // unit) so the pair stays glued together when the inputs flex.
     return (
       '<div class="dw-fgroup">' +
         '<h3 class="dw-fgroup__label">' + label + '</h3>' +
@@ -364,14 +370,18 @@
           '<input class="dw-slider__input dw-slider__input--max" type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="' + label + ' maximum">' +
         '</div>' +
         '<div class="dw-slider__values">' +
-          '<div class="dw-slider__numwrap">' +
-            '<input type="number" class="dw-slider__num dw-slider__num--min" min="' + min + '" max="' + max + '" step="' + step + '" value="' + min + '" aria-label="' + label + ' minimum value">' +
-            '<span class="dw-slider__numunit">' + escapeHTML(unit) + '</span>' +
+          '<div class="dw-slider__field">' +
+            '<div class="dw-slider__numwrap">' +
+              '<input type="number" class="dw-slider__num dw-slider__num--min" min="' + min + '" max="' + max + '" step="' + step + '" value="' + min + '" aria-label="' + label + ' minimum value">' +
+            '</div>' +
+            '<span class="dw-slider__field-unit">' + escapeHTML(unit) + '</span>' +
           '</div>' +
           '<span class="dw-slider__val-sep" aria-hidden="true">–</span>' +
-          '<div class="dw-slider__numwrap">' +
-            '<input type="number" class="dw-slider__num dw-slider__num--max" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="' + label + ' maximum value">' +
-            '<span class="dw-slider__numunit">' + escapeHTML(unit) + '</span>' +
+          '<div class="dw-slider__field">' +
+            '<div class="dw-slider__numwrap">' +
+              '<input type="number" class="dw-slider__num dw-slider__num--max" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="' + label + ' maximum value">' +
+            '</div>' +
+            '<span class="dw-slider__field-unit">' + escapeHTML(unit) + '</span>' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -404,9 +414,11 @@
   }
 
   // iter10 — price slider. Continuous range like carat, with $-prefixed
-  // number inputs (matches Aria's "$1 — $10,000" reference). Reuses the
-  // numwrap shell from buildSliderGroup but flips the unit span to a
-  // prefix via the CSS modifier .dw-slider__numunit--prefix.
+  // inputs (matches Aria's "$1 — $10,000" reference).
+  // iter11 — switched from <input type="number"> to <input type="text"
+  // inputmode="decimal"> so we can render comma-thousand-separators
+  // ("$10,000") and drop the noisy ".00" tail on round numbers. paint()
+  // and the change handlers do the formatting + parsing.
   function buildPriceSliderGroup() {
     var min = PRICE_MIN, max = PRICE_MAX, step = PRICE_STEP;
     return (
@@ -422,16 +434,44 @@
         '<div class="dw-slider__values">' +
           '<div class="dw-slider__numwrap">' +
             '<span class="dw-slider__numunit dw-slider__numunit--prefix">$</span>' +
-            '<input type="number" class="dw-slider__num dw-slider__num--min" min="' + min + '" max="' + max + '" step="' + step + '" value="' + min + '" aria-label="Price minimum value">' +
+            '<input type="text" inputmode="decimal" class="dw-slider__num dw-slider__num--min" value="' + formatPriceNum(min) + '" aria-label="Price minimum value">' +
           '</div>' +
           '<span class="dw-slider__val-sep" aria-hidden="true">–</span>' +
           '<div class="dw-slider__numwrap">' +
             '<span class="dw-slider__numunit dw-slider__numunit--prefix">$</span>' +
-            '<input type="number" class="dw-slider__num dw-slider__num--max" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="Price maximum value">' +
+            '<input type="text" inputmode="decimal" class="dw-slider__num dw-slider__num--max" value="' + formatPriceNum(max) + '" aria-label="Price maximum value">' +
           '</div>' +
         '</div>' +
       '</div>'
     );
+  }
+
+  // iter11 — price input formatter: integer values get comma-thousands and
+  // no decimals ("10,000"); fractional values get up to 2 decimals
+  // (rare for our $50-step slider but defensive). Returned as a plain
+  // string suitable for an <input type="text"> value.
+  function formatPriceNum(n) {
+    var num = Number(n);
+    if (!Number.isFinite(num)) return '';
+    var isInt = Math.abs(num - Math.round(num)) < 0.01;
+    try {
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: isInt ? 0 : 2,
+      }).format(num);
+    } catch (e) {
+      // Fallback if Intl unavailable: comma-grouping by hand for integers.
+      return isInt ? String(Math.round(num)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : String(num);
+    }
+  }
+  // iter11 — parse a price input value back to a number. Strips commas,
+  // currency symbols, and whitespace. Returns NaN for unparseable input
+  // so the change handler can clamp/reject.
+  function parsePriceNum(s) {
+    if (s == null) return NaN;
+    var cleaned = String(s).replace(/[\s,$]/g, '').trim();
+    if (!cleaned) return NaN;
+    return Number(cleaned);
   }
 
   function buildCartTriggerHTML() {
@@ -902,6 +942,15 @@
     var maxNum   = slider.parentElement.querySelector('.dw-slider__num--max');
     var key      = slider.dataset.key;
 
+    // iter11 — formatter dispatch. Carat keeps .toFixed(2) (continuous
+    // decimal). Price uses formatPriceNum for comma-thousands + no-".00".
+    var formatNum = (key === 'price')
+      ? function (n) { return formatPriceNum(n); }
+      : function (n) { return Number(n).toFixed(2); };
+    var parseNum = (key === 'price')
+      ? function (s) { return parsePriceNum(s); }
+      : function (s) { return Number(s); };
+
     function paint() {
       var lo = Number(minInput.value);
       var hi = Number(maxInput.value);
@@ -912,8 +961,8 @@
       range.style.left  = pctLo + '%';
       range.style.right = (100 - pctHi) + '%';
       // Mirror to number inputs (avoid feedback loops by guarding focus)
-      if (minNum && document.activeElement !== minNum) minNum.value = Number(lo).toFixed(2);
-      if (maxNum && document.activeElement !== maxNum) maxNum.value = Number(hi).toFixed(2);
+      if (minNum && document.activeElement !== minNum) minNum.value = formatNum(lo);
+      if (maxNum && document.activeElement !== maxNum) maxNum.value = formatNum(hi);
       slider._lo = lo;
       slider._hi = hi;
     }
@@ -932,9 +981,12 @@
     maxInput.addEventListener('change', commit);
 
     // Number-input <-> range two-way binding. Clamp + guard against crossing.
+    // Price input is type=text (commas) so parseNum strips them first.
     if (minNum) {
       minNum.addEventListener('change', function () {
-        var v = clamp(Number(minNum.value), min, max);
+        var raw = parseNum(minNum.value);
+        if (!Number.isFinite(raw)) { paint(); return; }
+        var v = clamp(raw, min, max);
         var hi = Number(maxInput.value);
         if (v > hi - step) v = hi - step;
         minInput.value = v;
@@ -943,7 +995,9 @@
     }
     if (maxNum) {
       maxNum.addEventListener('change', function () {
-        var v = clamp(Number(maxNum.value), min, max);
+        var raw = parseNum(maxNum.value);
+        if (!Number.isFinite(raw)) { paint(); return; }
+        var v = clamp(raw, min, max);
         var lo = Number(minInput.value);
         if (v < lo + step) v = lo + step;
         maxInput.value = v;
