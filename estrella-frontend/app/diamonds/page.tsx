@@ -1,15 +1,10 @@
-import "@/components/diamonds/diamonds.css";
-import { DiamondCatalog } from "@/components/diamonds/DiamondCatalog";
+import { DiamondWidgetEmbed } from "@/components/widget-embed/DiamondWidgetEmbed";
 
 export const metadata = {
   title: "Loose Diamonds — Augmont",
   description:
     "Browse our curated collection of certified lab-grown loose diamonds, jeweller-direct.",
 };
-
-const SHOP =
-  process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN ||
-  "trial-shop-sqxnl71f.myshopify.com";
 
 export default function DiamondsPage() {
   return (
@@ -71,7 +66,7 @@ export default function DiamondsPage() {
         }}
       >
         <div className="estrella-container">
-          <DiamondCatalog shop={SHOP} perPage={12} />
+          <DiamondWidgetEmbed />
         </div>
       </section>
     </>
