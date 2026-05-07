@@ -108,7 +108,7 @@ export function CartDrawer() {
                 Your cart is empty.
               </p>
               <Link
-                href="/products"
+                href="/diamonds"
                 onClick={closeCart}
                 style={{
                   fontFamily: "var(--font-sans)",

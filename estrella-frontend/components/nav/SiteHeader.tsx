@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { ShoppingBag, Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
-  { href: "/products", label: "Shop" },
   { href: "/diamonds", label: "Loose Diamonds" },
   { href: "/color-diamonds", label: "Fancy Diamonds" },
   { href: "/gemstones", label: "Gemstones" },

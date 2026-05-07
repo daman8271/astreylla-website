@@ -66,10 +66,6 @@ export default async function ProductDetailPage({
             Home
           </Link>
           <span style={{ margin: "0 8px" }}>·</span>
-          <Link href="/products" style={{ color: "inherit" }}>
-            Products
-          </Link>
-          <span style={{ margin: "0 8px" }}>·</span>
           <span style={{ color: "var(--brand-text-primary)" }}>{product.title}</span>
         </nav>
 
