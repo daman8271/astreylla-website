@@ -10,12 +10,12 @@ const COL_LEARN = [
 const COL_DIAMONDS = [
   { href: "/diamonds", label: "Natural Diamonds" },
   { href: "/diamonds", label: "Lab Grown Diamonds" },
-  { href: "/color-diamonds", label: "Colored Diamonds" },
+  { href: "/color-diamonds", label: "Fancy Diamonds" },
   { href: "/color-diamonds", label: "Colored Natural Gemstones" },
 ];
 
 const COL_BRIDAL = [
-  { href: "/engagement", label: "Engagement Rings" },
+  { href: "/engagement", label: "Rings" },
   { href: "/diamonds", label: "Wedding Bands" },
   { href: "/diamonds", label: "Anniversary" },
 ];

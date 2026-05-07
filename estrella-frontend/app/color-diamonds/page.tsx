@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Color Diamonds — Augmont",
+  title: "Fancy Diamonds — Augmont",
   description: "Fancy color lab-grown diamonds. Coming soon.",
 };
 
@@ -36,7 +36,7 @@ export default function ColorDiamondsPage() {
               marginBottom: 16,
             }}
           >
-            Color Diamonds
+            Fancy Diamonds
           </h1>
         </div>
       </section>

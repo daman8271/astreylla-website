@@ -15,7 +15,7 @@ const TILES = [
   },
   {
     href: "/color-diamonds",
-    label: "Fancy Color Diamonds",
+    label: "Fancy Diamonds",
     bg: "linear-gradient(135deg, #2c1d2a 0%, #3a2536 60%, #1a131a 100%)",
     accent: "#e2c9d9",
   },

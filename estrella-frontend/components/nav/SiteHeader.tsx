@@ -8,9 +8,9 @@ import { ShoppingBag, Menu, X } from "lucide-react";
 const NAV_LINKS = [
   { href: "/products", label: "Shop" },
   { href: "/diamonds", label: "Loose Diamonds" },
-  { href: "/color-diamonds", label: "Color Diamonds" },
+  { href: "/color-diamonds", label: "Fancy Diamonds" },
   { href: "/gemstones", label: "Gemstones" },
-  { href: "/engagement", label: "Engagement" },
+  { href: "/engagement", label: "Rings" },
   { href: "/about", label: "About" },
 ];
 

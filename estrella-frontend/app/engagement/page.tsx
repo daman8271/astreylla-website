@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Engagement Rings — Augmont",
-  description: "Custom engagement settings paired with certified lab-grown diamonds. Coming soon.",
+  title: "Rings — Augmont",
+  description: "Custom ring settings paired with certified lab-grown diamonds. Coming soon.",
 };
 
 export default function EngagementPage() {
@@ -36,7 +36,7 @@ export default function EngagementPage() {
               marginBottom: 16,
             }}
           >
-            Engagement Rings
+            Rings
           </h1>
         </div>
       </section>
