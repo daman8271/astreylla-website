@@ -71,6 +71,22 @@
   padding: var(--dw-s7) var(--dw-s5) var(--dw-s8);
   box-sizing: border-box;
   line-height: 1.4;
+
+  /* iter10 — viewport break-out so the widget escapes the merchant theme's
+   * page-width container (typically 1200px) and Aria-style fills more of
+   * the viewport. The standard breakout pattern: width is the viewport,
+   * margin-left is the negative offset from the centered parent edge.
+   * Internal blocks below clamp to max-width: 1600px so on huge monitors
+   * we don't go absurdly wide.
+   *
+   * Risk: parents with overflow: hidden will clip the breakout. If a
+   * merchant theme breaks under this, the safety net is the widget still
+   * gets its centered max-width on internal blocks — content stays sane.
+   * Mobile/tablet: at viewports ≤ 1280 the negative margin clamps to
+   * effectively zero and the layout is identical to pre-iter10. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  position: relative;
 }
 
 .diamond-widget *,
@@ -125,7 +141,8 @@
   justify-content: center;
   align-items: stretch;
   gap: var(--dw-s5);
-  max-width: 1280px;
+  /* iter10 — 1280→1600 to match widget viewport break-out */
+  max-width: 1600px;
   /* iter9 — tighten bottom margin 16→12 to match Aria nat-lab-toggle rhythm */
   margin: 0 auto var(--dw-s3);
   padding-bottom: var(--dw-s2);
@@ -175,9 +192,10 @@
 .dw-filters {
   /* iter9 — flat document flow per Aria. Drop vertical padding so the band
    * breathes against the page bg; horizontal padding 16px keeps content
-   * away from the page edge on narrower viewports. */
+   * away from the page edge on narrower viewports.
+   * iter10 — 1280→1600 to match widget viewport break-out. */
   margin: 0 auto var(--dw-s6);
-  max-width: 1280px;
+  max-width: 1600px;
   padding: 0 var(--dw-s4);
 }
 
@@ -476,6 +494,44 @@
 }
 .dw-slider__val-sep { color: var(--dw-text-faint); padding: 0 var(--dw-s1); flex-shrink: 0; }
 
+/* iter10 — Aria $-prefix unit for the price slider numwrap. The existing
+ * .dw-slider__numunit sits AFTER the input (suffix, "ct"); when the unit
+ * span is rendered BEFORE the input we want it to read as a prefix ("$"). */
+.dw-slider__numunit--prefix {
+  order: -1;
+}
+
+/* ─── GRADED SLIDER (iter10) ──────────────────────────────────────────────────
+ * Variant of .dw-slider for discrete-grade attributes (color/clarity/cut).
+ * Same dual-thumb mechanics as the carat slider — only difference is the
+ * track is followed by a row of grade tick labels instead of a number-input
+ * pair, and the .dw-slider__values block is suppressed so the slider stays
+ * compact under the section h3.
+ *
+ * Tick labels are evenly distributed via flex; first label sits at 0% and
+ * the last at 100% so they align with the slider's min/max thumb positions.
+ */
+.dw-slider--graded .dw-slider__values { display: none; }
+
+.dw-slider__ticks {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--dw-s3);
+  padding: 0 6px; /* roughly half a thumb-width so labels align under thumbs at the extremes */
+}
+
+.dw-slider__tick {
+  font-family: var(--dw-font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--dw-text-primary);
+  letter-spacing: 0.02em;
+  flex: 0 0 auto;
+  text-align: center;
+  line-height: 1;
+}
+
 /* ─── hasImage TOGGLE ─────────────────────────────────────────────────────── */
 /* CSS-only switch: peer-style label wraps an <input type=checkbox> +
  * track/thumb spans. Track recolors when input is :checked.
@@ -601,7 +657,8 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--dw-s4);
-  max-width: 1280px;
+  /* iter10 — 1280→1600 to match widget viewport break-out */
+  max-width: 1600px;
   margin: 0 auto var(--dw-s4);
   padding: var(--dw-s4) 0;
 }
@@ -696,7 +753,8 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--dw-s4);
-  max-width: 1280px;
+  /* iter10 — 1280→1600 to match widget viewport break-out */
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -1002,7 +1060,8 @@
   align-items: center;
   gap: var(--dw-s3);
   padding: var(--dw-s7) var(--dw-s4);
-  max-width: 1280px;
+  /* iter10 — 1280→1600 to match widget viewport break-out */
+  max-width: 1600px;
   margin: 0 auto;
 }
 .dw-loadmore[hidden] { display: none; }

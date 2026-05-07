@@ -45,9 +45,16 @@
 
   // ─── CONSTANTS ────────────────────────────────────────────────────────────
   var SHAPES   = ['Round', 'Princess', 'Cushion', 'Oval', 'Pear', 'Emerald', 'Marquise', 'Heart', 'Asscher', 'Radiant'];
-  var COLORS   = ['D', 'E', 'F', 'G', 'H', 'I', 'J'];
-  var CLARITIES = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
-  var CUTS     = ['Excellent', 'Very Good', 'Good', 'Fair'];
+
+  // iter10 — graded sliders for color/clarity/cut. Arrays are ordered
+  // worst→best so slider index 0 sits at the LEFT (worst grade) and the
+  // last index sits at the RIGHT (best grade), matching Aria's reference.
+  // The slider's selected (min, max) range is expanded to a CSV of grades
+  // before being sent to the server (server already accepts CSV — no
+  // upstream contract change required).
+  var COLORS_GRADED    = ['J', 'I', 'H', 'G', 'F', 'E', 'D'];
+  var CLARITIES_GRADED = ['SI2', 'SI1', 'VS2', 'VS1', 'VVS2', 'VVS1', 'IF', 'FL'];
+  var CUTS_GRADED      = ['Fair', 'Good', 'Very Good', 'Excellent'];
   // Certificate (lab) values seen on Augmont prod: GIA, IGI, HRD, No-cert. The
   // "Other" pill collects everything that's not GIA/IGI/HRD (the server
   // post-filters the page since Augmont doesn't expose a "not in" predicate).
@@ -66,6 +73,11 @@
   var CARAT_MIN = 0.25;
   var CARAT_MAX = 5.0;
   var CARAT_STEP = 0.05;
+  // iter10 — price slider bounds. Hardcoded to Aria's reference range;
+  // dynamic detection from the catalog is deferred to a later iter.
+  var PRICE_MIN = 0;
+  var PRICE_MAX = 10000;
+  var PRICE_STEP = 50;
   // URL query-param prefix to avoid collisions with merchant theme params.
   var URL_PREFIX = 'd_';
 
@@ -129,16 +141,24 @@
   }
 
   // ─── STATE ────────────────────────────────────────────────────────────────
+  // iter10 — color/clarity/cut moved from multi-select arrays to graded
+  // dual-handle sliders. State now stores the (min, max) INDEX range into
+  // each *_GRADED array (e.g. colorMin=2, colorMax=5 over COLORS_GRADED
+  // = ['J','I','H','G','F','E','D'] selects "H — E"). buildFilterParams
+  // expands the index range to a CSV before sending to the server, which
+  // already accepts CSV for these fields.
   var state = {
     shape: '',
-    colors: [],
-    clarities: [],
-    cuts: [],
+    colorMin:    0, colorMax:    COLORS_GRADED.length    - 1,
+    clarityMin:  0, clarityMax:  CLARITIES_GRADED.length - 1,
+    cutMin:      0, cutMax:      CUTS_GRADED.length      - 1,
     certificates: [],
     treatment: '',     // '' = All, 'natural', or 'lab-grown' (server maps to Augmont)
     hasImage: false,
     minCarat: CARAT_MIN,
     maxCarat: CARAT_MAX,
+    priceMin: PRICE_MIN,
+    priceMax: PRICE_MAX,
     sort: 'price_asc'
   };
   var pagination = { from: 1, to: perPage, hasMore: false, total: null };
@@ -250,17 +270,18 @@
     return (
       '<section class="dw-filters" role="search" aria-label="Filter diamonds">' +
         '<div class="dw-filters__grid">' +
-          // iter9 — Aria reading order Shape→Carats→Colour→Clarity→Cut→Cert
-          // mapped into our 2-col grid as a snake: left reads Shape, Colour,
-          // Clarity; right reads Carats, Cut, Certificate, hasImage.
+          // iter10 — color/clarity/cut now graded sliders (Aria parity).
+          // Reading order: Shape, Colour, Cut on the left; Carats, Clarity,
+          // Price, Certificate, hasImage on the right.
           '<div class="dw-filters__col">' +
             buildShapeTilesHTML() +
-            buildPillGroup('Colour', 'colors', COLORS, true) +
-            buildPillGroup('Clarity', 'clarities', CLARITIES, true) +
+            buildGradedSliderGroup('Colour', 'color', COLORS_GRADED) +
+            buildGradedSliderGroup('Cut', 'cut', CUTS_GRADED) +
           '</div>' +
           '<div class="dw-filters__col">' +
             buildSliderGroup('Carats', 'carat', CARAT_MIN, CARAT_MAX, CARAT_STEP, 'ct') +
-            buildPillGroup('Cut', 'cuts', CUTS, true) +
+            buildGradedSliderGroup('Clarity', 'clarity', CLARITIES_GRADED) +
+            buildPriceSliderGroup() +
             buildPillGroup('Certificate', 'certificates', CERTIFICATES, true) +
             buildHasImageToggleHTML() +
           '</div>' +
@@ -351,6 +372,62 @@
           '<div class="dw-slider__numwrap">' +
             '<input type="number" class="dw-slider__num dw-slider__num--max" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="' + label + ' maximum value">' +
             '<span class="dw-slider__numunit">' + escapeHTML(unit) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // iter10 — graded slider for discrete-grade attributes (color/clarity/cut).
+  // Same dual-thumb mechanics as the carat slider but with integer step over
+  // a fixed grade list. Tick labels render under the rail showing each grade
+  // at its proportional position. The standard .dw-slider__values number-
+  // input row is suppressed via the .dw-slider--graded variant in CSS.
+  function buildGradedSliderGroup(label, key, grades) {
+    var max = grades.length - 1;
+    var ticks = grades.map(function (g) {
+      return '<span class="dw-slider__tick">' + escapeHTML(g) + '</span>';
+    }).join('');
+    return (
+      '<div class="dw-fgroup">' +
+        '<h3 class="dw-fgroup__label">' + label + '</h3>' +
+        '<div class="dw-slider dw-slider--graded" data-key="' + key + '" data-min="0" data-max="' + max + '" data-step="1" data-grades="' + escapeAttr(grades.join(',')) + '">' +
+          '<div class="dw-slider__track" aria-hidden="true">' +
+            '<div class="dw-slider__range"></div>' +
+          '</div>' +
+          '<input class="dw-slider__input dw-slider__input--min" type="range" min="0" max="' + max + '" step="1" value="0" aria-label="' + label + ' minimum">' +
+          '<input class="dw-slider__input dw-slider__input--max" type="range" min="0" max="' + max + '" step="1" value="' + max + '" aria-label="' + label + ' maximum">' +
+        '</div>' +
+        '<div class="dw-slider__ticks" aria-hidden="true">' + ticks + '</div>' +
+      '</div>'
+    );
+  }
+
+  // iter10 — price slider. Continuous range like carat, with $-prefixed
+  // number inputs (matches Aria's "$1 — $10,000" reference). Reuses the
+  // numwrap shell from buildSliderGroup but flips the unit span to a
+  // prefix via the CSS modifier .dw-slider__numunit--prefix.
+  function buildPriceSliderGroup() {
+    var min = PRICE_MIN, max = PRICE_MAX, step = PRICE_STEP;
+    return (
+      '<div class="dw-fgroup">' +
+        '<h3 class="dw-fgroup__label">Price</h3>' +
+        '<div class="dw-slider" data-key="price" data-min="' + min + '" data-max="' + max + '" data-step="' + step + '">' +
+          '<div class="dw-slider__track" aria-hidden="true">' +
+            '<div class="dw-slider__range"></div>' +
+          '</div>' +
+          '<input class="dw-slider__input dw-slider__input--min" type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + min + '" aria-label="Price minimum">' +
+          '<input class="dw-slider__input dw-slider__input--max" type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="Price maximum">' +
+        '</div>' +
+        '<div class="dw-slider__values">' +
+          '<div class="dw-slider__numwrap">' +
+            '<span class="dw-slider__numunit dw-slider__numunit--prefix">$</span>' +
+            '<input type="number" class="dw-slider__num dw-slider__num--min" min="' + min + '" max="' + max + '" step="' + step + '" value="' + min + '" aria-label="Price minimum value">' +
+          '</div>' +
+          '<span class="dw-slider__val-sep" aria-hidden="true">–</span>' +
+          '<div class="dw-slider__numwrap">' +
+            '<span class="dw-slider__numunit dw-slider__numunit--prefix">$</span>' +
+            '<input type="number" class="dw-slider__num dw-slider__num--max" min="' + min + '" max="' + max + '" step="' + step + '" value="' + max + '" aria-label="Price maximum value">' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -615,9 +692,26 @@
       });
     });
 
-    // Sliders (carat only — price removed in C-iter1)
+    // Continuous sliders: carat (0.25–5.00 ct) and price (0–10000 USD,
+    // restored in iter10 grounded in real Augmont finalPrice values).
     initSlider(root.querySelector('.dw-slider[data-key="carat"]'), function (lo, hi) {
       state.minCarat = lo; state.maxCarat = hi;
+    });
+    initSlider(root.querySelector('.dw-slider[data-key="price"]'), function (lo, hi) {
+      state.priceMin = lo; state.priceMax = hi;
+    });
+
+    // iter10 — graded sliders (color/clarity/cut). Each onChange stores the
+    // index range; buildFilterParams expands the indices to a CSV of grades
+    // before sending to the server.
+    initGradedSlider(root.querySelector('.dw-slider[data-key="color"]'), function (lo, hi) {
+      state.colorMin = lo; state.colorMax = hi;
+    });
+    initGradedSlider(root.querySelector('.dw-slider[data-key="clarity"]'), function (lo, hi) {
+      state.clarityMin = lo; state.clarityMax = hi;
+    });
+    initGradedSlider(root.querySelector('.dw-slider[data-key="cut"]'), function (lo, hi) {
+      state.cutMin = lo; state.cutMax = hi;
     });
 
     // Treatment tabs (single-select)
@@ -857,11 +951,70 @@
       });
     }
 
-    // Initial paint from current state values (carat is the only slider
-    // remaining after C-iter1 removed the price slider).
+    // Initial paint from current state values. Carat (continuous-decimal,
+    // 0.25–5.00ct) and Price (continuous-integer, 0–10000 USD) share this
+    // path — both want the number-input two-way binding above. Graded
+    // sliders (color/clarity/cut) are initialised separately by
+    // initGradedSlider since they use indices, not units, and don't have
+    // a number-input pair to seed.
     if (key === 'carat') {
       minInput.value = state.minCarat;
       maxInput.value = state.maxCarat;
+    } else if (key === 'price') {
+      minInput.value = state.priceMin;
+      maxInput.value = state.priceMax;
+    }
+    paint();
+  }
+
+  // iter10 — graded slider for color/clarity/cut. Index-based (integer step
+  // over a fixed grade list). Allows lo == hi (single-grade selection) so
+  // the clamp differs from initSlider's "lo must be < hi - step" carat rule.
+  function initGradedSlider(slider, onChange) {
+    if (!slider) return;
+    var minInput = slider.querySelector('.dw-slider__input--min');
+    var maxInput = slider.querySelector('.dw-slider__input--max');
+    var range    = slider.querySelector('.dw-slider__range');
+    var max      = Number(slider.dataset.max);
+    var key      = slider.dataset.key;
+
+    function paint() {
+      var lo = Number(minInput.value);
+      var hi = Number(maxInput.value);
+      // Allow lo == hi (pin to a single grade); only forbid crossing.
+      if (lo > hi) { lo = hi; minInput.value = lo; }
+      if (hi < lo) { hi = lo; maxInput.value = hi; }
+      var pctLo = max > 0 ? (lo / max) * 100 : 0;
+      var pctHi = max > 0 ? (hi / max) * 100 : 100;
+      range.style.left  = pctLo + '%';
+      range.style.right = (100 - pctHi) + '%';
+      slider._lo = lo;
+      slider._hi = hi;
+    }
+
+    function commit() {
+      paint();
+      onChange(slider._lo, slider._hi);
+      renderChips();
+      writeStateToURL();
+      fetchInitial();
+    }
+
+    minInput.addEventListener('input', paint);
+    maxInput.addEventListener('input', paint);
+    minInput.addEventListener('change', commit);
+    maxInput.addEventListener('change', commit);
+
+    // Seed initial values from state by key
+    if (key === 'color') {
+      minInput.value = state.colorMin;
+      maxInput.value = state.colorMax;
+    } else if (key === 'clarity') {
+      minInput.value = state.clarityMin;
+      maxInput.value = state.clarityMax;
+    } else if (key === 'cut') {
+      minInput.value = state.cutMin;
+      maxInput.value = state.cutMax;
     }
     paint();
   }
@@ -869,6 +1022,8 @@
   // ─── FILTER UI <-> STATE ──────────────────────────────────────────────────
 
   function syncFilterUIFromState() {
+    // Pills now cover only Shape (single-select) and Certificate (multi).
+    // Color/clarity/cut graded sliders sync via syncSliderUIFromState below.
     var pillGroups = root.querySelectorAll('.dw-pills');
     pillGroups.forEach(function (group) {
       var key = group.dataset.key;
@@ -876,39 +1031,53 @@
         var v = pill.dataset.value;
         var active = false;
         if (key === 'shape') active = (state.shape === v);
-        else if (key === 'colors') active = state.colors.indexOf(v) >= 0;
-        else if (key === 'clarities') active = state.clarities.indexOf(v) >= 0;
-        else if (key === 'cuts') active = state.cuts.indexOf(v) >= 0;
         else if (key === 'certificates') active = state.certificates.indexOf(v) >= 0;
         pill.classList.toggle('is-active', active);
         pill.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
     });
+    syncSliderUIFromState();
+  }
+
+  // iter10 — push state values back into slider thumb positions + range fill.
+  // Used after URL restore, after chip removal, and after clearAllFilters.
+  // Dispatches 'input' so the existing paint() listeners recompute the
+  // .dw-slider__range fill. We don't dispatch 'change' (which would commit
+  // a fetch) — callers control fetch separately.
+  function syncSliderUIFromState() {
+    function setSlider(key, lo, hi) {
+      var s = root.querySelector('.dw-slider[data-key="' + key + '"]');
+      if (!s) return;
+      var minI = s.querySelector('.dw-slider__input--min');
+      var maxI = s.querySelector('.dw-slider__input--max');
+      if (!minI || !maxI) return;
+      minI.value = lo;
+      maxI.value = hi;
+      minI.dispatchEvent(new Event('input'));
+      maxI.dispatchEvent(new Event('input'));
+    }
+    setSlider('carat',   state.minCarat,   state.maxCarat);
+    setSlider('price',   state.priceMin,   state.priceMax);
+    setSlider('color',   state.colorMin,   state.colorMax);
+    setSlider('clarity', state.clarityMin, state.clarityMax);
+    setSlider('cut',     state.cutMin,     state.cutMax);
   }
 
   function clearAllFilters() {
     state.shape = '';
-    state.colors = [];
-    state.clarities = [];
-    state.cuts = [];
+    state.colorMin   = 0; state.colorMax   = COLORS_GRADED.length    - 1;
+    state.clarityMin = 0; state.clarityMax = CLARITIES_GRADED.length - 1;
+    state.cutMin     = 0; state.cutMax     = CUTS_GRADED.length      - 1;
     state.certificates = [];
     state.treatment = '';
     state.hasImage = false;
     state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX;
+    state.priceMin = PRICE_MIN; state.priceMax = PRICE_MAX;
     if (showFilters) {
       syncTreatmentUIFromState();
       var hasImg = root.querySelector('#dw-has-image');
       if (hasImg) hasImg.checked = false;
-      syncFilterUIFromState();
-      // Reset slider visual + inputs
-      var sliders = root.querySelectorAll('.dw-slider');
-      sliders.forEach(function (s) {
-        var minI = s.querySelector('.dw-slider__input--min');
-        var maxI = s.querySelector('.dw-slider__input--max');
-        minI.value = s.dataset.min; maxI.value = s.dataset.max;
-        minI.dispatchEvent(new Event('input'));
-        maxI.dispatchEvent(new Event('input'));
-      });
+      syncFilterUIFromState(); // also re-paints all sliders via syncSliderUIFromState
     }
     renderChips();
     writeStateToURL();
@@ -923,12 +1092,46 @@
       chips.push({ k: 'treatment', v: '', label: tlabel });
     }
     if (state.shape) chips.push({ k: 'shape', v: state.shape, label: capShape(state.shape) });
-    state.colors.forEach(function (c)    { chips.push({ k: 'colors', v: c, label: 'Colour: ' + c }); });
-    state.clarities.forEach(function (c) { chips.push({ k: 'clarities', v: c, label: 'Clarity: ' + c }); });
-    state.cuts.forEach(function (c)      { chips.push({ k: 'cuts', v: c, label: 'Cut: ' + c }); });
+
+    // iter10 — graded slider chips: only render when the user has narrowed
+    // away from the full range. Single-grade pin (lo == hi) reads as a
+    // single value, otherwise "lo — hi". Use ASCII '—' for consistency
+    // with carat chip style.
+    function gradedChipLabel(prefix, grades, lo, hi) {
+      var loG = grades[lo];
+      var hiG = grades[hi];
+      if (lo === hi) return prefix + ': ' + loG;
+      // Slider runs worst→best left→right; chip reads better→worse for
+      // jewellery convention (D — H not H — D, FL — VS2 not VS2 — FL).
+      return prefix + ': ' + hiG + ' — ' + loG;
+    }
+    if (state.colorMin > 0 || state.colorMax < COLORS_GRADED.length - 1) {
+      chips.push({ k: 'color', v: '', label: gradedChipLabel('Colour', COLORS_GRADED, state.colorMin, state.colorMax) });
+    }
+    if (state.clarityMin > 0 || state.clarityMax < CLARITIES_GRADED.length - 1) {
+      chips.push({ k: 'clarity', v: '', label: gradedChipLabel('Clarity', CLARITIES_GRADED, state.clarityMin, state.clarityMax) });
+    }
+    if (state.cutMin > 0 || state.cutMax < CUTS_GRADED.length - 1) {
+      chips.push({ k: 'cut', v: '', label: gradedChipLabel('Cut', CUTS_GRADED, state.cutMin, state.cutMax) });
+    }
+
     state.certificates.forEach(function (c) { chips.push({ k: 'certificates', v: c, label: c }); });
     if (state.minCarat > CARAT_MIN || state.maxCarat < CARAT_MAX) {
       chips.push({ k: 'carat', v: '', label: 'Carats: ' + state.minCarat.toFixed(2) + '–' + state.maxCarat.toFixed(2) });
+    }
+    // iter10 — price chip. formatMoney handles currency-aware rendering;
+    // fall back to a plain $-prefix string if cart currency is missing.
+    if (state.priceMin > PRICE_MIN || state.priceMax < PRICE_MAX) {
+      var ccy = (cart && cart.currency) || 'USD';
+      var loStr, hiStr;
+      try {
+        loStr = formatMoney(state.priceMin, ccy);
+        hiStr = formatMoney(state.priceMax, ccy);
+      } catch (e) {
+        loStr = '$' + state.priceMin;
+        hiStr = '$' + state.priceMax;
+      }
+      chips.push({ k: 'price', v: '', label: 'Price: ' + loStr + '–' + hiStr });
     }
     if (state.hasImage) {
       chips.push({ k: 'hasImage', v: '', label: 'With image' });
@@ -970,25 +1173,27 @@
     else if (k === 'treatment') state.treatment = '';
     else if (k === 'hasImage') state.hasImage = false;
     else if (k === 'carat') { state.minCarat = CARAT_MIN; state.maxCarat = CARAT_MAX; }
+    else if (k === 'price') { state.priceMin = PRICE_MIN; state.priceMax = PRICE_MAX; }
+    // iter10 — graded slider chip removal resets that filter to its full range.
+    else if (k === 'color')   { state.colorMin   = 0; state.colorMax   = COLORS_GRADED.length    - 1; }
+    else if (k === 'clarity') { state.clarityMin = 0; state.clarityMax = CLARITIES_GRADED.length - 1; }
+    else if (k === 'cut')     { state.cutMin     = 0; state.cutMax     = CUTS_GRADED.length      - 1; }
     else {
+      // Remaining array-style keys: certificates only.
       var arr = state[k];
-      var i = arr.indexOf(v);
-      if (i >= 0) arr.splice(i, 1);
+      if (Array.isArray(arr)) {
+        var i = arr.indexOf(v);
+        if (i >= 0) arr.splice(i, 1);
+      }
     }
     if (showFilters) {
+      // syncFilterUIFromState now re-paints all sliders too (carat, price,
+      // and the three graded sliders), so the explicit slider event-dispatch
+      // in the previous version is no longer needed here.
       syncFilterUIFromState();
       syncTreatmentUIFromState();
       var hasImg = root.querySelector('#dw-has-image');
       if (hasImg) hasImg.checked = !!state.hasImage;
-    }
-    if (k === 'carat') {
-      var s = root.querySelector('.dw-slider[data-key="carat"]');
-      if (s) {
-        var minI = s.querySelector('.dw-slider__input--min');
-        var maxI = s.querySelector('.dw-slider__input--max');
-        minI.value = s.dataset.min; maxI.value = s.dataset.max;
-        minI.dispatchEvent(new Event('input'));
-      }
     }
     renderChips();
     writeStateToURL();
@@ -997,19 +1202,46 @@
 
   // ─── URL STATE SYNC ───────────────────────────────────────────────────────
 
+  // iter10 — translate a single grade letter from the URL back to its
+  // index into the *_GRADED array. Returns null if the letter isn't in
+  // the grade list (e.g. legacy d_color=D,E pill-format share links — we
+  // intentionally don't honour those: the pill→slider→pill→slider churn
+  // means in-the-wild legacy share-links from the iter11 era are unlikely).
+  function gradeIdx(grades, letter) {
+    if (!letter) return null;
+    var idx = grades.indexOf(letter);
+    return idx >= 0 ? idx : null;
+  }
+
   function readStateFromURL() {
     try {
       var params = new URLSearchParams(window.location.search);
-      var v;
+      var v, idx;
       if ((v = params.get(URL_PREFIX + 'shape')))      state.shape = v;
-      if ((v = params.get(URL_PREFIX + 'color')))      state.colors = v.split(',').filter(Boolean);
-      if ((v = params.get(URL_PREFIX + 'clarity')))    state.clarities = v.split(',').filter(Boolean);
-      if ((v = params.get(URL_PREFIX + 'cut')))        state.cuts = v.split(',').filter(Boolean);
       if ((v = params.get(URL_PREFIX + 'certificate'))) state.certificates = v.split(',').filter(Boolean);
       if ((v = params.get(URL_PREFIX + 'treatment'))) state.treatment = v;
       if (params.get(URL_PREFIX + 'hasImage') === 'true') state.hasImage = true;
       if ((v = params.get(URL_PREFIX + 'carat_min')))  state.minCarat = clamp(Number(v), CARAT_MIN, CARAT_MAX);
       if ((v = params.get(URL_PREFIX + 'carat_max')))  state.maxCarat = clamp(Number(v), CARAT_MIN, CARAT_MAX);
+
+      // iter10 — graded slider URL params use letter values (semantic /
+      // shareable). d_color_min=H&d_color_max=D restores a slider range.
+      if ((v = params.get(URL_PREFIX + 'color_min')))   { idx = gradeIdx(COLORS_GRADED, v);    if (idx !== null) state.colorMin   = idx; }
+      if ((v = params.get(URL_PREFIX + 'color_max')))   { idx = gradeIdx(COLORS_GRADED, v);    if (idx !== null) state.colorMax   = idx; }
+      if ((v = params.get(URL_PREFIX + 'clarity_min'))) { idx = gradeIdx(CLARITIES_GRADED, v); if (idx !== null) state.clarityMin = idx; }
+      if ((v = params.get(URL_PREFIX + 'clarity_max'))) { idx = gradeIdx(CLARITIES_GRADED, v); if (idx !== null) state.clarityMax = idx; }
+      if ((v = params.get(URL_PREFIX + 'cut_min')))     { idx = gradeIdx(CUTS_GRADED, v);      if (idx !== null) state.cutMin     = idx; }
+      if ((v = params.get(URL_PREFIX + 'cut_max')))     { idx = gradeIdx(CUTS_GRADED, v);      if (idx !== null) state.cutMax     = idx; }
+      // Guard against crossed bounds in the URL.
+      if (state.colorMin   > state.colorMax)   state.colorMin   = state.colorMax;
+      if (state.clarityMin > state.clarityMax) state.clarityMin = state.clarityMax;
+      if (state.cutMin     > state.cutMax)     state.cutMin     = state.cutMax;
+
+      // iter10 — price slider URL params (numbers, USD).
+      if ((v = params.get(URL_PREFIX + 'price_min'))) state.priceMin = clamp(Number(v), PRICE_MIN, PRICE_MAX);
+      if ((v = params.get(URL_PREFIX + 'price_max'))) state.priceMax = clamp(Number(v), PRICE_MIN, PRICE_MAX);
+      if (state.priceMin > state.priceMax) state.priceMin = state.priceMax;
+
       if ((v = params.get(URL_PREFIX + 'sort')))       state.sort = v;
     } catch (e) { /* URL parse failure — keep defaults */ }
   }
@@ -1022,14 +1254,31 @@
         if (k.indexOf(URL_PREFIX) === 0) params.delete(k);
       });
       if (state.shape)               params.set(URL_PREFIX + 'shape', state.shape);
-      if (state.colors.length)       params.set(URL_PREFIX + 'color', state.colors.join(','));
-      if (state.clarities.length)    params.set(URL_PREFIX + 'clarity', state.clarities.join(','));
-      if (state.cuts.length)         params.set(URL_PREFIX + 'cut', state.cuts.join(','));
       if (state.certificates.length) params.set(URL_PREFIX + 'certificate', state.certificates.join(','));
       if (state.treatment) params.set(URL_PREFIX + 'treatment', state.treatment);
       if (state.hasImage) params.set(URL_PREFIX + 'hasImage', 'true');
       if (state.minCarat > CARAT_MIN) params.set(URL_PREFIX + 'carat_min', state.minCarat.toFixed(2));
       if (state.maxCarat < CARAT_MAX) params.set(URL_PREFIX + 'carat_max', state.maxCarat.toFixed(2));
+
+      // iter10 — graded slider URL params: letter values for readability /
+      // shareability. Only emit when the slider has been narrowed away
+      // from its full range (otherwise URLs stay clean for default state).
+      if (state.colorMin > 0 || state.colorMax < COLORS_GRADED.length - 1) {
+        params.set(URL_PREFIX + 'color_min', COLORS_GRADED[state.colorMin]);
+        params.set(URL_PREFIX + 'color_max', COLORS_GRADED[state.colorMax]);
+      }
+      if (state.clarityMin > 0 || state.clarityMax < CLARITIES_GRADED.length - 1) {
+        params.set(URL_PREFIX + 'clarity_min', CLARITIES_GRADED[state.clarityMin]);
+        params.set(URL_PREFIX + 'clarity_max', CLARITIES_GRADED[state.clarityMax]);
+      }
+      if (state.cutMin > 0 || state.cutMax < CUTS_GRADED.length - 1) {
+        params.set(URL_PREFIX + 'cut_min', CUTS_GRADED[state.cutMin]);
+        params.set(URL_PREFIX + 'cut_max', CUTS_GRADED[state.cutMax]);
+      }
+      // iter10 — price slider URL params (numbers).
+      if (state.priceMin > PRICE_MIN) params.set(URL_PREFIX + 'price_min', String(state.priceMin));
+      if (state.priceMax < PRICE_MAX) params.set(URL_PREFIX + 'price_max', String(state.priceMax));
+
       if (state.sort && state.sort !== 'price_asc') params.set(URL_PREFIX + 'sort', state.sort);
       var qs = params.toString();
       var url = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
@@ -1043,9 +1292,21 @@
     var p = new URLSearchParams();
     p.set('shop', shop);
     if (state.shape)            p.set('shape', state.shape);
-    if (state.colors.length)    p.set('color', state.colors.join(','));
-    if (state.clarities.length) p.set('clarity', state.clarities.join(','));
-    if (state.cuts.length)      p.set('cut', state.cuts.join(','));
+
+    // iter10 — graded sliders → CSV expansion. The server already accepts
+    // CSV for color/clarity/cut, so the slider's index range is expanded
+    // here into the same wire format the previous pill UI sent. Param is
+    // only set when the slider has been narrowed (full range = no filter).
+    if (state.colorMin > 0 || state.colorMax < COLORS_GRADED.length - 1) {
+      p.set('color', COLORS_GRADED.slice(state.colorMin, state.colorMax + 1).join(','));
+    }
+    if (state.clarityMin > 0 || state.clarityMax < CLARITIES_GRADED.length - 1) {
+      p.set('clarity', CLARITIES_GRADED.slice(state.clarityMin, state.clarityMax + 1).join(','));
+    }
+    if (state.cutMin > 0 || state.cutMax < CUTS_GRADED.length - 1) {
+      p.set('cut', CUTS_GRADED.slice(state.cutMin, state.cutMax + 1).join(','));
+    }
+
     if (state.certificates.length) p.set('certificate', state.certificates.join(','));
     if (state.treatment)        p.set('treatment', state.treatment);
     if (state.hasImage)         p.set('hasImage', 'true');
@@ -1054,6 +1315,10 @@
     // (d_carat_min, d_carat_max) stay snake-cased for readability.
     if (state.minCarat > CARAT_MIN) p.set('minCarat', state.minCarat.toFixed(2));
     if (state.maxCarat < CARAT_MAX) p.set('maxCarat', state.maxCarat.toFixed(2));
+    // iter10 — price filter. Server post-filters on these regardless of
+    // whether Augmont honours the params upstream (see routes/diamonds.js).
+    if (state.priceMin > PRICE_MIN) p.set('minFinalPrice', String(state.priceMin));
+    if (state.priceMax < PRICE_MAX) p.set('maxFinalPrice', String(state.priceMax));
     if (state.sort)             p.set('sort', state.sort);
     return p;
   }

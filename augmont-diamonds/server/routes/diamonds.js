@@ -116,14 +116,23 @@ export async function handlePublicDiamonds(req, res, next) {
     }
     const wantCount = countRaw === "true";
 
-    // Pull `sort`, `treatment`, and `certificate` out of the upstream
-    // filter set: each needs server-side handling (sort = ignored upstream;
-    // treatment = mapped to Augmont's exact string; certificate = "Other"
-    // tag means a server-side post-filter).
+    // Pull `sort`, `treatment`, `certificate`, and the price-range params
+    // out of the upstream filter set: each needs server-side handling.
+    //   sort        — ignored upstream, sorted server-side per page
+    //   treatment   — mapped to Augmont's exact string
+    //   certificate — "Other" tag means a server-side post-filter
+    //   minFinalPrice / maxFinalPrice — D-iter10: Augmont's price filter
+    //     contract is unverified (params may be silently ignored, accepted,
+    //     or rejected with 400). To avoid the 400 risk we DO NOT forward
+    //     them upstream; we only post-filter the page after fetch. Same
+    //     trade-off as cert "Other": page may show < pageSize stones if
+    //     many fall outside the chosen price range.
     const {
       sort: sortParam,
       treatment: treatmentParam,
       certificate: certParam,
+      minFinalPrice: minPriceParam,
+      maxFinalPrice: maxPriceParam,
       ...rest
     } = filters;
 
@@ -133,6 +142,20 @@ export async function handlePublicDiamonds(req, res, next) {
 
     const certInfo = partitionCertFilter(certParam);
     if (certInfo.upstream) augmontFilters.certificate = certInfo.upstream;
+
+    // Coerce price bounds; ignore invalid/empty values so a stray empty
+    // string from the widget doesn't filter out every stone.
+    const minPriceNum =
+      minPriceParam !== undefined && minPriceParam !== ""
+        ? Number(minPriceParam)
+        : null;
+    const maxPriceNum =
+      maxPriceParam !== undefined && maxPriceParam !== ""
+        ? Number(maxPriceParam)
+        : null;
+    const wantPriceFilter =
+      (minPriceNum !== null && Number.isFinite(minPriceNum)) ||
+      (maxPriceNum !== null && Number.isFinite(maxPriceNum));
 
     const augmontQuery = { ...augmontFilters, from: fromNum, to: toNum };
     if (wantCount) augmontQuery.count = "true";
@@ -159,6 +182,20 @@ export async function handlePublicDiamonds(req, res, next) {
         const lab = String(d?.lab || "").toUpperCase();
         if (explicitSet.has(lab)) return true;
         return !KNOWN_CERTS.has(lab);
+      });
+    }
+
+    // Price post-filter (D-iter10). Augmont's price-filter contract is
+    // unverified, so the price slider's bounds are enforced server-side
+    // here regardless of whether Augmont applied them. Same per-page
+    // trade-off as the cert post-filter above.
+    if (wantPriceFilter) {
+      diamonds = diamonds.filter((d) => {
+        const px = Number(d?.price);
+        if (!Number.isFinite(px)) return false;
+        if (minPriceNum !== null && px < minPriceNum) return false;
+        if (maxPriceNum !== null && px > maxPriceNum) return false;
+        return true;
       });
     }
 
