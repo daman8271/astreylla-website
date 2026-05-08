@@ -61,7 +61,6 @@
   var CERTIFICATES = ['GIA', 'IGI', 'HRD', 'Other'];
   var TREATMENTS = [
     { value: '',          label: 'All' },
-    { value: 'natural',   label: 'Natural' },
     { value: 'lab-grown', label: 'Lab-Grown' }
   ];
   var SORTS    = [
@@ -1142,8 +1141,7 @@
     if (!chipsBar) return;
     var chips = [];
     if (state.treatment) {
-      var tlabel = (state.treatment === 'lab-grown') ? 'Lab-Grown' : 'Natural';
-      chips.push({ k: 'treatment', v: '', label: tlabel });
+      chips.push({ k: 'treatment', v: '', label: 'Lab-Grown' });
     }
     if (state.shape) chips.push({ k: 'shape', v: state.shape, label: capShape(state.shape) });
 

@@ -61,28 +61,6 @@ export function DiamondFilters({ value, onChange }: Props) {
 
   return (
     <section className="ds-filters" aria-label="Filter diamonds">
-      <div className="ds-tabs" role="tablist">
-        {/* Natural is the visual default — empty string ("") and "natural"
-            both render the Natural tab as active. The empty case skips the
-            upstream filter so the catalog isn't restricted on first load. */}
-        <button
-          role="tab"
-          aria-selected={value.treatment !== "lab-grown"}
-          className={`ds-tab ${value.treatment !== "lab-grown" ? "ds-tab--active" : ""}`}
-          onClick={() => set("treatment", "natural")}
-        >
-          Natural
-        </button>
-        <button
-          role="tab"
-          aria-selected={value.treatment === "lab-grown"}
-          className={`ds-tab ${value.treatment === "lab-grown" ? "ds-tab--active" : ""}`}
-          onClick={() => set("treatment", "lab-grown")}
-        >
-          Lab Grown
-        </button>
-      </div>
-
       <div className="ds-filters__grid">
         {/* LEFT COLUMN */}
         <div className="ds-filters__col">

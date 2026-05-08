@@ -8,10 +8,8 @@ const COL_LEARN = [
 ];
 
 const COL_DIAMONDS = [
-  { href: "/diamonds", label: "Natural Diamonds" },
   { href: "/diamonds", label: "Lab Grown Diamonds" },
   { href: "/color-diamonds", label: "Fancy Diamonds" },
-  { href: "/color-diamonds", label: "Colored Natural Gemstones" },
 ];
 
 const COL_BRIDAL = [

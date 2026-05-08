@@ -111,16 +111,6 @@ const SHAPE_ITEM = (
   href: string
 ): MegaMenuItem => ({ label, href, icon: <ShapeIcon Cmp={Icon} /> });
 
-const DIAMOND_SHAPES_NATURAL: MegaMenuItem[] = [
-  SHAPE_ITEM("Round", RoundIcon, "/diamonds?shape=Round&treatment=natural"),
-  SHAPE_ITEM("Princess", PrincessIcon, "/diamonds?shape=Princess&treatment=natural"),
-  SHAPE_ITEM("Oval", OvalIcon, "/diamonds?shape=Oval&treatment=natural"),
-  SHAPE_ITEM("Radiant", RadiantIcon, "/diamonds?shape=Radiant&treatment=natural"),
-  SHAPE_ITEM("Pear", PearIcon, "/diamonds?shape=Pear&treatment=natural"),
-  SHAPE_ITEM("Heart", HeartIcon, "/diamonds?shape=Heart&treatment=natural"),
-  SHAPE_ITEM("Marquise", MarquiseIcon, "/diamonds?shape=Marquise&treatment=natural"),
-];
-
 const DIAMOND_SHAPES_LAB: MegaMenuItem[] = [
   SHAPE_ITEM("Round", RoundIcon, "/diamonds?shape=Round&treatment=lab-grown"),
   SHAPE_ITEM("Princess", PrincessIcon, "/diamonds?shape=Princess&treatment=lab-grown"),
@@ -160,21 +150,12 @@ const DIAMONDS_MENU: MegaMenuConfig = {
       ],
     },
     {
-      heading: "Natural diamonds",
-      items: DIAMOND_SHAPES_NATURAL,
-      more: { label: "Browse all shapes", href: "/diamonds?treatment=natural" },
-    },
-    {
-      heading: "Labgrown diamonds",
+      heading: "Diamonds",
       items: DIAMOND_SHAPES_LAB,
       more: { label: "Browse all shapes", href: "/diamonds?treatment=lab-grown" },
     },
   ],
   promos: [
-    {
-      eyebrow: "LOOSE NATURAL DIAMONDS",
-      cta: { label: "Browse all", href: "/diamonds?treatment=natural" },
-    },
     {
       eyebrow: "LOOSE LAB-GROWN DIAMONDS",
       cta: { label: "Browse all", href: "/diamonds?treatment=lab-grown" },
@@ -236,7 +217,6 @@ const COLORED_MENU: MegaMenuConfig = {
     {
       heading: "Colored diamond types",
       items: [
-        { label: "Natural Colored Diamonds", href: "/color-diamonds" },
         { label: "Lab-grown Colored Diamonds", href: "/color-diamonds" },
       ],
     },
@@ -411,12 +391,7 @@ const ENGAGEMENT_MENU: MegaMenuConfig = {
               icon: <RingStudioIcon which="setting" />,
             },
             {
-              label: "Start with a natural diamond",
-              href: "/diamonds?treatment=natural",
-              icon: <RingStudioIcon which="diamond" />,
-            },
-            {
-              label: "Start with a labgrown diamond",
+              label: "Start with a diamond",
               href: "/diamonds?treatment=lab-grown",
               icon: <RingStudioIcon which="labgrown" />,
             },
@@ -577,7 +552,7 @@ export function SiteHeader() {
       >
         <div
           className="estrella-container flex items-center justify-between"
-          style={{ height: 72 }}
+          style={{ height: 75, paddingInline: 32 }}
         >
           <Link
             href="/"
@@ -628,7 +603,7 @@ export function SiteHeader() {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 4,
-                    height: 72,
+                    height: 75,
                   }}
                   className="hover:opacity-70 transition-opacity"
                   aria-haspopup={l.menu ? "true" : undefined}

@@ -3,12 +3,6 @@ import Link from "next/link";
 const TILES = [
   {
     href: "/diamonds",
-    label: "Natural Diamonds",
-    bg: "linear-gradient(135deg, #1f1f1f 0%, #2e2e2e 60%, #161616 100%)",
-    accent: "#c9c4ba",
-  },
-  {
-    href: "/diamonds",
     label: "Lab Grown Diamonds",
     bg: "linear-gradient(135deg, #15201a 0%, #28342b 60%, #0e1612 100%)",
     accent: "#cfd9d2",
