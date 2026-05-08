@@ -1,0 +1,206 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { SHAPES_PRIMARY } from "@/components/diamonds/types";
+import type { Setting, SettingMetal, SettingColor, SettingKarat } from "./setting-types";
+import { metalKey, metalLabel } from "./setting-types";
+import { formatUsd } from "@/lib/settings";
+import { RingSpinner } from "./RingSpinner";
+
+type Props = {
+  setting: Setting;
+  lockedShape: string | null;
+  initialMetalKey?: string | null;
+  onBack: () => void;
+  onSelect: (params: { sku: string; metalKey: string; shape: string }) => void;
+};
+
+const COLOR_BG: Record<SettingColor, string> = {
+  Rose: "#e3b8a4",
+  White: "#dadada",
+  Yellow: "#d8b76a",
+  Platinum: "#c8ccd0",
+};
+
+const SHAPE_ICONS: Record<string, JSX.Element> = {
+  Round: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  ),
+  Princess: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="5" y="5" width="14" height="14" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  ),
+  Cushion: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="5" y="5" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  ),
+  Oval: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <ellipse cx="12" cy="12" rx="6" ry="9" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  ),
+  Pear: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3 C8 8 6 12 6 16 a6 6 0 0 0 12 0 C18 12 16 8 12 3 Z" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  ),
+  Emerald: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M8 4 L16 4 L20 8 L20 16 L16 20 L8 20 L4 16 L4 8 Z" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  ),
+};
+
+export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBack, onSelect }: Props) {
+  const [chosenMetalKey, setChosenMetalKey] = useState<string>(
+    initialMetalKey || metalKey(setting.metals[0])
+  );
+  const [descOpen, setDescOpen] = useState(true);
+
+  const metal: SettingMetal =
+    setting.metals.find((m) => metalKey(m) === chosenMetalKey) || setting.metals[0];
+
+  const shapesToShow = useMemo(() => {
+    return SHAPES_PRIMARY.filter((s) => setting.availableShapes.includes(s as never));
+  }, [setting]);
+
+  const chosenShape = lockedShape || setting.availableShapes[0];
+
+  return (
+    <div className="rs-detail">
+      <button type="button" className="rs-detail__back" onClick={onBack}>
+        ‹ Back to browse
+      </button>
+
+      <div className="rs-detail__grid">
+        {/* LEFT — gallery */}
+        <div className="rs-detail__gallery">
+          <RingSpinner
+            frames={metal.gallery360}
+            fallbackSrc={metal.imageUrl}
+            fallbackColor={metal.color}
+            alt={`${setting.name} in ${metalLabel(metal)}`}
+          />
+        </div>
+
+        {/* RIGHT — config */}
+        <div className="rs-detail__config">
+          <h2 className="rs-detail__title">
+            {setting.name} ({setting.sku})
+          </h2>
+          <div className="rs-detail__style">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <circle cx="12" cy="14" r="6" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M9 8 L12 4 L15 8" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+            <span className="rs-detail__style-key">Style</span>
+            <span className="rs-detail__style-val">{setting.style}</span>
+          </div>
+
+          <div className="rs-detail__section">
+            <div className="rs-detail__section-head">
+              <span className="rs-detail__section-key">Shape</span>
+              <span className="rs-detail__section-val">{chosenShape}</span>
+            </div>
+            <div className="rs-shape-row">
+              {shapesToShow.map((s) => {
+                const isActive = s === chosenShape;
+                const enabled = lockedShape ? s === lockedShape : true;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    className={`rs-shape-cell ${isActive ? "rs-shape-cell--active" : ""}`}
+                    disabled={!enabled}
+                    aria-pressed={isActive}
+                  >
+                    <span className="rs-shape-cell__icon">{SHAPE_ICONS[s] || null}</span>
+                    <span className="rs-shape-cell__label">{s}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button type="button" className="rs-more">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M6 9 L12 15 L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>More Shapes</span>
+            </button>
+          </div>
+
+          <div className="rs-detail__section">
+            <div className="rs-detail__section-head">
+              <span className="rs-detail__section-key">Metal</span>
+              <span className="rs-detail__section-val">{metalLabel(metal)}</span>
+            </div>
+            <div className="rs-metal-row rs-metal-row--detail">
+              {setting.metals.slice(0, 5).map((m) => {
+                const k = metalKey(m);
+                const active = k === chosenMetalKey;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    className={`rs-metal-btn ${active ? "rs-metal-btn--active" : ""}`}
+                    onClick={() => setChosenMetalKey(k)}
+                    aria-pressed={active}
+                  >
+                    <span
+                      className="rs-metal-btn__circle"
+                      style={{ background: COLOR_BG[m.color] }}
+                      aria-hidden
+                    >
+                      {m.karat}
+                    </span>
+                    <span className="rs-metal-btn__label">
+                      {m.color === "Platinum" ? "Platinum" : `${m.color} Gold`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <button type="button" className="rs-more">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M6 9 L12 15 L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>More Metals</span>
+            </button>
+          </div>
+
+          <div className="rs-detail__price">
+            <span className="rs-detail__price-row">
+              <span className="rs-detail__price-key">Price</span>
+              <strong>{formatUsd(metal.priceUsd)} USD</strong>
+            </span>
+            <span className="rs-detail__price-note">Price only for Setting</span>
+          </div>
+
+          <button
+            type="button"
+            className="rs-cta rs-cta--primary"
+            onClick={() => onSelect({ sku: setting.sku, metalKey: chosenMetalKey, shape: chosenShape })}
+          >
+            Select Setting
+          </button>
+          <button type="button" className="rs-cta rs-cta--ghost" disabled title="Coming soon">
+            Save for later
+          </button>
+
+          <div className="rs-detail__desc">
+            <button type="button" className="rs-detail__desc-toggle" onClick={() => setDescOpen((d) => !d)} aria-expanded={descOpen}>
+              <span>Description</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d={descOpen ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {descOpen ? <p className="rs-detail__desc-body">{setting.description}</p> : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

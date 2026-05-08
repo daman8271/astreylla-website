@@ -130,7 +130,7 @@ const DIAMONDS_MENU: MegaMenuConfig = {
           items: [
             {
               label: "Start with a setting",
-              href: "/engagement",
+              href: "/ring-studio/diamond",
               icon: <RingStudioIcon which="setting" />,
             },
             {
@@ -202,7 +202,7 @@ const COLORED_MENU: MegaMenuConfig = {
           items: [
             {
               label: "Start with a setting",
-              href: "/engagement",
+              href: "/ring-studio/diamond",
               icon: <RingStudioIcon which="setting" />,
             },
             {
@@ -315,12 +315,12 @@ const GEMSTONES_MENU: MegaMenuConfig = {
 
 // ── ENGAGEMENT MEGA-MENU ─────────────────────────────────────────────────
 const RING_SHAPES: MegaMenuItem[] = [
-  SHAPE_ITEM("Round", RoundIcon, "/engagement"),
-  SHAPE_ITEM("Princess", PrincessIcon, "/engagement"),
-  SHAPE_ITEM("Oval", OvalIcon, "/engagement"),
-  SHAPE_ITEM("Radiant", RadiantIcon, "/engagement"),
-  SHAPE_ITEM("Pear", PearIcon, "/engagement"),
-  SHAPE_ITEM("Heart", HeartIcon, "/engagement"),
+  SHAPE_ITEM("Round", RoundIcon, "/ring-studio/diamond"),
+  SHAPE_ITEM("Princess", PrincessIcon, "/ring-studio/diamond"),
+  SHAPE_ITEM("Oval", OvalIcon, "/ring-studio/diamond"),
+  SHAPE_ITEM("Radiant", RadiantIcon, "/ring-studio/diamond"),
+  SHAPE_ITEM("Pear", PearIcon, "/ring-studio/diamond"),
+  SHAPE_ITEM("Heart", HeartIcon, "/ring-studio/diamond"),
 ];
 
 const RingStyleIcon = () => (
@@ -331,49 +331,49 @@ const RingStyleIcon = () => (
 );
 
 const RING_STYLES: MegaMenuItem[] = [
-  { label: "Solitaire", href: "/engagement", icon: <RingStyleIcon /> },
-  { label: "Pave", href: "/engagement", icon: <RingStyleIcon /> },
-  { label: "Halo", href: "/engagement", icon: <RingStyleIcon /> },
-  { label: "Hidden Halo", href: "/engagement", icon: <RingStyleIcon /> },
-  { label: "Nature", href: "/engagement", icon: <RingStyleIcon /> },
-  { label: "Trilogy", href: "/engagement", icon: <RingStyleIcon /> },
-  { label: "Vintage", href: "/engagement", icon: <RingStyleIcon /> },
+  { label: "Solitaire", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
+  { label: "Pave", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
+  { label: "Halo", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
+  { label: "Hidden Halo", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
+  { label: "Nature", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
+  { label: "Trilogy", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
+  { label: "Vintage", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
 ];
 
 const RING_METALS: MegaMenuItem[] = [
   {
     label: "14k Yellow Gold",
-    href: "/engagement",
+    href: "/ring-studio/diamond",
     icon: <MetalChip bg="#f1d27a" fg="#7a5b1a" text="14K" />,
   },
   {
     label: "18k Yellow Gold",
-    href: "/engagement",
+    href: "/ring-studio/diamond",
     icon: <MetalChip bg="#e9c25a" fg="#5a4112" text="18K" />,
   },
   {
     label: "14k Rose Gold",
-    href: "/engagement",
+    href: "/ring-studio/diamond",
     icon: <MetalChip bg="#eac0b0" fg="#7a3f2c" text="14K" />,
   },
   {
     label: "18k Rose Gold",
-    href: "/engagement",
+    href: "/ring-studio/diamond",
     icon: <MetalChip bg="#dba38e" fg="#5e2d1d" text="18K" />,
   },
   {
     label: "14k White Gold",
-    href: "/engagement",
+    href: "/ring-studio/diamond",
     icon: <MetalChip bg="#e8e6e0" fg="#3d3d3d" text="14K" border="#cfcdc7" />,
   },
   {
     label: "18k White Gold",
-    href: "/engagement",
+    href: "/ring-studio/diamond",
     icon: <MetalChip bg="#dcdad4" fg="#2c2c2c" text="18K" border="#bfbdb7" />,
   },
   {
     label: "950 Platinum",
-    href: "/engagement",
+    href: "/ring-studio/diamond",
     icon: <MetalChip bg="#e2e1dc" fg="#3d3d3d" text="PT" border="#bfbdb7" />,
   },
 ];
@@ -387,7 +387,7 @@ const ENGAGEMENT_MENU: MegaMenuConfig = {
           items: [
             {
               label: "Start with a setting",
-              href: "/engagement",
+              href: "/ring-studio/diamond",
               icon: <RingStudioIcon which="setting" />,
             },
             {
@@ -416,18 +416,18 @@ const ENGAGEMENT_MENU: MegaMenuConfig = {
   promos: [
     {
       eyebrow: "ENGAGEMENT RINGS",
-      cta: { label: "Shop now", href: "/engagement" },
+      cta: { label: "Shop now", href: "/ring-studio/diamond" },
     },
   ],
   footer: {
     heading: "Education",
     items: [
-      { label: "Engagement ring guide", href: "/engagement" },
-      { label: "Ring sizing", href: "/engagement" },
-      { label: "Choosing a setting", href: "/engagement" },
-      { label: "Metal guide", href: "/engagement" },
+      { label: "Engagement ring guide", href: "/ring-studio/diamond" },
+      { label: "Ring sizing", href: "/ring-studio/diamond" },
+      { label: "Choosing a setting", href: "/ring-studio/diamond" },
+      { label: "Metal guide", href: "/ring-studio/diamond" },
     ],
-    more: { label: "All engagement guides", href: "/engagement" },
+    more: { label: "All engagement guides", href: "/ring-studio/diamond" },
   },
 };
 
@@ -435,7 +435,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/diamonds", label: "Diamonds", menu: DIAMONDS_MENU },
   { href: "/color-diamonds", label: "Colored Diamonds", menu: COLORED_MENU },
   { href: "/gemstones", label: "Gemstones", menu: GEMSTONES_MENU },
-  { href: "/engagement", label: "Engagement", menu: ENGAGEMENT_MENU },
+  { href: "/ring-studio/diamond", label: "Engagement", menu: ENGAGEMENT_MENU },
 ];
 
 const DARK_HERO_PATHS = new Set<string>(["/"]);

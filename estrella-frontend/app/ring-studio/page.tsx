@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function EngagementPage() {
+export default function RingStudioRoot() {
   redirect("/ring-studio/diamond");
 }

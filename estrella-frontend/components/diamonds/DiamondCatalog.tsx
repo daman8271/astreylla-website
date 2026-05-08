@@ -25,6 +25,9 @@ type Props = {
   shop: string;
   apiBase?: string; // defaults to /api/widget (proxies to Railway)
   perPage?: number;
+  mode?: "default" | "ring-studio";
+  onSelect?: (d: Diamond) => void;
+  initialFilters?: Partial<FilterState>;
 };
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
@@ -107,8 +110,12 @@ export function DiamondCatalog({
   shop,
   apiBase = "/api/widget",
   perPage = 12,
+  mode = "default",
+  onSelect,
+  initialFilters,
 }: Props) {
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const isRingStudio = mode === "ring-studio";
+  const [filters, setFilters] = useState<FilterState>({ ...DEFAULT_FILTERS, ...(initialFilters || {}) });
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -205,8 +212,9 @@ export function DiamondCatalog({
   // Read ?id= on mount + react to back/forward navigation. The drawer is
   // URL-driven: pushState on open, popstate or replaceState on close. We
   // never reload, so the catalog grid + scroll position are preserved.
+  // Ring Studio mode owns its own URL — skip this sync entirely.
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || isRingStudio) return;
     const sync = () => {
       const id = new URL(window.location.href).searchParams.get("id");
       setSelectedId(id);
@@ -214,7 +222,7 @@ export function DiamondCatalog({
     sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, []);
+  }, [isRingStudio]);
 
   const openDiamond = useCallback((d: Diamond) => {
     if (typeof window === "undefined") return;
@@ -313,7 +321,8 @@ export function DiamondCatalog({
   // Inline view-swap (Nivoda pattern): when a diamond is selected, the
   // catalog renders the detail view in place of filters + grid. Hero
   // and page header live in app/diamonds/page.tsx and remain visible.
-  if (selectedId) {
+  // Ring Studio mode skips this — selection advances to Stage 2 instead.
+  if (selectedId && !isRingStudio) {
     return (
       <div className="ds-catalog">
         <DiamondDetailView
@@ -424,6 +433,8 @@ export function DiamondCatalog({
                 onAddToCart={handleAdd}
                 onOpen={openDiamond}
                 busy={busyAddId === d.id}
+                mode={mode}
+                onSelect={onSelect}
               />
             ))}
       </div>

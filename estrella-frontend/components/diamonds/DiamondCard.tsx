@@ -9,6 +9,8 @@ type Props = {
   onAddToCart?: (d: Diamond) => void;
   onOpen?: (d: Diamond) => void;
   busy?: boolean;
+  mode?: "default" | "ring-studio";
+  onSelect?: (d: Diamond) => void;
 };
 
 const SHAPE_LABELS: Record<string, string> = {
@@ -66,9 +68,13 @@ function certBadge(lab: string | undefined) {
   return "Certified";
 }
 
-export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy }: Props) {
+export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode = "default", onSelect }: Props) {
   const [imgFailed, setImgFailed] = useState(false);
-  const open = () => onOpen?.(diamond);
+  const isRingStudio = mode === "ring-studio";
+  const open = () => {
+    if (isRingStudio) onSelect?.(diamond);
+    else onOpen?.(diamond);
+  };
   const onKeyOpen = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -149,14 +155,30 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy }: Pr
         </div>
       </div>
 
-      <button
-        type="button"
-        className="ds-card__cta"
-        onClick={() => onAddToCart?.(diamond)}
-        disabled={busy}
-      >
-        {busy ? "Adding…" : "Add to cart"}
-      </button>
+      {isRingStudio ? (
+        <button
+          type="button"
+          className="ds-card__cta ds-card__cta--outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect?.(diamond);
+          }}
+        >
+          Select diamond
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="ds-card__cta"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddToCart?.(diamond);
+          }}
+          disabled={busy}
+        >
+          {busy ? "Adding…" : "Add to cart"}
+        </button>
+      )}
     </article>
   );
 }

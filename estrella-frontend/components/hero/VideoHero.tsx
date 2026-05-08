@@ -94,7 +94,7 @@ export function VideoHero() {
             Design the ring you have always imagined.
           </h1>
           <Link
-            href="/diamonds"
+            href="/ring-studio/diamond"
             style={{
               display: "inline-flex",
               alignItems: "center",

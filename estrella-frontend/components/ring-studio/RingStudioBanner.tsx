@@ -70,7 +70,7 @@ export function RingStudioBanner() {
             AUGMONT
           </div>
           <Link
-            href="/engagement"
+            href="/ring-studio/diamond"
             className="estrella-btn estrella-btn--pill-outline"
           >
             Explore the Ring Studio

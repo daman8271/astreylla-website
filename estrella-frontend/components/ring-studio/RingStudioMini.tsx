@@ -30,13 +30,13 @@ function DiamondTileGlyph() {
 
 const TILES = [
   {
-    href: "/engagement",
+    href: "/ring-studio/diamond",
     label: "Start with a",
     italicLabel: "ring",
     Glyph: RingTileGlyph,
   },
   {
-    href: "/diamonds",
+    href: "/ring-studio/diamond",
     label: "Start with a",
     italicLabel: "diamond",
     Glyph: DiamondTileGlyph,
