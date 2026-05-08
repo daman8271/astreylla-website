@@ -667,24 +667,28 @@ export function SiteHeader() {
               <span>Search</span>
             </button>
 
-            {/* Mock country / currency switcher — placeholder, not wired */}
+            {/* Localization button — Aria parity: 48×44, 12px Instrument Sans,
+                20×20 flag swatch, white on dark hero / primary text on light. */}
             <button
               type="button"
-              aria-label="Country and currency (US)"
+              aria-label="Localization"
               className="hover:opacity-70 transition-opacity"
               style={{
                 background: "transparent",
                 border: 0,
                 color: fg,
-                padding: 8,
+                width: 48,
+                height: 44,
+                padding: 0,
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: 6,
                 fontFamily: "var(--font-sans)",
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 500,
-                letterSpacing: "0.08em",
+                letterSpacing: "0.04em",
                 textTransform: "uppercase",
               }}
             >
@@ -692,20 +696,21 @@ export function SiteHeader() {
                 aria-hidden="true"
                 style={{
                   display: "inline-block",
-                  width: 22,
-                  height: 22,
+                  width: 20,
+                  height: 20,
                   borderRadius: "50%",
                   overflow: "hidden",
-                  fontSize: 22,
-                  lineHeight: "22px",
+                  fontSize: 20,
+                  lineHeight: "20px",
                   background: "#fff",
                   border: "1px solid rgba(0,0,0,0.08)",
                   textAlign: "center",
+                  flexShrink: 0,
                 }}
               >
                 🇺🇸
               </span>
-              <span>US</span>
+              <span className="currency-country" style={{ fontSize: 12 }}>US</span>
             </button>
 
             <button
