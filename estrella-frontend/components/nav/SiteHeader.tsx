@@ -215,12 +215,6 @@ const COLORED_MENU: MegaMenuConfig = {
       ],
     },
     {
-      heading: "Colored diamond types",
-      items: [
-        { label: "Lab-grown Colored Diamonds", href: "/color-diamonds" },
-      ],
-    },
-    {
       heading: "Colored diamonds",
       items: COLORED_SHAPES,
       more: { label: "Browse all shapes", href: "/color-diamonds" },
