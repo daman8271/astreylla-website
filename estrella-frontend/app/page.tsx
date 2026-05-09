@@ -5,7 +5,6 @@ import { RingStudioBanner } from "@/components/ring-studio/RingStudioBanner";
 import { BestSellersRow } from "@/components/best-sellers/BestSellersRow";
 import { RingStudioMini } from "@/components/ring-studio/RingStudioMini";
 import { ValueStrip } from "@/components/value-strip/ValueStrip";
-import { AboutSection } from "@/components/about/AboutSection";
 import { ExpressDiamondsBand } from "@/components/express-band/ExpressDiamondsBand";
 
 export default function Home() {
@@ -18,7 +17,6 @@ export default function Home() {
       <BestSellersRow />
       <RingStudioMini />
       <ValueStrip />
-      <AboutSection />
       <ExpressDiamondsBand />
     </>
   );
