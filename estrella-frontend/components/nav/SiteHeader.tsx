@@ -174,7 +174,7 @@ const DIAMONDS_MENU: MegaMenuConfig = {
   },
 };
 
-// ── COLORED DIAMONDS MEGA-MENU ───────────────────────────────────────────
+// ── FANCY DIAMONDS MEGA-MENU ─────────────────────────────────────────────
 const COLORED_SHAPES: MegaMenuItem[] = [
   SHAPE_ITEM("Round", RoundIcon, "/color-diamonds"),
   SHAPE_ITEM("Princess", PrincessIcon, "/color-diamonds"),
@@ -206,7 +206,7 @@ const COLORED_MENU: MegaMenuConfig = {
               icon: <RingStudioIcon which="setting" />,
             },
             {
-              label: "Start with a colored diamond",
+              label: "Start with a fancy diamond",
               href: "/color-diamonds",
               icon: <RingStudioIcon which="diamond" />,
             },
@@ -215,31 +215,31 @@ const COLORED_MENU: MegaMenuConfig = {
       ],
     },
     {
-      heading: "Colored diamonds",
+      heading: "Fancy diamonds",
       items: COLORED_SHAPES,
       more: { label: "Browse all shapes", href: "/color-diamonds" },
     },
     {
-      heading: "Colored diamonds",
+      heading: "Fancy diamonds",
       items: COLORED_COLORS,
       more: { label: "Browse all colors", href: "/color-diamonds" },
     },
   ],
   promos: [
     {
-      eyebrow: "COLORED DIAMONDS",
+      eyebrow: "FANCY DIAMONDS",
       cta: { label: "Shop now", href: "/color-diamonds" },
     },
   ],
   footer: {
     heading: "Education",
     items: [
-      { label: "Why colored diamonds?", href: "/color-diamonds" },
+      { label: "Why fancy diamonds?", href: "/color-diamonds" },
       { label: "Color rarity", href: "/color-diamonds" },
       { label: "Intensity grading", href: "/color-diamonds" },
       { label: "Investment grade", href: "/color-diamonds" },
     ],
-    more: { label: "All colored diamond guides", href: "/color-diamonds" },
+    more: { label: "All fancy diamond guides", href: "/color-diamonds" },
   },
 };
 
@@ -307,7 +307,7 @@ const GEMSTONES_MENU: MegaMenuConfig = {
   },
 };
 
-// ── ENGAGEMENT MEGA-MENU ─────────────────────────────────────────────────
+// ── RINGS MEGA-MENU ──────────────────────────────────────────────────────
 const RING_SHAPES: MegaMenuItem[] = [
   SHAPE_ITEM("Round", RoundIcon, "/ring-studio/diamond"),
   SHAPE_ITEM("Princess", PrincessIcon, "/ring-studio/diamond"),
@@ -409,27 +409,27 @@ const ENGAGEMENT_MENU: MegaMenuConfig = {
   ],
   promos: [
     {
-      eyebrow: "ENGAGEMENT RINGS",
+      eyebrow: "RINGS",
       cta: { label: "Shop now", href: "/ring-studio/diamond" },
     },
   ],
   footer: {
     heading: "Education",
     items: [
-      { label: "Engagement ring guide", href: "/ring-studio/diamond" },
+      { label: "Ring guide", href: "/ring-studio/diamond" },
       { label: "Ring sizing", href: "/ring-studio/diamond" },
       { label: "Choosing a setting", href: "/ring-studio/diamond" },
       { label: "Metal guide", href: "/ring-studio/diamond" },
     ],
-    more: { label: "All engagement guides", href: "/ring-studio/diamond" },
+    more: { label: "All ring guides", href: "/ring-studio/diamond" },
   },
 };
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/diamonds", label: "Diamonds", menu: DIAMONDS_MENU },
-  { href: "/color-diamonds", label: "Colored Diamonds", menu: COLORED_MENU },
+  { href: "/color-diamonds", label: "Fancy Diamonds", menu: COLORED_MENU },
   { href: "/gemstones", label: "Gemstones", menu: GEMSTONES_MENU },
-  { href: "/ring-studio/diamond", label: "Engagement", menu: ENGAGEMENT_MENU },
+  { href: "/ring-studio/diamond", label: "Rings", menu: ENGAGEMENT_MENU },
 ];
 
 const DARK_HERO_PATHS = new Set<string>(["/"]);

@@ -161,7 +161,7 @@ export function SiteFooter() {
 
         <FooterCol title="LEARN & GROW" links={COL_LEARN} />
         <FooterCol title="DIAMONDS & GEMSTONES" links={COL_DIAMONDS} />
-        <FooterCol title="BRIDAL & ENGAGEMENT" links={COL_BRIDAL} />
+        <FooterCol title="BRIDAL & RINGS" links={COL_BRIDAL} />
         <FooterCol title="HELP & GUIDE" links={COL_HELP} />
       </div>
 
