@@ -1,17 +1,27 @@
 import Link from "next/link";
 
-const TILES = [
+type Tile = {
+  href: string;
+  label: string;
+  bg: string;
+  accent: string;
+  image?: string;
+};
+
+const TILES: Tile[] = [
   {
     href: "/diamonds",
     label: "Lab Grown Diamonds",
     bg: "linear-gradient(135deg, #15201a 0%, #28342b 60%, #0e1612 100%)",
     accent: "#cfd9d2",
+    image: "/categories/labgrown.jpg",
   },
   {
     href: "/color-diamonds",
     label: "Fancy Diamonds",
     bg: "linear-gradient(135deg, #2c1d2a 0%, #3a2536 60%, #1a131a 100%)",
     accent: "#e2c9d9",
+    image: "/categories/fancydiamond.jpg",
   },
   {
     href: "/gemstones",
@@ -96,17 +106,35 @@ export function CategoryTilesGrid() {
                 }}
                 className="group hover:brightness-110 transition-[filter] duration-300"
               >
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <TileGlyph color={t.accent} />
-                </div>
+                {t.image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={t.image}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: "center",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <TileGlyph color={t.accent} />
+                  </div>
+                )}
                 <div
                   aria-hidden="true"
                   style={{
