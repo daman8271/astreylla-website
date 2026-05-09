@@ -532,7 +532,7 @@ export function SiteHeader() {
         className="fixed top-0 left-0 right-0 z-50 transition-[background-color,backdrop-filter,border-color,color] duration-300"
         style={{
           backgroundColor: openMenu
-            ? "#ffffff"
+            ? "var(--brand-bg)"
             : headerSolid
               ? "var(--glass-bg)"
               : "transparent",
