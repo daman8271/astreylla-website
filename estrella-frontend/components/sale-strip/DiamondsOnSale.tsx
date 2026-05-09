@@ -8,12 +8,12 @@ type Stone = {
 };
 
 const STONES: Stone[] = [
-  { shape: "Heart", src: "/diamonds-on-sale/1-heart.jpeg", alt: "Heart-cut diamond" },
-  { shape: "Princess", src: "/diamonds-on-sale/2-princess.jpeg", alt: "Princess-cut diamond" },
-  { shape: "Round", src: "/diamonds-on-sale/3-round.jpeg", alt: "Round brilliant diamond" },
-  { shape: "Marquise", src: "/diamonds-on-sale/4-marquise.jpeg", alt: "Marquise-cut diamond" },
-  { shape: "Oval", src: "/diamonds-on-sale/5-oval.jpeg", alt: "Oval-cut diamond" },
-  { shape: "Emerald", src: "/diamonds-on-sale/6-emerald.jpeg", alt: "Emerald-cut diamond" },
+  { shape: "Heart", src: "/diamonds-on-sale-cut/1-heart.png", alt: "Heart-cut diamond" },
+  { shape: "Princess", src: "/diamonds-on-sale-cut/2-princess.png", alt: "Princess-cut diamond" },
+  { shape: "Round", src: "/diamonds-on-sale-cut/3-round.png", alt: "Round brilliant diamond" },
+  { shape: "Marquise", src: "/diamonds-on-sale-cut/4-marquise.png", alt: "Marquise-cut diamond" },
+  { shape: "Oval", src: "/diamonds-on-sale-cut/5-oval.png", alt: "Oval-cut diamond" },
+  { shape: "Emerald", src: "/diamonds-on-sale-cut/6-emerald.png", alt: "Emerald-cut diamond" },
 ];
 
 export function DiamondsOnSale() {
