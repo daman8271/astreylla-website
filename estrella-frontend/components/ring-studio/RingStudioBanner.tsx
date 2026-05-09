@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function RingStudioBanner() {
@@ -14,29 +15,28 @@ export function RingStudioBanner() {
         className="estrella-container"
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(200px, 280px) 1fr",
+          gridTemplateColumns: "minmax(320px, 1.4fr) 1fr",
           gap: 64,
           alignItems: "center",
         }}
       >
         <div
-          aria-hidden="true"
           style={{
-            aspectRatio: "3 / 4",
-            background:
-              "linear-gradient(160deg, #243049 0%, #11182a 60%, #1c2438 100%)",
-            borderRadius: "var(--radius-sm)",
             position: "relative",
+            width: "100%",
+            aspectRatio: "6592 / 2880",
+            borderRadius: "var(--radius-sm)",
             overflow: "hidden",
+            background: "#11182a",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.08), transparent 60%)",
-            }}
+          <Image
+            src="/ring-studio-banner.jpg"
+            alt="Golden and contemporary diamond rings"
+            fill
+            sizes="(max-width: 1040px) 100vw, 60vw"
+            style={{ objectFit: "cover" }}
+            priority={false}
           />
         </div>
 
