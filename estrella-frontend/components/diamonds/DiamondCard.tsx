@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Diamond } from "./types";
+import { DiamondViewer } from "./DiamondViewer";
 
 type Props = {
   diamond: Diamond;
@@ -12,6 +13,11 @@ type Props = {
   mode?: "default" | "ring-studio";
   onSelect?: (d: Diamond) => void;
 };
+
+function loupe360FrameUrl(stockNum?: string) {
+  if (!stockNum) return "";
+  return `https://loupe360.com/diamond/${encodeURIComponent(stockNum)}/image/0.jpg`;
+}
 
 const SHAPE_LABELS: Record<string, string> = {
   Round: "Round",
@@ -68,8 +74,17 @@ function certBadge(lab: string | undefined) {
   return "Certified";
 }
 
+type ImgStage = "primary" | "loupe360" | "placeholder";
+
 export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode = "default", onSelect }: Props) {
-  const [imgFailed, setImgFailed] = useState(false);
+  // Two-step image fallback: image_url → loupe360 frame 0 → SVG placeholder.
+  // The Augmont image_url returns an HTML viewer page that fails to decode as
+  // an <img>, so onError fires → we try the underlying loupe360 frame which
+  // is a real JPEG when provisioned. If that also 404s → SVG placeholder.
+  const [imgStage, setImgStage] = useState<ImgStage>(
+    diamond.image_url ? "primary" : diamond.stockNum ? "loupe360" : "placeholder"
+  );
+  const [viewerOpen, setViewerOpen] = useState(false);
   const isRingStudio = mode === "ring-studio";
   const open = () => {
     if (isRingStudio) onSelect?.(diamond);
@@ -81,8 +96,26 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode
       open();
     }
   };
+  const handleImgError = () => {
+    setImgStage((cur) => {
+      if (cur === "primary" && diamond.stockNum) return "loupe360";
+      return "placeholder";
+    });
+  };
+  const launchViewer = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setViewerOpen(true);
+  };
+
+  const imgSrc =
+    imgStage === "primary"
+      ? diamond.image_url
+      : imgStage === "loupe360"
+      ? loupe360FrameUrl(diamond.stockNum)
+      : "";
 
   return (
+    <>
     <article
       className="ds-card ds-card--clickable"
       onClick={open}
@@ -92,12 +125,13 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode
       aria-label={`Open details for ${formatTitle(diamond)}`}
     >
       <div className="ds-card__media">
-        {!imgFailed && diamond.image_url ? (
+        {imgSrc ? (
           <img
-            src={diamond.image_url}
+            key={imgSrc}
+            src={imgSrc}
             alt={formatTitle(diamond)}
             loading="lazy"
-            onError={() => setImgFailed(true)}
+            onError={handleImgError}
           />
         ) : (
           <div className="ds-card__placeholder" aria-hidden>
@@ -111,6 +145,16 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode
             </svg>
           </div>
         )}
+        {diamond.stockNum ? (
+          <button
+            type="button"
+            className="ds-card__view360"
+            onClick={launchViewer}
+            aria-label={`Open 360 viewer for ${formatTitle(diamond)}`}
+          >
+            360°
+          </button>
+        ) : null}
       </div>
 
       <h3 className="ds-card__title">{formatTitle(diamond)}</h3>
@@ -180,6 +224,13 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode
         </button>
       )}
     </article>
+    <DiamondViewer
+      stockNum={diamond.stockNum}
+      shape={diamond.shape}
+      open={viewerOpen}
+      onClose={() => setViewerOpen(false)}
+    />
+    </>
   );
 }
 

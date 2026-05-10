@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from "react";
 import type { Diamond } from "./types";
+import { DiamondViewer } from "./DiamondViewer";
+
+function loupe360FrameUrl(stockNum?: string) {
+  if (!stockNum) return "";
+  return `https://loupe360.com/diamond/${encodeURIComponent(stockNum)}/image/0.jpg`;
+}
+
+type ImgStage = "primary" | "loupe360" | "placeholder";
 
 type Props = {
   diamond: Diamond | null;
@@ -50,11 +58,17 @@ export function DiamondDetailView({
   onAddToCart,
   busyAddId,
 }: Props) {
-  const [imgFailed, setImgFailed] = useState(false);
+  const [imgStage, setImgStage] = useState<ImgStage>(() =>
+    diamond?.image_url ? "primary" : diamond?.stockNum ? "loupe360" : "placeholder"
+  );
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => {
-    setImgFailed(false);
-  }, [diamond?.id]);
+    setImgStage(
+      diamond?.image_url ? "primary" : diamond?.stockNum ? "loupe360" : "placeholder"
+    );
+    setViewerOpen(false);
+  }, [diamond?.id, diamond?.image_url, diamond?.stockNum]);
 
   if (!diamond) {
     return (
@@ -95,11 +109,20 @@ export function DiamondDetailView({
 
       <div className="ds-detail__layout">
         <div className="ds-detail__media">
-          {!imgFailed && d.image_url ? (
+          {imgStage !== "placeholder" ? (
             <img
-              src={d.image_url}
+              key={imgStage}
+              src={
+                imgStage === "primary"
+                  ? d.image_url
+                  : loupe360FrameUrl(d.stockNum)
+              }
               alt={title}
-              onError={() => setImgFailed(true)}
+              onError={() =>
+                setImgStage((cur) =>
+                  cur === "primary" && d.stockNum ? "loupe360" : "placeholder"
+                )
+              }
             />
           ) : (
             <div className="ds-detail__placeholder" aria-hidden>
@@ -113,16 +136,15 @@ export function DiamondDetailView({
               </svg>
             </div>
           )}
-          {d.video_url ? (
-            <a
+          {d.stockNum ? (
+            <button
+              type="button"
               className="ds-detail__360"
-              href={d.video_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open 360° viewer in a new tab"
+              onClick={() => setViewerOpen(true)}
+              aria-label="Open 360° viewer"
             >
-              360
-            </a>
+              360°
+            </button>
           ) : null}
         </div>
 
@@ -185,6 +207,12 @@ export function DiamondDetailView({
           </button>
         </div>
       </div>
+      <DiamondViewer
+        stockNum={d.stockNum}
+        shape={d.shape}
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+      />
     </div>
   );
 }
