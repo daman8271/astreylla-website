@@ -4,7 +4,15 @@ import Link from "next/link";
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const PRODUCTS = [
+type Product = {
+  name: string;
+  sku: string;
+  priceFrom: string;
+  glyph: string;
+  image?: string;
+};
+
+const PRODUCTS: Product[] = [
   {
     name: "The Six-Prong Solitaire",
     sku: "AUG-S-046",
@@ -22,8 +30,9 @@ const PRODUCTS = [
     sku: "AUG-S-037",
     priceFrom: "$830",
     glyph: "solitaire-thin",
+    image: "/best-sellers/tapered-solitaire.jpeg",
   },
-] as const;
+];
 
 function RingGlyph({ kind }: { kind: string }) {
   const stroke = "currentColor";
@@ -189,9 +198,24 @@ export function BestSellersRow() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  overflow: "hidden",
                 }}
               >
-                <RingGlyph kind={p.glyph} />
+                {p.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    loading="lazy"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                    }}
+                  />
+                ) : (
+                  <RingGlyph kind={p.glyph} />
+                )}
               </div>
             </article>
           ))}
