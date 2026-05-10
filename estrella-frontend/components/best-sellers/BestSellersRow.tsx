@@ -182,8 +182,8 @@ export function BestSellersRow() {
             <article
               key={p.sku}
               style={{
-                background: "var(--surface-soft)",
-                color: "var(--brand-text-primary)",
+                background: "#ffffff",
+                color: "#1a1a1a",
                 borderRadius: "var(--radius-sm)",
                 padding: 32,
                 scrollSnapAlign: "start",
