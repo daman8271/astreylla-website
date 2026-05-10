@@ -6,6 +6,13 @@ type Tile = {
   bg: string;
   accent: string;
   image?: string;
+  /**
+   * CSS object-position for the tile image. The portrait 3:4 crop slices
+   * top/bottom of landscape source photos, so set this to keep the
+   * subject in frame (e.g. "right center" when the focal point sits on
+   * the right side of the source image).
+   */
+  imagePosition?: string;
 };
 
 const TILES: Tile[] = [
@@ -28,6 +35,8 @@ const TILES: Tile[] = [
     label: "Gemstones",
     bg: "linear-gradient(135deg, #1a2436 0%, #243049 60%, #11182a 100%)",
     accent: "#cdd6e4",
+    image: "/categories/gemstones.jpg",
+    imagePosition: "65% center",
   },
 ];
 
@@ -119,7 +128,7 @@ export function CategoryTilesGrid() {
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
-                      objectPosition: "center",
+                      objectPosition: t.imagePosition ?? "center",
                     }}
                   />
                 ) : (
