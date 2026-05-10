@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import type { Diamond } from "./types";
 import { DiamondViewer } from "./DiamondViewer";
 
-function loupe360FrameUrl(stockNum?: string) {
+function resolverUrl(stockNum?: string) {
   if (!stockNum) return "";
-  return `https://loupe360.com/diamond/${encodeURIComponent(stockNum)}/image/0.jpg`;
+  return `/api/diamond-image/${encodeURIComponent(stockNum)}`;
 }
 
-type ImgStage = "primary" | "loupe360" | "placeholder";
+type ImgStage = "resolver" | "placeholder";
 
 type Props = {
   diamond: Diamond | null;
@@ -59,16 +59,14 @@ export function DiamondDetailView({
   busyAddId,
 }: Props) {
   const [imgStage, setImgStage] = useState<ImgStage>(() =>
-    diamond?.image_url ? "primary" : diamond?.stockNum ? "loupe360" : "placeholder"
+    diamond?.stockNum ? "resolver" : "placeholder"
   );
   const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => {
-    setImgStage(
-      diamond?.image_url ? "primary" : diamond?.stockNum ? "loupe360" : "placeholder"
-    );
+    setImgStage(diamond?.stockNum ? "resolver" : "placeholder");
     setViewerOpen(false);
-  }, [diamond?.id, diamond?.image_url, diamond?.stockNum]);
+  }, [diamond?.id, diamond?.stockNum]);
 
   if (!diamond) {
     return (
@@ -109,20 +107,11 @@ export function DiamondDetailView({
 
       <div className="ds-detail__layout">
         <div className="ds-detail__media">
-          {imgStage !== "placeholder" ? (
+          {imgStage === "resolver" ? (
             <img
-              key={imgStage}
-              src={
-                imgStage === "primary"
-                  ? d.image_url
-                  : loupe360FrameUrl(d.stockNum)
-              }
+              src={resolverUrl(d.stockNum)}
               alt={title}
-              onError={() =>
-                setImgStage((cur) =>
-                  cur === "primary" && d.stockNum ? "loupe360" : "placeholder"
-                )
-              }
+              onError={() => setImgStage("placeholder")}
             />
           ) : (
             <div className="ds-detail__placeholder" aria-hidden>

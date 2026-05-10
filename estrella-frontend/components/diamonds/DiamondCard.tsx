@@ -14,9 +14,12 @@ type Props = {
   onSelect?: (d: Diamond) => void;
 };
 
-function loupe360FrameUrl(stockNum?: string) {
+function resolverUrl(stockNum?: string) {
+  // Server-side route that hits Augmont's short-url API and 302-redirects to
+  // the real JPEG (e.g. video.diamondasset.in or videos.gem360.in). Browser
+  // caches the redirect for 24h. Returns 404 → onError → SVG placeholder.
   if (!stockNum) return "";
-  return `https://loupe360.com/diamond/${encodeURIComponent(stockNum)}/image/0.jpg`;
+  return `/api/diamond-image/${encodeURIComponent(stockNum)}`;
 }
 
 const SHAPE_LABELS: Record<string, string> = {
@@ -74,15 +77,16 @@ function certBadge(lab: string | undefined) {
   return "Certified";
 }
 
-type ImgStage = "primary" | "loupe360" | "placeholder";
+type ImgStage = "resolver" | "placeholder";
 
 export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode = "default", onSelect }: Props) {
-  // Two-step image fallback: image_url → loupe360 frame 0 → SVG placeholder.
-  // The Augmont image_url returns an HTML viewer page that fails to decode as
-  // an <img>, so onError fires → we try the underlying loupe360 frame which
-  // is a real JPEG when provisioned. If that also 404s → SVG placeholder.
+  // Image source: our /api/diamond-image/{stockNum} route resolves Augmont's
+  // short-url API → real JPEG. On 404 / network error, onError fires and we
+  // fall through to the SVG placeholder. The Augmont diamond.image_url is
+  // intentionally NOT used as <img src> because it's an HTML viewer page,
+  // not an image; it remains the source for the iframe-based 360 modal.
   const [imgStage, setImgStage] = useState<ImgStage>(
-    diamond.image_url ? "primary" : diamond.stockNum ? "loupe360" : "placeholder"
+    diamond.stockNum ? "resolver" : "placeholder"
   );
   const [viewerOpen, setViewerOpen] = useState(false);
   const isRingStudio = mode === "ring-studio";
@@ -96,23 +100,13 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode
       open();
     }
   };
-  const handleImgError = () => {
-    setImgStage((cur) => {
-      if (cur === "primary" && diamond.stockNum) return "loupe360";
-      return "placeholder";
-    });
-  };
+  const handleImgError = () => setImgStage("placeholder");
   const launchViewer = (e: React.MouseEvent) => {
     e.stopPropagation();
     setViewerOpen(true);
   };
 
-  const imgSrc =
-    imgStage === "primary"
-      ? diamond.image_url
-      : imgStage === "loupe360"
-      ? loupe360FrameUrl(diamond.stockNum)
-      : "";
+  const imgSrc = imgStage === "resolver" ? resolverUrl(diamond.stockNum) : "";
 
   return (
     <>
