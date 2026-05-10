@@ -14,16 +14,18 @@ type Product = {
 
 const PRODUCTS: Product[] = [
   {
-    name: "The Six-Prong Solitaire",
+    name: "Classic Ring",
     sku: "AUG-S-046",
     priceFrom: "$860",
     glyph: "solitaire",
+    image: "/best-sellers/classic-ring.jpeg",
   },
   {
     name: "The Cluster Halo Ring",
     sku: "AUG-C-044",
     priceFrom: "$940",
     glyph: "cluster",
+    image: "/best-sellers/cluster-halo-ring.jpeg",
   },
   {
     name: "The Tapered Solitaire",
