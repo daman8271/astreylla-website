@@ -588,9 +588,10 @@ export function SiteHeader() {
                   onClick={() => closeMenu()}
                   style={{
                     fontFamily: "var(--font-sans)",
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: 500,
-                    letterSpacing: "0.02em",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
                     color: fg,
                     textShadow: onDarkHero ? "0 1px 8px rgba(0,0,0,0.35)" : "none",
                     transition: "color 200ms ease",
