@@ -25,7 +25,7 @@
   --glass-blur: 24px;
 
   --font-serif: var(--font-source-serif), Georgia, serif;
-  --font-display: var(--font-italiana), var(--font-source-serif), serif;
+  --font-display: var(--font-instrument-serif), var(--font-source-serif), serif;
   --font-sans: var(--font-instrument-sans), -apple-system, system-ui, sans-serif;
 
   --fs-display: 64px;

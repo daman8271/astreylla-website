@@ -21,7 +21,7 @@ const config: Config = {
       },
       fontFamily: {
         serif: ["var(--font-source-serif)", "Georgia", "serif"],
-        display: ["var(--font-italiana)", "var(--font-source-serif)", "serif"],
+        display: ["var(--font-instrument-serif)", "var(--font-source-serif)", "serif"],
         sans: ["var(--font-instrument-sans)", "-apple-system", "system-ui", "sans-serif"],
       },
       maxWidth: {

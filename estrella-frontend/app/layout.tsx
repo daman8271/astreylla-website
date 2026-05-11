@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Source_Serif_4, Italiana, Instrument_Sans } from "next/font/google";
+import { Source_Serif_4, Instrument_Serif, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/nav/SiteHeader";
 import { SiteFooter } from "@/components/footer/SiteFooter";
@@ -21,11 +21,12 @@ const sourceSerif = Source_Serif_4({
   weight: ["300", "400", "600", "700"],
 });
 
-const italiana = Italiana({
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-italiana",
+  variable: "--font-instrument-serif",
   weight: ["400"],
+  style: ["normal", "italic"],
 });
 
 const instrumentSans = Instrument_Sans({
@@ -53,7 +54,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${sourceSerif.variable} ${italiana.variable} ${instrumentSans.variable}`}
+        className={`${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable}`}
         style={{
           minHeight: "100vh",
           display: "flex",
