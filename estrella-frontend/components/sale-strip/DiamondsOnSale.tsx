@@ -1,25 +1,26 @@
-import Link from "next/link";
-import Image from "next/image";
+import { DiamondVideoTile } from "./DiamondVideoTile";
 
 type Stone = {
   shape: string;
-  src: string;
+  stockNum: string;
+  posterSrc: string;
   alt: string;
 };
 
 // Layout matches the Aria Morelle reference: 4 columns × 2 rows.
 // Top row: Oval, Asscher, Cushion, Pear   (curved / soft shapes)
 // Bottom:  Emerald, Round, Marquise, Heart (mixed character shapes)
-// (Asscher is filled by our Princess photo — closest square step-cut analogue.)
+// Each tile loads a live 360° rotation via viewmydiamonds.com iframe; the
+// rembg poster PNG holds the slot until the iframe is ready.
 const STONES: Stone[] = [
-  { shape: "Oval", src: "/diamonds-on-sale-cut/5-oval.png", alt: "Oval-cut diamond" },
-  { shape: "Asscher", src: "/diamonds-on-sale-cut/2-princess.png", alt: "Asscher-cut diamond" },
-  { shape: "Cushion", src: "/diamonds-on-sale-cut/8-cushion.png", alt: "Cushion-cut diamond" },
-  { shape: "Pear", src: "/diamonds-on-sale-cut/7-pear.png", alt: "Pear-cut diamond" },
-  { shape: "Emerald", src: "/diamonds-on-sale-cut/6-emerald.png", alt: "Emerald-cut diamond" },
-  { shape: "Round", src: "/diamonds-on-sale-cut/3-round.png", alt: "Round brilliant diamond" },
-  { shape: "Marquise", src: "/diamonds-on-sale-cut/4-marquise.png", alt: "Marquise-cut diamond" },
-  { shape: "Heart", src: "/diamonds-on-sale-cut/1-heart.png", alt: "Heart-cut diamond" },
+  { shape: "Oval", stockNum: "0VOWQ3YWSP", posterSrc: "/diamonds-on-sale-cut/5-oval.png", alt: "Oval-cut diamond" },
+  { shape: "Asscher", stockNum: "A9XU1TM11I", posterSrc: "/diamonds-on-sale-cut/2-princess.png", alt: "Asscher-cut diamond" },
+  { shape: "Cushion", stockNum: "Y0B33LPUXT", posterSrc: "/diamonds-on-sale-cut/8-cushion.png", alt: "Cushion-cut diamond" },
+  { shape: "Pear", stockNum: "ITWZ3KJZY8", posterSrc: "/diamonds-on-sale-cut/7-pear.png", alt: "Pear-cut diamond" },
+  { shape: "Emerald", stockNum: "CCLWIZCN9Q", posterSrc: "/diamonds-on-sale-cut/6-emerald.png", alt: "Emerald-cut diamond" },
+  { shape: "Round", stockNum: "KOTGTTZC82", posterSrc: "/diamonds-on-sale-cut/3-round.png", alt: "Round brilliant diamond" },
+  { shape: "Marquise", stockNum: "V2FRHFFDPF", posterSrc: "/diamonds-on-sale-cut/4-marquise.png", alt: "Marquise-cut diamond" },
+  { shape: "Heart", stockNum: "VS19UC37B7", posterSrc: "/diamonds-on-sale-cut/1-heart.png", alt: "Heart-cut diamond" },
 ];
 
 export function DiamondsOnSale() {
@@ -71,27 +72,12 @@ export function DiamondsOnSale() {
               key={stone.shape}
               style={{ width: "100%", display: "flex", justifyContent: "center" }}
             >
-              <Link
-                href={`/diamonds?shape=${encodeURIComponent(stone.shape)}`}
-                aria-label={`Browse ${stone.shape.toLowerCase()} diamonds on sale`}
-                style={{
-                  display: "block",
-                  width: "clamp(140px, 17vw, 240px)",
-                  aspectRatio: "1 / 1",
-                  position: "relative",
-                  filter: "var(--sale-strip-stone-shadow)",
-                  transition: "transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1)",
-                }}
-                className="hover:scale-[1.03]"
-              >
-                <Image
-                  src={stone.src}
-                  alt={stone.alt}
-                  fill
-                  sizes="(max-width: 768px) 30vw, 240px"
-                  style={{ objectFit: "contain" }}
-                />
-              </Link>
+              <DiamondVideoTile
+                shape={stone.shape}
+                stockNum={stone.stockNum}
+                posterSrc={stone.posterSrc}
+                alt={stone.alt}
+              />
             </li>
           ))}
         </ul>
