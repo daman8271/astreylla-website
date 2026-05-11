@@ -26,7 +26,7 @@ export function DiamondsOnSale() {
   return (
     <section
       style={{
-        background: "#0a0a0a",
+        background: "var(--surface-soft)",
         paddingBlock: "clamp(72px, 9vw, 140px)",
       }}
       aria-labelledby="on-sale-heading"
@@ -42,7 +42,7 @@ export function DiamondsOnSale() {
             lineHeight: 1.2,
             letterSpacing: "0.18em",
             textAlign: "center",
-            color: "#ffffff",
+            color: "var(--brand-text-primary)",
             marginBottom: "clamp(64px, 8vw, 110px)",
             textTransform: "uppercase",
           }}
