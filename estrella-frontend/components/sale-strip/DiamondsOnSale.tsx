@@ -26,8 +26,9 @@ export function DiamondsOnSale() {
   return (
     <section
       style={{
-        background: "var(--surface-soft)",
-        paddingBlock: "clamp(72px, 9vw, 140px)",
+        background:
+          "linear-gradient(180deg, #f3ede2 0%, #ece4d5 100%)",
+        paddingBlock: "clamp(64px, 8vw, 120px)",
       }}
       aria-labelledby="on-sale-heading"
     >
@@ -35,15 +36,16 @@ export function DiamondsOnSale() {
         <h2
           id="on-sale-heading"
           style={{
-            fontFamily: "var(--font-cormorant), Cormorant, 'Cormorant Garamond', Garamond, serif",
+            fontFamily:
+              "var(--font-cormorant), Cormorant, 'Cormorant Garamond', Garamond, serif",
             fontStyle: "italic",
-            fontWeight: 500,
-            fontSize: "clamp(28px, 3.2vw, 40px)",
+            fontWeight: 400,
+            fontSize: "clamp(30px, 3.4vw, 44px)",
             lineHeight: 1.15,
-            letterSpacing: "0.04em",
+            letterSpacing: "0.06em",
             textAlign: "center",
             color: "var(--brand-text-primary)",
-            marginBottom: "clamp(64px, 8vw, 110px)",
+            marginBottom: "clamp(48px, 6vw, 84px)",
             textTransform: "uppercase",
           }}
         >
@@ -54,8 +56,8 @@ export function DiamondsOnSale() {
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
-            rowGap: "clamp(48px, 7vw, 110px)",
-            columnGap: "clamp(24px, 4vw, 72px)",
+            rowGap: "clamp(32px, 4vw, 64px)",
+            columnGap: "clamp(20px, 3vw, 56px)",
             listStyle: "none",
             padding: 0,
             margin: 0,
@@ -65,26 +67,29 @@ export function DiamondsOnSale() {
           }}
         >
           {STONES.map((stone) => (
-            <li key={stone.shape} style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+            <li
+              key={stone.shape}
+              style={{ width: "100%", display: "flex", justifyContent: "center" }}
+            >
               <Link
                 href={`/diamonds?shape=${encodeURIComponent(stone.shape)}`}
                 aria-label={`Browse ${stone.shape.toLowerCase()} diamonds on sale`}
                 style={{
                   display: "block",
-                  width: "clamp(110px, 14vw, 200px)",
+                  width: "clamp(140px, 17vw, 240px)",
                   aspectRatio: "1 / 1",
                   position: "relative",
                   filter:
-                    "drop-shadow(0 22px 28px rgba(255,255,255,0.05)) drop-shadow(0 6px 14px rgba(0,0,0,0.6))",
+                    "drop-shadow(0 18px 28px rgba(60,40,20,0.10)) drop-shadow(0 6px 12px rgba(60,40,20,0.08))",
                   transition: "transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1)",
                 }}
-                className="hover:scale-[1.05]"
+                className="hover:scale-[1.03]"
               >
                 <Image
                   src={stone.src}
                   alt={stone.alt}
                   fill
-                  sizes="(max-width: 768px) 25vw, 200px"
+                  sizes="(max-width: 768px) 30vw, 240px"
                   style={{ objectFit: "contain" }}
                 />
               </Link>
