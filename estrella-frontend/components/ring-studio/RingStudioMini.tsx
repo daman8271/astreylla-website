@@ -89,7 +89,7 @@ export function RingStudioMini() {
               style={{
                 aspectRatio: "1 / 1",
                 background: "#ffffff",
-                color: "var(--brand-text-primary)",
+                color: "#1a1a1a",
                 position: "relative",
                 display: "flex",
                 alignItems: "center",
@@ -111,7 +111,7 @@ export function RingStudioMini() {
                   fontSize: 24,
                   lineHeight: 1.2,
                   letterSpacing: "-0.01em",
-                  color: "var(--brand-text-primary)",
+                  color: "#1a1a1a",
                 }}
               >
                 {t.label}{" "}
