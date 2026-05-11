@@ -27,7 +27,7 @@ export function DiamondsOnSale() {
     <section
       style={{
         background:
-          "linear-gradient(180deg, #f3ede2 0%, #ece4d5 100%)",
+          "linear-gradient(180deg, var(--sale-strip-bg-start) 0%, var(--sale-strip-bg-end) 100%)",
         paddingBlock: "clamp(64px, 8vw, 120px)",
       }}
       aria-labelledby="on-sale-heading"
@@ -79,8 +79,7 @@ export function DiamondsOnSale() {
                   width: "clamp(140px, 17vw, 240px)",
                   aspectRatio: "1 / 1",
                   position: "relative",
-                  filter:
-                    "drop-shadow(0 18px 28px rgba(60,40,20,0.10)) drop-shadow(0 6px 12px rgba(60,40,20,0.08))",
+                  filter: "var(--sale-strip-stone-shadow)",
                   transition: "transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1)",
                 }}
                 className="hover:scale-[1.03]"

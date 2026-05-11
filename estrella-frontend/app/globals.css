@@ -45,6 +45,12 @@
   --radius-md: 8px;
   --radius-lg: 16px;
   --radius-pill: 9999px;
+
+  /* Diamonds-on-Sale section — theme-aware bg + stone grounding shadow */
+  --sale-strip-bg-start: #f3ede2;
+  --sale-strip-bg-end: #ece4d5;
+  --sale-strip-stone-shadow: drop-shadow(0 18px 28px rgba(60, 40, 20, 0.10))
+    drop-shadow(0 6px 12px rgba(60, 40, 20, 0.08));
 }
 
 [data-theme="dark"] {
@@ -66,6 +72,12 @@
 
   /* Card / surface tints used in best-sellers, products etc. */
   --surface-soft: #1c1c1c;
+
+  /* Diamonds-on-Sale section — dark variant */
+  --sale-strip-bg-start: #0a0a0a;
+  --sale-strip-bg-end: #050505;
+  --sale-strip-stone-shadow: drop-shadow(0 22px 30px rgba(255, 255, 255, 0.05))
+    drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
 }
 
 :root {
