@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, Moon, Sun, Search, ChevronDown } from "lucide-react";
 import { MegaMenu, type MegaMenuConfig, type MegaMenuItem } from "./MegaMenu";
+import { CountrySelector } from "./CountrySelector";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import {
   RoundIcon,
@@ -662,51 +663,8 @@ export function SiteHeader() {
               <span>Search</span>
             </button>
 
-            {/* Localization button — Aria parity: 48×44, 12px Instrument Sans,
-                20×20 flag swatch, white on dark hero / primary text on light. */}
-            <button
-              type="button"
-              aria-label="Localization"
-              className="hover:opacity-70 transition-opacity"
-              style={{
-                background: "transparent",
-                border: 0,
-                color: fg,
-                width: 48,
-                height: 44,
-                padding: 0,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-                fontFamily: "var(--font-sans)",
-                fontSize: 12,
-                fontWeight: 500,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-              }}
-            >
-              <span
-                aria-hidden="true"
-                style={{
-                  display: "inline-block",
-                  width: 20,
-                  height: 20,
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  fontSize: 20,
-                  lineHeight: "20px",
-                  background: "#fff",
-                  border: "1px solid rgba(0,0,0,0.08)",
-                  textAlign: "center",
-                  flexShrink: 0,
-                }}
-              >
-                🇺🇸
-              </span>
-              <span className="currency-country" style={{ fontSize: 12 }}>US</span>
-            </button>
+            {/* Localization — country/currency dropdown selector */}
+            <CountrySelector fg={fg} />
 
             <button
               type="button"
