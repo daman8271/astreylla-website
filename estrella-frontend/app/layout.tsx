@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Source_Serif_4, Instrument_Serif, Instrument_Sans } from "next/font/google";
+import {
+  Source_Serif_4,
+  Instrument_Serif,
+  Instrument_Sans,
+  Cormorant,
+} from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/nav/SiteHeader";
 import { SiteFooter } from "@/components/footer/SiteFooter";
@@ -36,6 +41,14 @@ const instrumentSans = Instrument_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
+const cormorant = Cormorant({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-cormorant",
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+});
+
 export const metadata: Metadata = {
   title: "Augmont — Lab-grown diamonds, jeweller-direct",
   description:
@@ -54,7 +67,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable}`}
+        className={`${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${cormorant.variable}`}
         style={{
           minHeight: "100vh",
           display: "flex",

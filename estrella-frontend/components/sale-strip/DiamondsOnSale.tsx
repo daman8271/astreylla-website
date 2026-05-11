@@ -35,12 +35,12 @@ export function DiamondsOnSale() {
         <h2
           id="on-sale-heading"
           style={{
-            fontFamily: "var(--font-display)",
+            fontFamily: "var(--font-cormorant), Cormorant, 'Cormorant Garamond', Garamond, serif",
             fontStyle: "italic",
-            fontWeight: 400,
-            fontSize: "clamp(20px, 1.8vw, 26px)",
-            lineHeight: 1.2,
-            letterSpacing: "0.18em",
+            fontWeight: 500,
+            fontSize: "clamp(28px, 3.2vw, 40px)",
+            lineHeight: 1.15,
+            letterSpacing: "0.04em",
             textAlign: "center",
             color: "var(--brand-text-primary)",
             marginBottom: "clamp(64px, 8vw, 110px)",
