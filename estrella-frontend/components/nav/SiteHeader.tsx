@@ -8,6 +8,7 @@ import { MegaMenu, type MegaMenuConfig, type MegaMenuItem } from "./MegaMenu";
 import { CountrySelector } from "./CountrySelector";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { ShapeMaskIcon, type ShapeName } from "./ShapeMaskIcon";
+import { RingStyleMaskIcon, type RingStyleName } from "./RingStyleMaskIcon";
 
 type NavItem = {
   href: string;
@@ -309,21 +310,14 @@ const RING_SHAPES: MegaMenuItem[] = [
   SHAPE_ITEM("Heart", "heart", "/ring-studio/diamond"),
 ];
 
-const RingStyleIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-    <circle cx="12" cy="14" r="5" stroke="currentColor" strokeWidth="1.3" />
-    <circle cx="12" cy="9" r="2" stroke="currentColor" strokeWidth="1.3" />
-  </svg>
-);
-
 const RING_STYLES: MegaMenuItem[] = [
-  { label: "Solitaire", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
-  { label: "Pave", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
-  { label: "Halo", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
-  { label: "Hidden Halo", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
-  { label: "Nature", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
-  { label: "Trilogy", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
-  { label: "Vintage", href: "/ring-studio/diamond", icon: <RingStyleIcon /> },
+  { label: "Solitaire", href: "/ring-studio/diamond", icon: <RingStyleMaskIcon name="solitaire" /> },
+  { label: "Pave", href: "/ring-studio/diamond", icon: <RingStyleMaskIcon name="pave" /> },
+  { label: "Halo", href: "/ring-studio/diamond", icon: <RingStyleMaskIcon name="halo" /> },
+  { label: "Hidden Halo", href: "/ring-studio/diamond", icon: <RingStyleMaskIcon name="hidden-halo" /> },
+  { label: "Nature", href: "/ring-studio/diamond", icon: <RingStyleMaskIcon name="nature" /> },
+  { label: "Trilogy", href: "/ring-studio/diamond", icon: <RingStyleMaskIcon name="trilogy" /> },
+  { label: "Vintage", href: "/ring-studio/diamond", icon: <RingStyleMaskIcon name="vintage" /> },
 ];
 
 const RING_METALS: MegaMenuItem[] = [
