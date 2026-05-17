@@ -219,6 +219,13 @@
   color: var(--brand-text-primary);
   border-bottom-color: var(--brand-border-subtle);
 }
+[data-theme="dark"] .ds-mega__group-h {
+  color: var(--brand-text-primary);
+  border-bottom-color: var(--brand-border-subtle);
+}
+[data-theme="dark"] .ds-mega__icon {
+  color: var(--brand-text-primary);
+}
 [data-theme="dark"] .ds-mega__link {
   color: var(--brand-text-secondary);
 }
