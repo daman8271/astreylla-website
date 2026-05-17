@@ -9,6 +9,21 @@ export const loader = async ({ request }) => {
 export default function Dashboard() {
   return (
     <s-page heading="Augmont Diamonds">
+      <s-box padding="base">
+        <s-stack direction="inline" justifyContent="center">
+          <img
+            src="/payal-logo.jpg"
+            alt="Astreylla — Diamonds & Fine Jewelry"
+            style={{
+              maxWidth: "320px",
+              width: "100%",
+              height: "auto",
+              display: "block",
+            }}
+          />
+        </s-stack>
+      </s-box>
+
       <s-banner tone="info" heading="Welcome to Augmont Diamonds">
         Jewellers install this app to let customers browse and order diamonds
         directly from their store. Orders route to Payal&apos;s API automatically.
