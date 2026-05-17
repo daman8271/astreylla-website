@@ -4,6 +4,8 @@ import { useState } from "react";
 import type { SettingStyle, SettingKarat, SettingColor } from "./setting-types";
 import { SETTING_STYLES } from "./setting-types";
 import { RangeSlider } from "@/components/diamonds/RangeSlider";
+import { ShapeMaskIcon, type ShapeName } from "@/components/nav/ShapeMaskIcon";
+import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyleMaskIcon";
 
 export type SettingFilterState = {
   styles: Set<SettingStyle>;
@@ -110,10 +112,7 @@ export function SettingFilters({ value, onChange, lockedShape, hidden, onToggleH
                       aria-pressed={active}
                     >
                       <span className="rs-style-btn__icon" aria-hidden>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="14" r="6" stroke="currentColor" strokeWidth="1.4" />
-                          <path d="M9 8 L12 4 L15 8" stroke="currentColor" strokeWidth="1.4" />
-                        </svg>
+                        <RingStyleMaskIcon name={normalizeRingStyle(s)} size={22} />
                       </span>
                       <span className="rs-style-btn__label">{s}</span>
                     </button>
@@ -216,9 +215,12 @@ export function SettingFilters({ value, onChange, lockedShape, hidden, onToggleH
               <label className="rs-field__label">Shape</label>
               <div className="rs-shape-locked">
                 <span className="rs-shape-locked__chip" aria-disabled>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <ellipse cx="12" cy="12" rx="6" ry="9" stroke="currentColor" strokeWidth="1.4" />
-                  </svg>
+                  {lockedShape ? (
+                    <ShapeMaskIcon
+                      name={lockedShape.toLowerCase() as ShapeName}
+                      size={16}
+                    />
+                  ) : null}
                   {lockedShape || "—"}
                 </span>
                 <span className="rs-shape-locked__note">Locked to your chosen diamond</span>

@@ -6,6 +6,7 @@ import type { Setting, SettingMetal, SettingColor, SettingKarat } from "./settin
 import { metalKey, metalLabel } from "./setting-types";
 import { formatUsd } from "@/lib/settings";
 import { RingSpinner } from "./RingSpinner";
+import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyleMaskIcon";
 
 type Props = {
   setting: Setting;
@@ -93,10 +94,7 @@ export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBac
             {setting.name} ({setting.sku})
           </h2>
           <div className="rs-detail__style">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <circle cx="12" cy="14" r="6" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M9 8 L12 4 L15 8" stroke="currentColor" strokeWidth="1.4" />
-            </svg>
+            <RingStyleMaskIcon name={normalizeRingStyle(setting.style)} size={16} />
             <span className="rs-detail__style-key">Style</span>
             <span className="rs-detail__style-val">{setting.style}</span>
           </div>

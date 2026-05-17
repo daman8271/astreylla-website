@@ -11,6 +11,27 @@ export type RingStyleName =
   | "trilogy"
   | "vintage";
 
+/**
+ * Map setting-style data-model strings (e.g. "Hidden Halo", "Three-Stone")
+ * to the matching RingStyleName. Side Stone + Three-Stone both render the
+ * trilogy illustration (visually identical — center stone with sides).
+ */
+export function normalizeRingStyle(s: string | null | undefined): RingStyleName {
+  if (!s) return "solitaire";
+  const k = s.toLowerCase().trim().replace(/\s+/g, "-");
+  if (k === "side-stone" || k === "three-stone") return "trilogy";
+  const known: Record<string, RingStyleName> = {
+    solitaire: "solitaire",
+    pave: "pave",
+    halo: "halo",
+    "hidden-halo": "hidden-halo",
+    nature: "nature",
+    trilogy: "trilogy",
+    vintage: "vintage",
+  };
+  return known[k] ?? "solitaire";
+}
+
 type Props = {
   name: RingStyleName;
   size?: number;

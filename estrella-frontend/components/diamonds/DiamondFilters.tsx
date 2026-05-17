@@ -14,7 +14,7 @@ import {
   Treatment,
 } from "./types";
 import { RangeSlider } from "./RangeSlider";
-import { SHAPE_ICONS } from "./ShapeIcons";
+import { ShapeMaskIcon, type ShapeName } from "../nav/ShapeMaskIcon";
 
 export type FilterState = {
   treatment: Treatment;
@@ -68,7 +68,6 @@ export function DiamondFilters({ value, onChange }: Props) {
             <label className="ds-field__label">Shape</label>
             <div className="ds-shape-row">
               {allShapes.map((shape) => {
-                const Icon = SHAPE_ICONS[shape];
                 const active = value.shape === shape;
                 return (
                   <button
@@ -79,7 +78,7 @@ export function DiamondFilters({ value, onChange }: Props) {
                     aria-pressed={active}
                   >
                     <span className="ds-shape__icon">
-                      {Icon ? <Icon size={28} /> : null}
+                      <ShapeMaskIcon name={shape.toLowerCase() as ShapeName} size={28} />
                     </span>
                     <span className="ds-shape__label">{shape}</span>
                   </button>
