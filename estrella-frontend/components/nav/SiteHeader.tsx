@@ -7,16 +7,7 @@ import { Menu, X, Moon, Sun, Search, ChevronDown } from "lucide-react";
 import { MegaMenu, type MegaMenuConfig, type MegaMenuItem } from "./MegaMenu";
 import { CountrySelector } from "./CountrySelector";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import {
-  RoundIcon,
-  PrincessIcon,
-  OvalIcon,
-  RadiantIcon,
-  PearIcon,
-  HeartIcon,
-  MarquiseIcon,
-  EmeraldIcon,
-} from "@/components/diamonds/ShapeIcons";
+import { ShapeMaskIcon, type ShapeName } from "./ShapeMaskIcon";
 
 type NavItem = {
   href: string;
@@ -24,10 +15,10 @@ type NavItem = {
   menu?: MegaMenuConfig;
 };
 
-// ── ICON BUILDERS ─────────────────────────────────────────────────────────
-// Reuse the existing diamond shape SVGs from ShapeIcons.tsx for shape rows.
-const ShapeIcon = ({ Cmp }: { Cmp: (p: { size?: number }) => JSX.Element }) => (
-  <Cmp size={20} />
+// Detailed cropped diamond-cut PNGs rendered via CSS mask so they pick up
+// the surrounding text color (light/dark theme aware) in one asset.
+const ShapeIcon = ({ name }: { name: ShapeName }) => (
+  <ShapeMaskIcon name={name} size={22} />
 );
 
 // Color swatch dot (filled circle with the listed color).
@@ -108,18 +99,18 @@ const RingStudioIcon = ({ which }: { which: "setting" | "diamond" | "labgrown" }
 // ── DIAMONDS MEGA-MENU ────────────────────────────────────────────────────
 const SHAPE_ITEM = (
   label: string,
-  Icon: (p: { size?: number }) => JSX.Element,
+  shape: ShapeName,
   href: string
-): MegaMenuItem => ({ label, href, icon: <ShapeIcon Cmp={Icon} /> });
+): MegaMenuItem => ({ label, href, icon: <ShapeIcon name={shape} /> });
 
 const DIAMOND_SHAPES_LAB: MegaMenuItem[] = [
-  SHAPE_ITEM("Round", RoundIcon, "/diamonds?shape=Round&treatment=lab-grown"),
-  SHAPE_ITEM("Princess", PrincessIcon, "/diamonds?shape=Princess&treatment=lab-grown"),
-  SHAPE_ITEM("Oval", OvalIcon, "/diamonds?shape=Oval&treatment=lab-grown"),
-  SHAPE_ITEM("Radiant", RadiantIcon, "/diamonds?shape=Radiant&treatment=lab-grown"),
-  SHAPE_ITEM("Pear", PearIcon, "/diamonds?shape=Pear&treatment=lab-grown"),
-  SHAPE_ITEM("Heart", HeartIcon, "/diamonds?shape=Heart&treatment=lab-grown"),
-  SHAPE_ITEM("Marquise", MarquiseIcon, "/diamonds?shape=Marquise&treatment=lab-grown"),
+  SHAPE_ITEM("Round", "round", "/diamonds?shape=Round&treatment=lab-grown"),
+  SHAPE_ITEM("Princess", "princess", "/diamonds?shape=Princess&treatment=lab-grown"),
+  SHAPE_ITEM("Oval", "oval", "/diamonds?shape=Oval&treatment=lab-grown"),
+  SHAPE_ITEM("Radiant", "radiant", "/diamonds?shape=Radiant&treatment=lab-grown"),
+  SHAPE_ITEM("Pear", "pear", "/diamonds?shape=Pear&treatment=lab-grown"),
+  SHAPE_ITEM("Heart", "heart", "/diamonds?shape=Heart&treatment=lab-grown"),
+  SHAPE_ITEM("Marquise", "marquise", "/diamonds?shape=Marquise&treatment=lab-grown"),
 ];
 
 const DIAMONDS_MENU: MegaMenuConfig = {
@@ -177,12 +168,12 @@ const DIAMONDS_MENU: MegaMenuConfig = {
 
 // ── FANCY DIAMONDS MEGA-MENU ─────────────────────────────────────────────
 const COLORED_SHAPES: MegaMenuItem[] = [
-  SHAPE_ITEM("Round", RoundIcon, "/color-diamonds"),
-  SHAPE_ITEM("Princess", PrincessIcon, "/color-diamonds"),
-  SHAPE_ITEM("Oval", OvalIcon, "/color-diamonds"),
-  SHAPE_ITEM("Radiant", RadiantIcon, "/color-diamonds"),
-  SHAPE_ITEM("Pear", PearIcon, "/color-diamonds"),
-  SHAPE_ITEM("Heart", HeartIcon, "/color-diamonds"),
+  SHAPE_ITEM("Round", "round", "/color-diamonds"),
+  SHAPE_ITEM("Princess", "princess", "/color-diamonds"),
+  SHAPE_ITEM("Oval", "oval", "/color-diamonds"),
+  SHAPE_ITEM("Radiant", "radiant", "/color-diamonds"),
+  SHAPE_ITEM("Pear", "pear", "/color-diamonds"),
+  SHAPE_ITEM("Heart", "heart", "/color-diamonds"),
 ];
 
 const COLORED_COLORS: MegaMenuItem[] = [
@@ -246,12 +237,12 @@ const COLORED_MENU: MegaMenuConfig = {
 
 // ── GEMSTONES MEGA-MENU ──────────────────────────────────────────────────
 const GEMSTONE_SHAPES: MegaMenuItem[] = [
-  SHAPE_ITEM("Round", RoundIcon, "/gemstones"),
-  { label: "Square", href: "/gemstones", icon: <ShapeIcon Cmp={PrincessIcon} /> },
-  SHAPE_ITEM("Oval", OvalIcon, "/gemstones"),
-  SHAPE_ITEM("Emerald", EmeraldIcon, "/gemstones"),
-  SHAPE_ITEM("Pear", PearIcon, "/gemstones"),
-  SHAPE_ITEM("Heart", HeartIcon, "/gemstones"),
+  SHAPE_ITEM("Round", "round", "/gemstones"),
+  { label: "Square", href: "/gemstones", icon: <ShapeIcon name="princess" /> },
+  SHAPE_ITEM("Oval", "oval", "/gemstones"),
+  SHAPE_ITEM("Emerald", "emerald", "/gemstones"),
+  SHAPE_ITEM("Pear", "pear", "/gemstones"),
+  SHAPE_ITEM("Heart", "heart", "/gemstones"),
 ];
 
 const GEMSTONE_COLORS: MegaMenuItem[] = [
@@ -310,12 +301,12 @@ const GEMSTONES_MENU: MegaMenuConfig = {
 
 // ── RINGS MEGA-MENU ──────────────────────────────────────────────────────
 const RING_SHAPES: MegaMenuItem[] = [
-  SHAPE_ITEM("Round", RoundIcon, "/ring-studio/diamond"),
-  SHAPE_ITEM("Princess", PrincessIcon, "/ring-studio/diamond"),
-  SHAPE_ITEM("Oval", OvalIcon, "/ring-studio/diamond"),
-  SHAPE_ITEM("Radiant", RadiantIcon, "/ring-studio/diamond"),
-  SHAPE_ITEM("Pear", PearIcon, "/ring-studio/diamond"),
-  SHAPE_ITEM("Heart", HeartIcon, "/ring-studio/diamond"),
+  SHAPE_ITEM("Round", "round", "/ring-studio/diamond"),
+  SHAPE_ITEM("Princess", "princess", "/ring-studio/diamond"),
+  SHAPE_ITEM("Oval", "oval", "/ring-studio/diamond"),
+  SHAPE_ITEM("Radiant", "radiant", "/ring-studio/diamond"),
+  SHAPE_ITEM("Pear", "pear", "/ring-studio/diamond"),
+  SHAPE_ITEM("Heart", "heart", "/ring-studio/diamond"),
 ];
 
 const RingStyleIcon = () => (
@@ -560,13 +551,16 @@ export function SiteHeader() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo-astreylla.jpeg"
-              alt=""
-              aria-hidden
+              src={
+                onDarkHero || theme === "dark"
+                  ? "/logo/logo-dark.png"
+                  : "/logo/logo-light.png"
+              }
+              alt="Astreylla"
               style={{
-                height: 56,
+                height: 52,
                 width: "auto",
-                maxWidth: 220,
+                maxWidth: 240,
                 display: "block",
               }}
             />
