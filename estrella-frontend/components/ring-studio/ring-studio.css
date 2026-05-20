@@ -683,10 +683,17 @@
 }
 .rs-empty-stage p { color: var(--brand-text-secondary, #6b6b6b); margin-bottom: 16px; }
 
-/* ─── DiamondCard outlined CTA (added for ring-studio mode) ── */
+/* ─── DiamondCard outlined CTA (added for ring-studio mode) ──
+   Theme-aware: light = white fill + dark ink/border, dark = dark fill +
+   light ink/border. Hover inverts to a solid fill for clear affordance in
+   both themes. (Previously hardcoded #fff → invisible white-on-white CTA in
+   dark mode.) */
 .ds-card__cta--outline {
-  background: #fff !important;
+  background: var(--brand-bg) !important;
   color: var(--brand-text-primary, #1a1a1a) !important;
   border: 1px solid var(--brand-text-primary, #1a1a1a) !important;
 }
-.ds-card__cta--outline:hover { background: #f7f3ec !important; }
+.ds-card__cta--outline:hover {
+  background: var(--brand-text-primary) !important;
+  color: var(--brand-bg) !important;
+}

@@ -46,6 +46,9 @@
   --radius-lg: 16px;
   --radius-pill: 9999px;
 
+  /* Card / surface tints used in best-sellers, products etc. */
+  --surface-soft: #f5f5f5;
+
   /* Diamonds-on-Sale section — theme-aware bg + stone grounding shadow */
   --sale-strip-bg-start: #f3ede2;
   --sale-strip-bg-end: #ece4d5;
@@ -78,10 +81,6 @@
   --sale-strip-bg-end: #050505;
   --sale-strip-stone-shadow: drop-shadow(0 22px 30px rgba(255, 255, 255, 0.05))
     drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
-}
-
-:root {
-  --surface-soft: #f5f5f5;
 }
 
 * {

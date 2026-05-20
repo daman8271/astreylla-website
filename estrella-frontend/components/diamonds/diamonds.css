@@ -901,6 +901,18 @@
   color: var(--brand-bg);
 }
 
+/* Skeleton loading shimmer — keep it a subtle DARK shimmer in dark mode
+   instead of the bright cream/white gradients used in light mode. The
+   selector below has specificity (0,3,0), so it wins over the (0,2,0)
+   `[data-theme="dark"] .ds-card__media` rule above and preserves the
+   animated shimmer rather than flattening to a solid gradient. */
+[data-theme="dark"] .ds-card--skeleton .ds-card__media,
+[data-theme="dark"] .ds-card__skeleton-line {
+  background: linear-gradient(110deg, #1c1c1c 30%, #262626 50%, #1c1c1c 70%);
+  background-size: 200% 100%;
+  animation: ds-skeleton 1.4s linear infinite;
+}
+
 /* ─── 360 OVERLAY BUTTON (on card + detail) ─────────────────────────────── */
 .ds-card__view360,
 .ds-detail__360 {
