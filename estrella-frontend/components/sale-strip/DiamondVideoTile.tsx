@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
 type Props = {
   shape: string;
@@ -11,24 +10,16 @@ type Props = {
   alt: string;
 };
 
-const VIEWER_BASE = "https://www.viewmydiamonds.com";
-
-export function DiamondVideoTile({ shape, stockNum, posterSrc, alt }: Props) {
-  // Iframe stays mounted (so it can auto-play 360° rotation) but the rembg
-  // poster sits over it until the iframe signals it loaded — keeps the
-  // section looking clean if the viewer is slow/blocked, then fades to live.
-  const [iframeReady, setIframeReady] = useState(false);
-
-  // Augmont's viewmydiamonds viewer supports id/type/autoplay/width/height
-  // query params. Autoplay = continuous rotation, no controls.
-  const videoSrc = `${VIEWER_BASE}/?id=${encodeURIComponent(
-    stockNum
-  )}&type=video&autoplay=true`;
-
+export function DiamondVideoTile({ shape, posterSrc, alt }: Props) {
+  // Static poster only — no video. Previously each tile mounted a
+  // viewmydiamonds.com 360° <iframe> over the poster. When a stone has no
+  // video, that iframe serves its own "No video found" + spinner page, which
+  // still loads (HTTP 200) so onLoad fires, the poster fades out, and the
+  // error page bleeds through. We render the clean rembg PNG and nothing else.
   return (
     <Link
       href={`/diamonds?shape=${encodeURIComponent(shape)}`}
-      aria-label={`Browse ${shape.toLowerCase()} diamonds on sale — preview 360° rotation`}
+      aria-label={`Browse ${shape.toLowerCase()} diamonds on sale`}
       style={{
         display: "block",
         width: "clamp(140px, 17vw, 240px)",
@@ -39,36 +30,12 @@ export function DiamondVideoTile({ shape, stockNum, posterSrc, alt }: Props) {
       }}
       className="hover:scale-[1.03]"
     >
-      {/* Iframe layer — auto-rotates the 360° JPEG frame sequence */}
-      <iframe
-        src={videoSrc}
-        title={`${shape} 360° rotation`}
-        loading="lazy"
-        allow="autoplay"
-        onLoad={() => setIframeReady(true)}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          border: 0,
-          background: "transparent",
-          opacity: iframeReady ? 1 : 0,
-          transition: "opacity 600ms ease-out",
-          pointerEvents: "none",
-        }}
-      />
-      {/* Poster layer — clean rembg PNG, fades out when iframe is ready */}
       <Image
         src={posterSrc}
         alt={alt}
         fill
         sizes="(max-width: 768px) 30vw, 240px"
-        style={{
-          objectFit: "contain",
-          opacity: iframeReady ? 0 : 1,
-          transition: "opacity 600ms ease-out",
-        }}
+        style={{ objectFit: "contain" }}
         priority={false}
       />
     </Link>
