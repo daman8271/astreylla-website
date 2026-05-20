@@ -57,7 +57,7 @@ export function SiteFooter() {
       >
         <Link
           href="/"
-          aria-label="Augmont — home"
+          aria-label="Astreylla — home"
           style={{
             fontFamily: "var(--font-display)",
             fontSize: 22,
@@ -66,7 +66,7 @@ export function SiteFooter() {
             paddingBlock: 24,
           }}
         >
-          AUGMONT
+          ASTREYLLA
         </Link>
       </div>
 
@@ -187,7 +187,7 @@ export function SiteFooter() {
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <span>USD $</span>
             <span style={{ color: "var(--brand-text-primary)" }}>
-              hello@augmont.example
+              hello@astreylla.example
             </span>
           </div>
 
@@ -207,7 +207,7 @@ export function SiteFooter() {
             >
               <InstagramIcon />
             </a>
-            <span>© Copyright, Augmont Beta, {year}.</span>
+            <span>© Copyright, Astreylla Beta, {year}.</span>
           </div>
         </div>
       </div>

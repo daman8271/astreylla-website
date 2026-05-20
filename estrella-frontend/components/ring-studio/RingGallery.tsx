@@ -86,7 +86,7 @@ export function RingGallery({
       </div>
       <div className="rs-gallery__brand">
         <span style={{ fontFamily: "var(--font-display, serif)", fontSize: 22, letterSpacing: "0.18em" }}>
-          AUGMONT
+          ASTREYLLA
         </span>
       </div>
     </div>

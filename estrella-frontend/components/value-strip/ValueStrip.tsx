@@ -23,7 +23,7 @@ export function ValueStrip() {
     <section
       className="estrella-section"
       style={{ background: "var(--brand-bg-warm)" }}
-      aria-label="Why Augmont"
+      aria-label="Why Astreylla"
     >
       <div className="estrella-container">
         <ul

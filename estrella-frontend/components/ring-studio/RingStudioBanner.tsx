@@ -67,7 +67,7 @@ export function RingStudioBanner() {
               marginBottom: 32,
             }}
           >
-            AUGMONT
+            ASTREYLLA
           </div>
           <Link
             href="/ring-studio/diamond"

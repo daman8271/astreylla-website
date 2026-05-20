@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Gemstones — Augmont",
+  title: "Gemstones — Astreylla",
   description: "Lab-grown sapphires, rubies, emeralds. Coming soon.",
 };
 

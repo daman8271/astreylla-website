@@ -50,7 +50,7 @@ const cormorant = Cormorant({
 });
 
 export const metadata: Metadata = {
-  title: "Augmont — Lab-grown diamonds, jeweller-direct",
+  title: "Astreylla — Lab-grown diamonds, jeweller-direct",
   description:
     "Browse certified loose diamonds at wholesale prices. GIA & IGI certified, lab-grown excellence, direct jeweller pricing.",
 };
