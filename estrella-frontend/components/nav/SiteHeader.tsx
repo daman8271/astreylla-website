@@ -68,35 +68,6 @@ const MetalChip = ({
   </span>
 );
 
-// Tiny outline ring/icon for "Ring Studio" entries.
-const RingStudioIcon = ({ which }: { which: "setting" | "diamond" | "labgrown" }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-    {which === "setting" ? (
-      <>
-        <circle cx="12" cy="14" r="5" stroke="currentColor" strokeWidth="1.3" />
-        <path d="M9 9 L12 4 L15 9" stroke="currentColor" strokeWidth="1.3" />
-      </>
-    ) : which === "diamond" ? (
-      <>
-        <path
-          d="M6 9 L12 3 L18 9 L12 21 Z"
-          stroke="currentColor"
-          strokeWidth="1.3"
-        />
-      </>
-    ) : (
-      <>
-        <path
-          d="M6 9 L12 3 L18 9 L12 21 Z"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeDasharray="2 1.5"
-        />
-      </>
-    )}
-  </svg>
-);
-
 // ── DIAMONDS MEGA-MENU ────────────────────────────────────────────────────
 const SHAPE_ITEM = (
   label: string,
@@ -124,12 +95,12 @@ const DIAMONDS_MENU: MegaMenuConfig = {
             {
               label: "Start with a setting",
               href: "/ring-studio/diamond",
-              icon: <RingStudioIcon which="setting" />,
+              icon: <RingStyleMaskIcon name="solitaire" size={22} />,
             },
             {
               label: "Start with a diamond",
               href: "/diamonds",
-              icon: <RingStudioIcon which="diamond" />,
+              icon: <ShapeIcon name="round" />,
             },
           ],
         },
@@ -196,12 +167,12 @@ const COLORED_MENU: MegaMenuConfig = {
             {
               label: "Start with a setting",
               href: "/ring-studio/diamond",
-              icon: <RingStudioIcon which="setting" />,
+              icon: <RingStyleMaskIcon name="solitaire" size={22} />,
             },
             {
               label: "Start with a fancy diamond",
               href: "/color-diamonds",
-              icon: <RingStudioIcon which="diamond" />,
+              icon: <ShapeIcon name="round" />,
             },
           ],
         },
@@ -368,12 +339,12 @@ const ENGAGEMENT_MENU: MegaMenuConfig = {
             {
               label: "Start with a setting",
               href: "/ring-studio/diamond",
-              icon: <RingStudioIcon which="setting" />,
+              icon: <RingStyleMaskIcon name="solitaire" size={22} />,
             },
             {
               label: "Start with a diamond",
               href: "/diamonds?treatment=lab-grown",
-              icon: <RingStudioIcon which="labgrown" />,
+              icon: <ShapeIcon name="round" />,
             },
           ],
         },
