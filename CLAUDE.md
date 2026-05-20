@@ -5,7 +5,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > Read this ENTIRE file before doing ANYTHING.
 > Zero code until this is fully read.
 
-## PROJECT
+## ⚠️ REPO ORIENTATION — READ FIRST
+This repo (`astreylla-website`) holds **two separate codebases**. There is **no root `package.json`** — the root is just a container.
+
+| Path | What it is | Status |
+|------|-----------|--------|
+| **`estrella-frontend/`** | **★ THE ACTIVE PROJECT — a Next.js 14 website** (App Router, TypeScript, Tailwind v3). Marketing storefront + ring builder for the **Astreylla / Estrella** brand. Deploys to **Vercel** (`vercel.json`). | **Where ~all current work happens.** |
+| `augmont-diamonds/` + `server/` + `prisma/` | The older **Shopify embedded app** (React Router/Remix admin + Express API + Theme Extension widget) for the diamond-wholesale flow. Built, deployed to Railway, **stable / maintenance mode**. | Mostly untouched now. |
+
+**Brand naming has drifted across the repo:** "Payal Diamond" (old root docs) → "Estrella" (`estrella-frontend`) → **"Astreylla"** (repo name + recent commits). They all refer to the same business; **Astreylla is the current brand.**
+
+> **Everything in this file BELOW this section documents the `augmont-diamonds/` Shopify app**, not the Next.js website. The hard-won lessons (Prisma/Supabase, Augmont API, currency, deploy gotchas) still apply to that sibling app and to the widget the website reuses — but the day-to-day work is in `estrella-frontend/`.
+
+### estrella-frontend/ at a glance
+- **Run:** `cd estrella-frontend && npm install && npm run dev` → http://localhost:3001 (port 3001 to avoid the Remix app's 3000).
+- **Routes:** `/` (home — hero, shape tiles, sale strip, best sellers), `/diamonds` (embeds the live diamond widget), `/ring-studio/*` (multi-step ring builder: choose setting → diamond → complete), `/products/[handle]`, plus `/color-diamonds` `/gemstones` `/engagement` placeholders.
+- **API routes (`app/api/`):** `widget/[...path]` (CORS proxy → Railway Express), `diamond-image/[stockNum]`, `ring-quotes`.
+- **Structure:** `app/` (routes), `components/` (nav, hero, sale-strip, ring-studio, cart, theme/dark-mode, widget-embed, …), `lib/` (design-tokens, ringQuote, ringSizes, cart-actions, shopify clients), `public/` (assets + copied widget files).
+- **Diamond widget:** copied verbatim from `augmont-diamonds/extensions/diamond-widget/assets/` into `public/widget/`. Re-sync on widget updates (see `estrella-frontend/README.md`). **Copy out — don't edit in place.**
+- **Don't touch from website work:** `augmont-diamonds/`, `server/`, `prisma/`, root `.env`, `shopify.app.toml`.
+
+---
+
+## PROJECT (the `augmont-diamonds/` Shopify app — sibling, stable)
 Shopify embedded app for Payal (diamond wholesaler).
 Jewellers install app → customers browse diamonds on jeweller's store
 → orders flow to Payal's existing live API → she ships.
