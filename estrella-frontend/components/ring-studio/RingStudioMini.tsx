@@ -1,45 +1,22 @@
 import Link from "next/link";
-
-function RingTileGlyph() {
-  return (
-    <svg viewBox="0 0 200 200" aria-hidden="true" style={{ width: "55%", height: "55%" }}>
-      <ellipse cx="100" cy="130" rx="56" ry="54" fill="none" stroke="#1a1a1a" strokeWidth="1.5" />
-      <ellipse cx="100" cy="130" rx="44" ry="42" fill="none" stroke="#1a1a1a" strokeWidth="0.8" opacity="0.5" />
-      <path d="M86 80 L100 60 L114 80 L100 96 Z" fill="none" stroke="#1a1a1a" strokeWidth="1.4" />
-      <path d="M100 60 L100 96 M86 80 L114 80" fill="none" stroke="#1a1a1a" strokeWidth="0.6" opacity="0.6" />
-    </svg>
-  );
-}
-
-function DiamondTileGlyph() {
-  return (
-    <svg viewBox="0 0 200 200" aria-hidden="true" style={{ width: "55%", height: "55%" }}>
-      <defs>
-        <linearGradient id="mini-stone-grad" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stopColor="#f0f0f0" />
-          <stop offset="50%" stopColor="#cfcfcf" />
-          <stop offset="100%" stopColor="#9b9b9b" />
-        </linearGradient>
-      </defs>
-      <circle cx="100" cy="100" r="68" fill="url(#mini-stone-grad)" stroke="#1a1a1a" strokeWidth="1" />
-      <circle cx="100" cy="100" r="46" fill="none" stroke="#1a1a1a" strokeWidth="0.6" opacity="0.4" />
-      <path d="M32 100 L168 100 M100 32 L100 168 M52 52 L148 148 M148 52 L52 148 M100 32 L146 100 L100 168 L54 100 Z" fill="none" stroke="#1a1a1a" strokeWidth="0.5" opacity="0.55" />
-    </svg>
-  );
-}
+import Image from "next/image";
 
 const TILES = [
   {
     href: "/ring-studio/diamond",
     label: "Start with a",
     italicLabel: "ring",
-    Glyph: RingTileGlyph,
+    image: "/ring-studio/start-with-ring.jpg",
+    alt: "Solitaire diamond engagement ring",
+    objectPosition: "center",
   },
   {
     href: "/ring-studio/diamond",
     label: "Start with a",
     italicLabel: "diamond",
-    Glyph: DiamondTileGlyph,
+    image: "/ring-studio/start-with-diamond.jpg",
+    alt: "Princess-cut diamond",
+    objectPosition: "center",
   },
 ];
 
@@ -88,18 +65,39 @@ export function RingStudioMini() {
               href={t.href}
               style={{
                 aspectRatio: "1 / 1",
-                background: "#ffffff",
-                color: "#1a1a1a",
+                background: "#111111",
+                color: "#ffffff",
                 position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: "block",
                 overflow: "hidden",
                 borderRadius: "var(--radius-sm)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
               }}
-              className="hover:scale-[1.01] transition-transform"
+              className="group hover:scale-[1.01] transition-transform"
             >
-              <t.Glyph />
+              <Image
+                src={t.image}
+                alt={t.alt}
+                fill
+                sizes="(max-width: 600px) 90vw, 420px"
+                style={{
+                  objectFit: "cover",
+                  objectPosition: t.objectPosition,
+                }}
+              />
+
+              {/* readability scrim so the label stays legible over light or dark photos */}
+              <span
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%)",
+                  pointerEvents: "none",
+                }}
+              />
+
               <span
                 style={{
                   position: "absolute",
@@ -111,7 +109,8 @@ export function RingStudioMini() {
                   fontSize: 24,
                   lineHeight: 1.2,
                   letterSpacing: "-0.01em",
-                  color: "#1a1a1a",
+                  color: "#ffffff",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.45)",
                 }}
               >
                 {t.label}{" "}
