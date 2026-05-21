@@ -1,4 +1,5 @@
 import type { Setting, SettingStyle, SettingMetal } from "@/components/ring-studio/setting-types";
+import { RINGS, resolveMedia, type AkoProduct } from "@/lib/akoirah";
 
 const PALETTE: Record<string, { bg: string; fg: string }> = {
   Rose: { bg: "e3b8a4", fg: "5a3328" },
@@ -7,25 +8,12 @@ const PALETTE: Record<string, { bg: string; fg: string }> = {
   Platinum: { bg: "c8ccd0", fg: "1f2933" },
 };
 
+// Last-resort placeholder, used only when a setting has no mapped Bunny render
+// (e.g. we run out of usable ring folders, or the CDN is unreachable).
 function mockImage(name: string, color: keyof typeof PALETTE) {
   const p = PALETTE[color];
   const text = encodeURIComponent(name);
   return `https://placehold.co/800x800/${p.bg}/${p.fg}?text=${text}`;
-}
-
-function buildMetals(name: string, basePrices: Record<string, number>): SettingMetal[] {
-  const tag = (k: string, c: keyof typeof PALETTE) => `${name}\n${k} ${c}`;
-  return [
-    { karat: "9K", color: "Rose", priceUsd: basePrices["9K"] ?? 850, imageUrl: mockImage(tag("9K", "Rose"), "Rose") },
-    { karat: "14K", color: "Rose", priceUsd: basePrices["14K"] ?? 1150, imageUrl: mockImage(tag("14K", "Rose"), "Rose") },
-    { karat: "18K", color: "Rose", priceUsd: basePrices["18K"] ?? 1400, imageUrl: mockImage(tag("18K", "Rose"), "Rose") },
-    { karat: "9K", color: "White", priceUsd: basePrices["9K"] ?? 850, imageUrl: mockImage(tag("9K", "White"), "White") },
-    { karat: "14K", color: "White", priceUsd: basePrices["14K"] ?? 1150, imageUrl: mockImage(tag("14K", "White"), "White") },
-    { karat: "18K", color: "White", priceUsd: basePrices["18K"] ?? 1400, imageUrl: mockImage(tag("18K", "White"), "White") },
-    { karat: "14K", color: "Yellow", priceUsd: basePrices["14K"] ?? 1150, imageUrl: mockImage(tag("14K", "Yellow"), "Yellow") },
-    { karat: "18K", color: "Yellow", priceUsd: basePrices["18K"] ?? 1400, imageUrl: mockImage(tag("18K", "Yellow"), "Yellow") },
-    { karat: "PT", color: "Platinum", priceUsd: basePrices["PT"] ?? 1750, imageUrl: mockImage(tag("PT", "Platinum"), "Platinum") },
-  ];
 }
 
 const ALL_SHAPES: Setting["availableShapes"] = [
@@ -41,108 +29,166 @@ const ALL_SHAPES: Setting["availableShapes"] = [
   "Radiant",
 ];
 
-export const SETTINGS: Setting[] = [
+// The 9 metal/karat variants every setting offers. Image + video come from the
+// mapped Bunny ring (per colour: Rose->RG, White->WG, Yellow->YG, Platinum->WG).
+const METAL_SPECS: { karat: SettingMetal["karat"]; color: SettingMetal["color"]; priceKey: string }[] = [
+  { karat: "9K", color: "Rose", priceKey: "9K" },
+  { karat: "14K", color: "Rose", priceKey: "14K" },
+  { karat: "18K", color: "Rose", priceKey: "18K" },
+  { karat: "9K", color: "White", priceKey: "9K" },
+  { karat: "14K", color: "White", priceKey: "14K" },
+  { karat: "18K", color: "White", priceKey: "18K" },
+  { karat: "14K", color: "Yellow", priceKey: "14K" },
+  { karat: "18K", color: "Yellow", priceKey: "18K" },
+  { karat: "PT", color: "Platinum", priceKey: "PT" },
+];
+
+type SettingSeed = {
+  sku: string;
+  name: string;
+  style: SettingStyle;
+  description: string;
+  basePriceUsd: number;
+  availableShapes: Setting["availableShapes"];
+  prices: Record<string, number>;
+};
+
+// Curated catalogue metadata (names, styles, descriptions, prices). Imagery is
+// overlaid from the Bunny CDN catalogue below.
+// NOTE: these Bunny renders are finished fashion rings, not engagement-ring
+// mountings — the image<->setting pairing is approximate and 1:1 by catalogue
+// order. Precise product identity/style/pricing arrives with the Ring API.
+// TODO: wire Ring API pricing + descriptions + correct image mapping — prices below are placeholder.
+const SEEDS: SettingSeed[] = [
   {
     sku: "AUG001-R-SOL",
     name: "The Aurora",
     style: "Solitaire",
-    description: "A timeless solitaire that lets a single brilliant stone speak for itself. The slim band is hand-finished for an effortless silhouette.",
+    description:
+      "A timeless solitaire that lets a single brilliant stone speak for itself. The slim band is hand-finished for an effortless silhouette.",
     basePriceUsd: 680,
     availableShapes: ALL_SHAPES,
-    defaultThumbnail: mockImage("Aurora", "White"),
-    metals: buildMetals("Aurora", { "9K": 680, "14K": 920, "18K": 1120, PT: 1480 }),
+    prices: { "9K": 680, "14K": 920, "18K": 1120, PT: 1480 },
   },
   {
     sku: "AUG002-R-SOL",
     name: "The Lumen",
     style: "Solitaire",
-    description: "Six delicate prongs cradle the centre stone, lifting it skyward for maximum brilliance. Pairs beautifully with any wedding band.",
+    description:
+      "Six delicate prongs cradle the centre stone, lifting it skyward for maximum brilliance. Pairs beautifully with any wedding band.",
     basePriceUsd: 720,
     availableShapes: ALL_SHAPES,
-    defaultThumbnail: mockImage("Lumen", "Yellow"),
-    metals: buildMetals("Lumen", { "9K": 720, "14K": 980, "18K": 1180, PT: 1520 }),
+    prices: { "9K": 720, "14K": 980, "18K": 1180, PT: 1520 },
   },
   {
     sku: "AUG003-R-HAL",
     name: "The Floral",
     style: "Halo",
-    description: "A petal-shaped halo of pavé diamonds blossoms around the centre stone, amplifying its radiance for a romantic finish.",
+    description:
+      "A petal-shaped halo of pavé diamonds blossoms around the centre stone, amplifying its radiance for a romantic finish.",
     basePriceUsd: 1090,
     availableShapes: ["Round", "Oval", "Cushion", "Pear", "Emerald"],
-    defaultThumbnail: mockImage("Floral", "Rose"),
-    metals: buildMetals("Floral", { "9K": 1090, "14K": 1340, "18K": 1620, PT: 1990 }),
+    prices: { "9K": 1090, "14K": 1340, "18K": 1620, PT: 1990 },
   },
   {
     sku: "AUG004-R-HAL",
     name: "The Celeste",
     style: "Halo",
-    description: "A classic round halo magnifies the centre stone with a perfect symmetrical glow. Pavé shoulders trail toward the band.",
+    description:
+      "A classic round halo magnifies the centre stone with a perfect symmetrical glow. Pavé shoulders trail toward the band.",
     basePriceUsd: 1240,
     availableShapes: ["Round", "Princess", "Oval", "Cushion"],
-    defaultThumbnail: mockImage("Celeste", "White"),
-    metals: buildMetals("Celeste", { "9K": 1240, "14K": 1490, "18K": 1790, PT: 2190 }),
+    prices: { "9K": 1240, "14K": 1490, "18K": 1790, PT: 2190 },
   },
   {
     sku: "AUG005-R-HHL",
     name: "The Vela",
     style: "Hidden Halo",
-    description: "From above, a clean solitaire silhouette. Tilt and a hidden halo of micro-pavé reveals itself for an unexpected sparkle.",
+    description:
+      "From above, a clean solitaire silhouette. Tilt and a hidden halo of micro-pavé reveals itself for an unexpected sparkle.",
     basePriceUsd: 1180,
     availableShapes: ["Round", "Oval", "Cushion", "Emerald", "Radiant"],
-    defaultThumbnail: mockImage("Vela", "Yellow"),
-    metals: buildMetals("Vela", { "9K": 1180, "14K": 1420, "18K": 1720, PT: 2090 }),
+    prices: { "9K": 1180, "14K": 1420, "18K": 1720, PT: 2090 },
   },
   {
     sku: "AUG006-R-PAV",
     name: "The Étoile",
     style: "Pave",
-    description: "Tightly-set pavé runs the entire length of the band, surrounding the centre stone in continuous fire from every angle.",
+    description:
+      "Tightly-set pavé runs the entire length of the band, surrounding the centre stone in continuous fire from every angle.",
     basePriceUsd: 1150,
     availableShapes: ["Round", "Princess", "Oval", "Cushion", "Pear"],
-    defaultThumbnail: mockImage("Etoile", "Rose"),
-    metals: buildMetals("Étoile", { "9K": 1150, "14K": 1390, "18K": 1690, PT: 2050 }),
+    prices: { "9K": 1150, "14K": 1390, "18K": 1690, PT: 2050 },
   },
   {
     sku: "AUG007-R-PAV",
     name: "The Sirena",
     style: "Pave",
-    description: "A delicate twisted band hand-set with pavé diamonds along its curve. Modern and feminine without being overdone.",
+    description:
+      "A delicate twisted band hand-set with pavé diamonds along its curve. Modern and feminine without being overdone.",
     basePriceUsd: 980,
     availableShapes: ["Round", "Oval", "Pear", "Marquise"],
-    defaultThumbnail: mockImage("Sirena", "White"),
-    metals: buildMetals("Sirena", { "9K": 980, "14K": 1220, "18K": 1490, PT: 1820 }),
+    prices: { "9K": 980, "14K": 1220, "18K": 1490, PT: 1820 },
   },
   {
     sku: "AUG008-R-1ST",
     name: "The Accent",
     style: "Side Stone",
-    description: "Designed with side stones that gracefully complement the centre stone, this ring strikes a balance between classic elegance and added brilliance.",
+    description:
+      "Designed with side stones that gracefully complement the centre stone, this ring strikes a balance between classic elegance and added brilliance.",
     basePriceUsd: 1240,
     availableShapes: ["Round", "Oval", "Cushion", "Pear", "Emerald", "Princess"],
-    defaultThumbnail: mockImage("Accent", "Rose"),
-    metals: buildMetals("Accent", { "9K": 1240, "14K": 1490, "18K": 1790, PT: 2190 }),
+    prices: { "9K": 1240, "14K": 1490, "18K": 1790, PT: 2190 },
   },
   {
     sku: "AUG009-R-3ST",
     name: "The Triad",
     style: "Three-Stone",
-    description: "Past, present, future — a centre stone flanked by two perfectly-matched side stones. Symbolic without being heavy.",
+    description:
+      "Past, present, future — a centre stone flanked by two perfectly-matched side stones. Symbolic without being heavy.",
     basePriceUsd: 1490,
     availableShapes: ["Round", "Oval", "Emerald", "Cushion"],
-    defaultThumbnail: mockImage("Triad", "Yellow"),
-    metals: buildMetals("Triad", { "9K": 1490, "14K": 1790, "18K": 2150, PT: 2580 }),
+    prices: { "9K": 1490, "14K": 1790, "18K": 2150, PT: 2580 },
   },
   {
     sku: "AUG010-R-NAT",
     name: "The Verdant",
     style: "Nature",
-    description: "Twin vines of pavé curl up the band and meet beneath the centre stone, evoking organic growth in solid gold.",
+    description:
+      "Twin vines of pavé curl up the band and meet beneath the centre stone, evoking organic growth in solid gold.",
     basePriceUsd: 1320,
     availableShapes: ["Round", "Oval", "Pear", "Marquise"],
-    defaultThumbnail: mockImage("Verdant", "Rose"),
-    metals: buildMetals("Verdant", { "9K": 1320, "14K": 1590, "18K": 1920, PT: 2350 }),
+    prices: { "9K": 1320, "14K": 1590, "18K": 1920, PT: 2350 },
   },
 ];
+
+function buildSetting(seed: SettingSeed, ring: AkoProduct | undefined): Setting {
+  const metals: SettingMetal[] = METAL_SPECS.map((spec) => {
+    const media = resolveMedia(ring, spec.color);
+    return {
+      karat: spec.karat,
+      color: spec.color,
+      priceUsd: seed.prices[spec.priceKey] ?? seed.basePriceUsd,
+      imageUrl: media.card ?? mockImage(`${seed.name}\n${spec.karat} ${spec.color}`, spec.color),
+      thumbnails: media.gallery.length ? media.gallery : undefined,
+      videoUrl: media.video ?? undefined,
+    };
+  });
+  const white = resolveMedia(ring, "White");
+  return {
+    sku: seed.sku,
+    name: seed.name,
+    style: seed.style,
+    description: seed.description,
+    basePriceUsd: seed.basePriceUsd,
+    availableShapes: seed.availableShapes,
+    defaultThumbnail: white.card ?? mockImage(seed.name, "White"),
+    metals,
+  };
+}
+
+// Map each curated setting to a usable Bunny ring (1:1 by catalogue order).
+export const SETTINGS: Setting[] = SEEDS.map((seed, i) => buildSetting(seed, RINGS[i]));
 
 export function getSettingBySku(sku: string): Setting | undefined {
   return SETTINGS.find((s) => s.sku === sku);

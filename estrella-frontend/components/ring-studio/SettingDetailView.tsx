@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SHAPES_PRIMARY } from "@/components/diamonds/types";
 import type { Setting, SettingMetal, SettingColor, SettingKarat } from "./setting-types";
 import { metalKey, metalLabel } from "./setting-types";
@@ -61,9 +61,18 @@ export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBac
     initialMetalKey || metalKey(setting.metals[0])
   );
   const [descOpen, setDescOpen] = useState(true);
+  // Which still the gallery is showing; null = the default 360° spin video.
+  const [activeStill, setActiveStill] = useState<string | null>(null);
 
   const metal: SettingMetal =
     setting.metals.find((m) => metalKey(m) === chosenMetalKey) || setting.metals[0];
+
+  // Switching metal swaps the whole asset set — return to the spin view.
+  useEffect(() => {
+    setActiveStill(null);
+  }, [chosenMetalKey]);
+
+  const stills = metal.thumbnails ?? [];
 
   const shapesToShow = useMemo(() => {
     return SHAPES_PRIMARY.filter((s) => setting.availableShapes.includes(s as never));
@@ -78,14 +87,50 @@ export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBac
       </button>
 
       <div className="rs-detail__grid">
-        {/* LEFT — gallery */}
-        <div className="rs-detail__gallery">
-          <RingSpinner
-            frames={metal.gallery360}
-            fallbackSrc={metal.imageUrl}
-            fallbackColor={metal.color}
-            alt={`${setting.name} in ${metalLabel(metal)}`}
-          />
+        {/* LEFT — gallery + thumbnail strip */}
+        <div className="rs-detail__media">
+          <div className="rs-detail__gallery">
+            <RingSpinner
+              // A still is selected -> show just that image; otherwise the 360° spin video.
+              videoSrc={activeStill ? undefined : metal.videoUrl}
+              frames={activeStill ? undefined : metal.gallery360}
+              fallbackSrc={activeStill ?? metal.imageUrl}
+              fallbackColor={metal.color}
+              alt={`${setting.name} in ${metalLabel(metal)}`}
+            />
+          </div>
+          {(metal.videoUrl || stills.length > 0) && (
+            <div className="rs-detail__thumbs" role="group" aria-label="Views">
+              {metal.videoUrl && (
+                <button
+                  type="button"
+                  className={`rs-thumb rs-thumb--video ${activeStill === null ? "rs-thumb--active" : ""}`}
+                  onClick={() => setActiveStill(null)}
+                  aria-label="360° spin view"
+                  aria-pressed={activeStill === null}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={metal.imageUrl} alt="" loading="lazy" />
+                  <span className="rs-thumb__badge" aria-hidden>
+                    360°
+                  </span>
+                </button>
+              )}
+              {stills.map((src) => (
+                <button
+                  key={src}
+                  type="button"
+                  className={`rs-thumb ${activeStill === src ? "rs-thumb--active" : ""}`}
+                  onClick={() => setActiveStill(src)}
+                  aria-label="View"
+                  aria-pressed={activeStill === src}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" loading="lazy" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* RIGHT — config */}

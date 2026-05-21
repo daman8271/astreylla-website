@@ -31,6 +31,8 @@ export type SettingMetal = {
   imageUrl: string;
   thumbnails?: string[];
   gallery360?: string[];
+  /** 360° spin video (Bunny CDN .mp4) for this metal, when available. */
+  videoUrl?: string;
 };
 
 export type Setting = {

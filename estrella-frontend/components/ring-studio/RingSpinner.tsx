@@ -6,22 +6,33 @@ import type { SettingColor } from "./setting-types";
 
 type Props = {
   frames?: string[];
+  /** 360° spin video (.mp4). Preferred over a static image when present. */
+  videoSrc?: string;
   fallbackSrc?: string;
   fallbackColor?: SettingColor;
   alt?: string;
 };
 
 /**
- * Frame-based 360° viewer. Drag to rotate. When `frames` is empty/short, it
- * degrades to a single static image; if that also fails, an inline
- * <SettingPlaceholder> renders. Hand-rolled (no 3D libs).
+ * 360° viewer. Prefers a spin video when given one; otherwise a frame-based
+ * drag-to-rotate (needs >=8 frames). Both degrade to a single static image,
+ * and finally to an inline <SettingPlaceholder>. Hand-rolled (no 3D libs).
  */
-export function RingSpinner({ frames, fallbackSrc, fallbackColor = "White", alt = "Ring" }: Props) {
+export function RingSpinner({ frames, videoSrc, fallbackSrc, fallbackColor = "White", alt = "Ring" }: Props) {
   const usable = (frames?.length ?? 0) >= 8 ? frames! : null;
   const [idx, setIdx] = useState(0);
   const [imgFailed, setImgFailed] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const dragRef = useRef<{ startX: number; startIdx: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset transient failure flags when the source changes (metal switch, etc.).
+  useEffect(() => {
+    setVideoFailed(false);
+  }, [videoSrc]);
+  useEffect(() => {
+    setImgFailed(false);
+  }, [fallbackSrc]);
 
   // Preload all frames for smooth scrub.
   useEffect(() => {
@@ -31,6 +42,28 @@ export function RingSpinner({ frames, fallbackSrc, fallbackColor = "White", alt 
       img.src = src;
     });
   }, [usable]);
+
+  // Spin video takes priority — it's the truest "drag to rotate" we have.
+  if (videoSrc && !videoFailed) {
+    return (
+      <div className="rs-spinner rs-spinner--video">
+        <video
+          src={videoSrc}
+          poster={fallbackSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-label={`${alt} — 360° view`}
+          onError={() => setVideoFailed(true)}
+        />
+        <span className="rs-spinner__badge" aria-hidden>
+          360°
+        </span>
+      </div>
+    );
+  }
 
   if (!usable) {
     if (fallbackSrc && !imgFailed) {
