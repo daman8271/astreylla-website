@@ -22,7 +22,8 @@ export function DiamondVideoTile({ shape, posterSrc, alt }: Props) {
       aria-label={`Browse ${shape.toLowerCase()} diamonds on sale`}
       style={{
         display: "block",
-        width: "clamp(140px, 17vw, 240px)",
+        width: "100%",
+        maxWidth: 240,
         aspectRatio: "1 / 1",
         position: "relative",
         filter: "var(--sale-strip-stone-shadow)",

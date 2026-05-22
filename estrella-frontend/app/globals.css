@@ -340,6 +340,30 @@ img, svg, video { display: block; max-width: 100%; }
   .express-band__grid { grid-template-columns: 1fr; gap: 32px; }
   .express-band__title { max-width: none; }
 }
+
+/* ─── Diamonds-on-Sale grid — responsive column count ─────────────────────
+   Was a hard `repeat(4, 1fr)`; with the tile's 140px min that forced a
+   ~620px row → horizontal overflow → mobile shrink-to-fit (whole page squished
+   into ~65% width with a white strip). Drop to 3 cols on tablet, 2 on phone so
+   the row always fits the viewport. */
+.sale-strip__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  row-gap: clamp(28px, 4vw, 64px);
+  column-gap: clamp(16px, 3vw, 56px);
+  list-style: none;
+  padding: 0;
+  margin-inline: auto;
+  margin-block: 0;
+  justify-items: center;
+  max-width: 1200px;
+}
+@media (max-width: 900px) {
+  .sale-strip__grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .sale-strip__grid { grid-template-columns: repeat(2, 1fr); }
+}
 @media (prefers-reduced-motion: reduce) {
   .express-band__video { display: none; }
 }

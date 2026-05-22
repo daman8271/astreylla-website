@@ -41,7 +41,7 @@ export function DiamondsOnSale() {
               "var(--font-cormorant), Cormorant, 'Cormorant Garamond', Garamond, serif",
             fontStyle: "italic",
             fontWeight: 400,
-            fontSize: "clamp(30px, 3.4vw, 44px)",
+            fontSize: "clamp(22px, 3.4vw, 44px)",
             lineHeight: 1.15,
             letterSpacing: "0.06em",
             textAlign: "center",
@@ -53,20 +53,7 @@ export function DiamondsOnSale() {
           Diamonds on Sale Now
         </h2>
 
-        <ul
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            rowGap: "clamp(32px, 4vw, 64px)",
-            columnGap: "clamp(20px, 3vw, 56px)",
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
-            justifyItems: "center",
-            maxWidth: 1200,
-            marginInline: "auto",
-          }}
-        >
+        <ul className="sale-strip__grid">
           {STONES.map((stone) => (
             <li
               key={stone.shape}

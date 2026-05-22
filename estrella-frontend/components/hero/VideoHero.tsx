@@ -73,7 +73,6 @@ export function VideoHero() {
               marginBottom: 8,
               fontWeight: 400,
               lineHeight: 1.4,
-              whiteSpace: "nowrap",
             }}
           >
             Your destination for eternal shine
@@ -83,12 +82,12 @@ export function VideoHero() {
               fontFamily: "var(--font-display)",
               fontStyle: "italic",
               fontWeight: 400,
-              fontSize: 30,
+              fontSize: "clamp(26px, 6vw, 34px)",
               lineHeight: 1.2,
               letterSpacing: 0,
               color: "#ffffff",
               margin: 0,
-              whiteSpace: "nowrap",
+              maxWidth: "min(90vw, 16ch)",
             }}
           >
             Design the ring you have always imagined.
