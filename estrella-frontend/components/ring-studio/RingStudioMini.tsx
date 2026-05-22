@@ -51,12 +51,15 @@ export function RingStudioMini() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            // min(240px, 100%) lets each tile shrink to the container on narrow
+            // screens (instead of forcing a 240px column that overflows), and
+            // the side padding scales down on mobile (was a flat 96px that, on
+            // a ~350px screen, clipped the tiles off the right edge).
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(240px, 100%), 1fr))",
             gap: 32,
             width: "100%",
             maxWidth: 880,
-            paddingLeft: 96,
-            paddingRight: 96,
+            paddingInline: "clamp(0px, 6vw, 96px)",
           }}
         >
           {TILES.map((t, i) => (

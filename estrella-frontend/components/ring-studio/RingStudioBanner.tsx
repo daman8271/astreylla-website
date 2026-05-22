@@ -7,19 +7,11 @@ export function RingStudioBanner() {
       style={{
         background: "var(--bg-navy)",
         color: "#ffffff",
-        paddingBlock: 96,
+        paddingBlock: "clamp(48px, 8vw, 96px)",
       }}
       aria-labelledby="ring-studio-banner-heading"
     >
-      <div
-        className="estrella-container"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(320px, 1.4fr) 1fr",
-          gap: 64,
-          alignItems: "center",
-        }}
-      >
+      <div className="estrella-container rs-home-banner__grid">
         <div
           style={{
             position: "relative",

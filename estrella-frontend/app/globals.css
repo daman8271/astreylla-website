@@ -89,10 +89,19 @@
 
 html {
   scroll-behavior: smooth;
+  /* The cart drawer is a position:fixed off-canvas panel parked at
+     translateX(100%) — past the viewport it creates phantom horizontal scroll
+     on mobile. Clip it at the root (also a safety net for any future overflow).
+     `clip` has no scroll-container side effects; `hidden` is the older-Safari
+     fallback. No position:sticky exists in the app, so this is safe. */
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--brand-bg);
   color: var(--brand-text-primary);
   font-family: var(--font-sans);
@@ -363,6 +372,23 @@ img, svg, video { display: block; max-width: 100%; }
 }
 @media (max-width: 600px) {
   .sale-strip__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ─── Home Ring-Studio banner — image | text, stacks on mobile ────────────
+   Was an inline `minmax(320px, 1.4fr) 1fr` grid that never collapsed: on a
+   phone the 320px image column + 64px gap pushed the text column off-screen
+   and clipped the banner image. Collapse to one column under 768px. */
+.rs-home-banner__grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.4fr) 1fr;
+  gap: 64px;
+  align-items: center;
+}
+@media (max-width: 768px) {
+  .rs-home-banner__grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .express-band__video { display: none; }
