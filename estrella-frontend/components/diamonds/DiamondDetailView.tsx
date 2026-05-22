@@ -58,6 +58,7 @@ export function DiamondDetailView({
     diamond?.id ? "resolver" : "placeholder"
   );
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(true);
 
   useEffect(() => {
     setImgStage(diamond?.id ? "resolver" : "placeholder");
@@ -94,6 +95,31 @@ export function DiamondDetailView({
     if (!d.stockNum) return;
     navigator.clipboard?.writeText(d.stockNum).catch(() => {});
   };
+
+  // Full diamond spec list, mirroring the app's "Diamond details" table.
+  // Missing/unknown values render as an em-dash (matches the app).
+  const dash = "—";
+  const certName = (() => {
+    const v = (d.lab || "").trim();
+    if (!v || v.toLowerCase() === "no-cert") return dash;
+    return ["GIA", "IGI", "HRD"].includes(v.toUpperCase()) ? v.toUpperCase() : v;
+  })();
+  const specs: [string, string][] = [
+    ["Type", "Lab Grown Diamond"],
+    ["Shape", d.shape ? capFirst(d.shape) : dash],
+    ["Carat", d.carat ? String(d.carat) : dash],
+    ["Colour", d.color || dash],
+    ["Clarity", d.clarity || dash],
+    ["Cut", d.cut || dash],
+    ["Polish", d.polish || dash],
+    ["Symmetry", d.symmetry || dash],
+    ["Certificate", certName],
+    ["Stock Number", d.stockNum || dash],
+    ["Measurements", d.measurements || dash],
+  ];
+  const expertHref = `mailto:hello@astreylla.example?subject=${encodeURIComponent(
+    `Diamond enquiry — ${d.stockNum || title}`
+  )}`;
 
   return (
     <div className="ds-detail">
@@ -190,6 +216,50 @@ export function DiamondDetailView({
           >
             {busyAddId === d.id ? "Adding…" : "Add to cart"}
           </button>
+
+          <a className="ds-detail__cta ds-detail__cta--ghost" href={expertHref}>
+            Talk to an expert
+          </a>
+
+          <div className="ds-detail__specs">
+            <button
+              type="button"
+              className="ds-detail__specs-head"
+              onClick={() => setDetailsOpen((o) => !o)}
+              aria-expanded={detailsOpen}
+            >
+              <span>Diamond details</span>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+                style={{
+                  transform: detailsOpen ? "rotate(180deg)" : "none",
+                  transition: "transform 200ms ease",
+                }}
+              >
+                <path
+                  d="M6 9 L12 15 L18 9"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            {detailsOpen ? (
+              <dl className="ds-detail__specs-list">
+                {specs.map(([k, v]) => (
+                  <div className="ds-detail__spec-row" key={k}>
+                    <dt>{k}</dt>
+                    <dd>{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+          </div>
         </div>
       </div>
       <DiamondViewer
