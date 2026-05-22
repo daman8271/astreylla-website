@@ -643,10 +643,18 @@
 }
 @media (max-width: 1040px) {
   .ds-detail__layout { flex-direction: column; gap: 24px; }
+  /* Stacked on mobile — no sticky; restore normal flow (relative keeps the
+     360° badge anchored). */
+  .ds-detail__media { position: relative; top: auto; }
 }
 
 .ds-detail__media {
-  position: relative;
+  /* Desktop: pin the image while the details panel on the right scrolls.
+     `position: sticky` still establishes a containing block for the absolutely
+     positioned 360° badge. top clears the 75px fixed header. */
+  position: sticky;
+  top: 90px;
+  align-self: flex-start;
   flex: 1 1 50%;
   aspect-ratio: 1 / 1;
   background: linear-gradient(135deg, #d8d4cc 0%, #b9b4a8 100%);
