@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Diamond } from "./types";
 import { DiamondViewer } from "./DiamondViewer";
-
-function resolverUrl(stockNum?: string) {
-  if (!stockNum) return "";
-  return `/api/diamond-image/${encodeURIComponent(stockNum)}`;
-}
+import { diamondImageUrl } from "@/lib/diamondImage";
 
 type ImgStage = "resolver" | "placeholder";
 
@@ -59,14 +55,14 @@ export function DiamondDetailView({
   busyAddId,
 }: Props) {
   const [imgStage, setImgStage] = useState<ImgStage>(() =>
-    diamond?.stockNum ? "resolver" : "placeholder"
+    diamond?.id ? "resolver" : "placeholder"
   );
   const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => {
-    setImgStage(diamond?.stockNum ? "resolver" : "placeholder");
+    setImgStage(diamond?.id ? "resolver" : "placeholder");
     setViewerOpen(false);
-  }, [diamond?.id, diamond?.stockNum]);
+  }, [diamond?.id]);
 
   if (!diamond) {
     return (
@@ -109,7 +105,7 @@ export function DiamondDetailView({
         <div className="ds-detail__media">
           {imgStage === "resolver" ? (
             <img
-              src={resolverUrl(d.stockNum)}
+              src={diamondImageUrl(d.id)}
               alt={title}
               onError={() => setImgStage("placeholder")}
             />

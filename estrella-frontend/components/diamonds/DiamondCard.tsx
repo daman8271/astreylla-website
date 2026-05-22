@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Diamond } from "./types";
 import { DiamondViewer } from "./DiamondViewer";
+import { diamondImageUrl } from "@/lib/diamondImage";
 
 type Props = {
   diamond: Diamond;
@@ -13,14 +14,6 @@ type Props = {
   mode?: "default" | "ring-studio";
   onSelect?: (d: Diamond) => void;
 };
-
-function resolverUrl(stockNum?: string) {
-  // Server-side route that hits Augmont's short-url API and 302-redirects to
-  // the real JPEG (e.g. video.diamondasset.in or videos.gem360.in). Browser
-  // caches the redirect for 24h. Returns 404 → onError → SVG placeholder.
-  if (!stockNum) return "";
-  return `/api/diamond-image/${encodeURIComponent(stockNum)}`;
-}
 
 const SHAPE_LABELS: Record<string, string> = {
   Round: "Round",
@@ -80,13 +73,13 @@ function certBadge(lab: string | undefined) {
 type ImgStage = "resolver" | "placeholder";
 
 export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode = "default", onSelect }: Props) {
-  // Image source: our /api/diamond-image/{stockNum} route resolves Augmont's
-  // short-url API → real JPEG. On 404 / network error, onError fires and we
-  // fall through to the SVG placeholder. The Augmont diamond.image_url is
-  // intentionally NOT used as <img src> because it's an HTML viewer page,
-  // not an image; it remains the source for the iframe-based 360 modal.
+  // Image source: the diamond's still photo loaded straight from the Bunny CDN
+  // (built from diamond.id via diamondImageUrl — no Augmont resolver hop). On a
+  // genuinely-missing asset, onError fires and we fall through to the SVG
+  // placeholder. The Augmont diamond.image_url is intentionally NOT used as
+  // <img src> (it's an HTML viewer page); it remains the 360 modal's source.
   const [imgStage, setImgStage] = useState<ImgStage>(
-    diamond.stockNum ? "resolver" : "placeholder"
+    diamond.id ? "resolver" : "placeholder"
   );
   const [viewerOpen, setViewerOpen] = useState(false);
   const isRingStudio = mode === "ring-studio";
@@ -106,7 +99,7 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode
     setViewerOpen(true);
   };
 
-  const imgSrc = imgStage === "resolver" ? resolverUrl(diamond.stockNum) : "";
+  const imgSrc = imgStage === "resolver" ? diamondImageUrl(diamond.id) : "";
 
   return (
     <>
