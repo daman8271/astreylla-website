@@ -45,6 +45,13 @@ function buildQuery(
   const p = new URLSearchParams();
   p.set("shop", shop);
 
+  // Hard rule: only ever surface diamonds that carry BOTH a real image and a
+  // 360° video. These are always-on (not user-toggleable) filters honoured by
+  // the Express API (`hasImage` / `hasVideo` query params). Without them the
+  // catalog shows media-less stones that fall back to the SVG placeholder.
+  p.set("hasImage", "true");
+  p.set("hasVideo", "true");
+
   if (filters.shape) p.set("shape", filters.shape);
 
   // Treatment: API expects 'lab-grown' or 'natural'.
@@ -144,13 +151,20 @@ export function DiamondCatalog({
         to: newPage.to,
         count: true,
       });
-      fetch(`${apiBase}/api/public/diamonds?${qs}`, { cache: "no-store" })
-        .then((r) => {
+
+      // Augmont's catalog upstream is intermittently unavailable and surfaces
+      // as a transient 5xx (502/503) that clears within seconds. Auto-retry a
+      // few times with backoff before showing the visitor an error, so a brief
+      // upstream blip self-heals instead of rendering a hard "HTTP 503".
+      const MAX_RETRIES = 2;
+      const attempt = async (n: number): Promise<void> => {
+        try {
+          const r = await fetch(`${apiBase}/api/public/diamonds?${qs}`, {
+            cache: "no-store",
+          });
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return r.json() as Promise<DiamondsResponse>;
-        })
-        .then((data) => {
-          if (myReq !== seq.current) return;
+          const data = (await r.json()) as DiamondsResponse;
+          if (myReq !== seq.current) return; // superseded by a newer request
           const rows = (data.diamonds || data.data || []) as Diamond[];
           if (resetPage) {
             setDiamonds(rows);
@@ -162,14 +176,28 @@ export function DiamondCatalog({
           if (typeof data.totalCount === "number") setTotal(data.totalCount);
           else if (typeof data.count === "number") setTotal(data.count);
           if (data.currencyCode) setCurrency(data.currencyCode);
-        })
-        .catch((e: Error) => {
-          if (myReq !== seq.current) return;
-          setError(e.message || "Failed to load diamonds");
-        })
-        .finally(() => {
           if (myReq === seq.current) setLoading(false);
-        });
+        } catch (e) {
+          if (myReq !== seq.current) return; // a newer request took over
+          const status = Number(
+            String((e as Error).message).replace(/\D+/g, "")
+          );
+          // Retry transient upstream failures (5xx) and network errors only —
+          // never 4xx (those won't fix themselves on retry).
+          const retryable = !Number.isFinite(status) || status >= 500;
+          if (retryable && n < MAX_RETRIES) {
+            await new Promise((res) => setTimeout(res, (n + 1) * 1200));
+            if (myReq !== seq.current) return;
+            return attempt(n + 1);
+          }
+          setError(
+            "Our diamond catalogue is taking a moment to load — this usually clears in a few seconds."
+          );
+          setLoading(false);
+        }
+      };
+
+      attempt(0);
     },
     [shop, filters, pagination, perPage, apiBase]
   );
@@ -409,7 +437,22 @@ export function DiamondCatalog({
 
       {error ? (
         <div className="ds-error" role="alert">
-          {error}
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => refetch(true)}
+            style={{
+              marginLeft: 12,
+              background: "none",
+              border: "none",
+              color: "inherit",
+              font: "inherit",
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+          >
+            Try again
+          </button>
         </div>
       ) : null}
 
