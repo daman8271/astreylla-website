@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import type { Diamond } from "./types";
 import { DiamondViewer } from "./DiamondViewer";
 import { diamondImageUrl } from "@/lib/diamondImage";
@@ -59,10 +59,12 @@ export function DiamondDetailView({
   );
   const [viewerOpen, setViewerOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     setImgStage(diamond?.id ? "resolver" : "placeholder");
     setViewerOpen(false);
+    setActiveTab(0);
   }, [diamond?.id]);
 
   if (!diamond) {
@@ -85,6 +87,51 @@ export function DiamondDetailView({
   const d = diamond;
   const title = formatTitle(d);
   const cert = certLabel(d.lab);
+
+  const galleryItems = useMemo(() => {
+    if (!d.id) return [];
+
+    const items = [
+      {
+        id: "front",
+        type: "image" as const,
+        url: diamondImageUrl(d.id),
+        label: "Front View",
+      },
+      {
+        id: "side",
+        type: "image" as const,
+        url: `https://augmont-lgd-prod.b-cdn.net/products/${d.id}/image/64.jpg`,
+        label: "Side View",
+      },
+      {
+        id: "back",
+        type: "image" as const,
+        url: `https://augmont-lgd-prod.b-cdn.net/products/${d.id}/image/128.jpg`,
+        label: "Back View",
+      },
+    ];
+
+    if (d.video_url) {
+      items.push({
+        id: "video",
+        type: "video" as const,
+        url: d.video_url,
+        label: "Video",
+      });
+    }
+
+    if (d.stockNum) {
+      items.push({
+        id: "360",
+        type: "360" as const,
+        url: `/360-viewer.html?id=${encodeURIComponent(d.stockNum)}&type=video`,
+        label: "360° View",
+      });
+    }
+
+    return items;
+  }, [d.id, d.video_url, d.stockNum]);
 
   const segments: { k: string; v: string }[] = [];
   if (d.color) segments.push({ k: "Color", v: d.color });
@@ -128,35 +175,157 @@ export function DiamondDetailView({
       </button>
 
       <div className="ds-detail__layout">
-        <div className="ds-detail__media">
-          {imgStage === "resolver" ? (
-            <img
-              src={diamondImageUrl(d.id)}
-              alt={title}
-              onError={() => setImgStage("placeholder")}
-            />
-          ) : (
-            <div className="ds-detail__placeholder" aria-hidden>
-              <svg width="120" height="120" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M6 3 L18 3 L21 9 L12 21 L3 9 Z"
-                  stroke="#c9a961"
-                  strokeWidth="1.2"
-                  fill="rgba(201,169,97,0.08)"
+        {/* Left Side: Interactive Media Gallery */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: "1 1 50%", width: "100%", position: "sticky", top: 90, alignSelf: "flex-start" }} className="ds-detail__gallery-col">
+          <div className="ds-detail__media" style={{ width: "100%", margin: 0, position: "relative", top: "auto" }}>
+            {galleryItems.length === 0 ? (
+              <div className="ds-detail__placeholder" aria-hidden>
+                <svg width="120" height="120" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M6 3 L18 3 L21 9 L12 21 L3 9 Z"
+                    stroke="#c9a961"
+                    strokeWidth="1.2"
+                    fill="rgba(201,169,97,0.08)"
+                  />
+                </svg>
+              </div>
+            ) : galleryItems[activeTab].type === "image" ? (
+              <img
+                src={galleryItems[activeTab].url}
+                alt={title}
+                onError={() => {
+                  if (activeTab !== 0) setActiveTab(0);
+                }}
+              />
+            ) : galleryItems[activeTab].type === "video" ? (
+              <div style={{ width: "100%", height: "100%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <video
+                  src={galleryItems[activeTab].url}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  controls
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
                 />
-              </svg>
+              </div>
+            ) : (
+              <iframe
+                src={galleryItems[activeTab].url}
+                title="360° Diamond Viewer"
+                style={{ width: "100%", height: "100%", border: 0, background: "#ffffff", display: "block" }}
+                allow="autoplay; fullscreen"
+              />
+            )}
+
+            {d.stockNum && galleryItems[activeTab]?.type !== "360" ? (
+              <button
+                type="button"
+                className="ds-detail__360"
+                onClick={() => {
+                  const idx = galleryItems.findIndex(item => item.type === "360");
+                  if (idx !== -1) setActiveTab(idx);
+                  else setViewerOpen(true);
+                }}
+                aria-label="Open 360° view"
+              >
+                360°
+              </button>
+            ) : null}
+          </div>
+
+          {/* Thumbnail row below main viewer */}
+          {galleryItems.length > 1 && (
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "4px 0" }} className="ds-detail__thumbnails">
+              {galleryItems.map((item, idx) => {
+                const isActive = idx === activeTab;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveTab(idx)}
+                    style={{
+                      width: 68,
+                      height: 68,
+                      borderRadius: 6,
+                      overflow: "hidden",
+                      border: isActive ? "2px solid #c9a961" : "1px solid rgba(0,0,0,0.08)",
+                      background: "#ffffff",
+                      padding: 0,
+                      cursor: "pointer",
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      boxShadow: isActive ? "0 2px 8px rgba(201,169,97,0.2)" : "none",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    {item.type === "image" ? (
+                      <img
+                        src={item.url}
+                        alt={item.label}
+                        style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = diamondImageUrl(d.id);
+                        }}
+                      />
+                    ) : item.type === "video" ? (
+                      <div style={{ width: "100%", height: "100%", position: "relative", background: "#fbf8f3", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <img
+                          src={diamondImageUrl(d.id)}
+                          alt={item.label}
+                          style={{ width: "100%", height: "100%", objectFit: "contain", opacity: 0.6 }}
+                        />
+                        <div style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "rgba(0,0,0,0.15)"
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M8 5v14l11-7z" fill="#ffffff" />
+                          </svg>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", position: "relative", background: "#fbf8f3", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <img
+                          src={diamondImageUrl(d.id)}
+                          alt={item.label}
+                          style={{ width: "100%", height: "100%", objectFit: "contain", opacity: 0.6 }}
+                        />
+                        <div style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "rgba(0,0,0,0.15)"
+                        }}>
+                          <span style={{
+                            fontSize: 9,
+                            fontWeight: "bold",
+                            color: "#ffffff",
+                            background: "rgba(0,0,0,0.6)",
+                            padding: "2px 4px",
+                            borderRadius: 4,
+                            fontFamily: "var(--font-sans)",
+                            letterSpacing: "0.05em"
+                          }}>
+                            360°
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
-          {d.stockNum ? (
-            <button
-              type="button"
-              className="ds-detail__360"
-              onClick={() => setViewerOpen(true)}
-              aria-label="Open 360° viewer"
-            >
-              360°
-            </button>
-          ) : null}
         </div>
 
         <div className="ds-detail__panel">

@@ -510,11 +510,12 @@ export function SiteHeader() {
             aria-label="Astreylla — home"
             style={{
               display: "inline-flex",
-              alignItems: "center",
+              alignItems: "flex-start",
               textDecoration: "none",
+              paddingTop: "6px",
+              height: "100%",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={
                 onDarkHero || theme === "dark"
@@ -522,12 +523,7 @@ export function SiteHeader() {
                   : "/logo/logo-light.png"
               }
               alt="Astreylla"
-              style={{
-                height: 52,
-                width: "auto",
-                maxWidth: 240,
-                display: "block",
-              }}
+              className="h-[75px] md:h-[90px] w-auto max-w-[220px] md:max-w-[280px] block"
             />
           </Link>
 

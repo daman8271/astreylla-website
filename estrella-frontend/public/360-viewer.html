@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Diamond 360° Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --border: #d0d0d0;
+      --text: #1a1a1a;
+      --muted: #666666;
+      --accent: #3498db;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      touch-action: none;
+    }
+    body {
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      font-family: 'DM Sans', sans-serif;
+      background: #ffffff;
+      color: var(--text);
+      position: fixed;
+      inset: 0;
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .viewer-wrap {
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .viewer-wrap:active {
+      cursor: grabbing;
+    }
+    .viewer-wrap canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+    .viewer-wrap .single-media {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.95);
+      background: color-mix(in srgb, var(--bg) 95%, transparent);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.3s ease;
+    }
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 14px;
+    }
+    .loading-text {
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .loading-overlay.no-video .loading-text {
+      color: var(--muted);
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <!-- Load Three.js v0.149.0 directly via unpkg to support all environments securely inside iframes with zero deprecation warnings -->
+  <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+</head>
+<body>
+  <div class="viewer-wrap" id="viewerContainer">
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading 360° view</div>
+    </div>
+  </div>
+
+  <script>
+    // Note: THREE is globally available from the CDN script tag.
+    const FRAME_COUNT = 255;
+    const IMAGE_EXT = 'jpg';
+    const PARALLEL_LOAD = 16;
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    function getParam(name, defaultValue) {
+      const v = urlParams.get(name);
+      if (v === null || v === '') return defaultValue;
+      return v;
+    }
+
+    const IMAGE_EXTENSIONS = /\.(jpe?g|png|gif|webp|bmp)(\?|$)/i;
+
+    function isImageUrl(url) {
+      return typeof url === 'string' && IMAGE_EXTENSIONS.test(url);
+    }
+
+    const TYPE_STORAGE_KEY = 'diamond360_type';
+
+    /** Get type: from URL param first, then from localStorage. If from URL, persist to localStorage. */
+    function getAndPersistType() {
+      const fromUrl = urlParams.get('type');
+      if (fromUrl !== null && fromUrl !== '') {
+        try { localStorage.setItem(TYPE_STORAGE_KEY, fromUrl); } catch (_) {}
+        return fromUrl;
+      }
+      try {
+        const stored = localStorage.getItem(TYPE_STORAGE_KEY);
+        return (stored !== null && stored !== '') ? stored : null;
+      } catch (_) { return null; }
+    }
+
+    /** Fetch base URL from short-url API via our local CORS-bypassing proxy; returns fullUrl for 360 frames or null. */
+    function callApi(code, type) {
+      const id = (code || '').trim();
+      if (!id) return Promise.resolve(null);
+      
+      // Use local Next.js proxy route `/api/diamond-image/[sku]?json=true` to securely bypass CORS blocks!
+      let url = "/api/diamond-image/" + encodeURIComponent(id) + "?json=true";
+      if (type != null && String(type).trim() !== '') {
+        url += "&type=" + encodeURIComponent(String(type).trim());
+      }
+      return fetch(url)
+        .then(response => response.json())
+        .then(res => (res && res.fullUrl) ? res.fullUrl : null)
+        .catch(err => {
+          console.error("Error:", err);
+          return null;
+        });
+    }
+
+    function getFrameImageUrl(baseUrl, index) {
+      return `${baseUrl}/image/${index}.${IMAGE_EXT}`;
+    }
+
+    /** Get dominant/background color from image by sampling corners and edges. Returns hex number. */
+    function getDominantColorFromImage(img) {
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      if (!w || !h) return 0xffffff;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return 0xffffff;
+      ctx.drawImage(img, 0, 0);
+      const sampleSize = Math.max(2, Math.min(20, Math.floor(w * 0.08), Math.floor(h * 0.08)));
+      const samples = [];
+      const regions = [
+        [0, 0, sampleSize, sampleSize],
+        [w - sampleSize, 0, sampleSize, sampleSize],
+        [0, h - sampleSize, sampleSize, sampleSize],
+        [w - sampleSize, h - sampleSize, sampleSize, sampleSize],
+        [Math.floor(w / 2) - sampleSize / 2, 0, sampleSize, sampleSize],
+        [Math.floor(w / 2) - sampleSize / 2, h - sampleSize, sampleSize, sampleSize],
+      ];
+      for (const [x, y, sw, sh] of regions) {
+        try {
+          const data = ctx.getImageData(Math.max(0, x), Math.max(0, y), sw, sh);
+          for (let i = 0; i < data.data.length; i += 4) {
+            const r = data.data[i];
+            const g = data.data[i + 1];
+            const b = data.data[i + 2];
+            const a = data.data[i + 3];
+            if (a > 128) samples.push((r << 16) | (g << 8) | b);
+          }
+        } catch (_) {}
+      }
+      if (samples.length === 0) return 0xffffff;
+      const r = [], g = [], b = [];
+      samples.forEach(hex => {
+        r.push((hex >> 16) & 0xff);
+        g.push((hex >> 8) & 0xff);
+        b.push(hex & 0xff);
+      });
+      r.sort((a, b) => a - b);
+      g.sort((a, b) => a - b);
+      b.sort((a, b) => a - b);
+      const mid = Math.floor(samples.length / 2);
+      return (r[mid] << 16) | (g[mid] << 8) | b[mid];
+    }
+
+    function isMobileViewport() {
+      return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    function applySizeFromParams() {
+      const container = document.getElementById('viewerContainer');
+      if (!container) return;
+
+      const mobile = isMobileViewport();
+      const wRaw = urlParams.get('width');
+      const hRaw = urlParams.get('height');
+      const hasExplicitSize = (wRaw !== null && wRaw !== '') || (hRaw !== null && hRaw !== '');
+
+      if (mobile && !hasExplicitSize) {
+        container.style.width = '100%';
+        container.style.height = '100dvh';
+        container.style.minHeight = '100dvh';
+        return;
+      }
+
+      const w = getParam('width', '500');
+      const h = getParam('height', '500');
+
+      const width = (w === '' || isNaN(Number(w))) ? '500px' : (Number(w) + 'px');
+      const height = (h === '' || isNaN(Number(h))) ? '500px' : (Number(h) + 'px');
+      container.style.width = width;
+      container.style.height = height;
+      container.style.minHeight = height;
+    }
+
+    class Diamond360Viewer {
+      constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        this.frameCount = FRAME_COUNT;
+        this.currentFrame = 0;
+        this.isDragging = false;
+        this.lastX = null;
+        this.sensitivity = 1.2;
+        this.autoRotate = getParam('autoplay', 'true').toLowerCase() !== 'false';
+        this.hasLoaded = false;
+        this.textures = [];
+        this.imageAspectRatio = 1;
+        this.dominantColorHex = 0xffffff;
+        this.lastTimestamp = null;
+        this.accumulatedTime = 0;
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.plane = null;
+      }
+
+      setLoading(text, noVideo = false) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+          overlay.classList.remove('hidden');
+          overlay.classList.toggle('no-video', !!noVideo);
+          const textEl = overlay.querySelector('.loading-text');
+          if (textEl) textEl.textContent = text;
+        }
+      }
+
+      hideLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.classList.add('hidden');
+      }
+
+      async loadAndShowImage(url) {
+        this.cleanup();
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.className = 'single-media';
+        try {
+          await new Promise((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error('Image failed to load'));
+            img.src = url;
+          });
+        } catch (_) {
+          this.setLoading('No video found', true);
+          return;
+        }
+        this.imageAspectRatio = img.naturalWidth / img.naturalHeight;
+        this.dominantColorHex = getDominantColorFromImage(img);
+        const hexStr = '#' + (this.dominantColorHex.toString(16).padStart(6, '0'));
+        this.container.style.backgroundColor = hexStr;
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.background = hexStr;
+        this.container.appendChild(img);
+        this.hasLoaded = true;
+        this.hideLoading();
+      }
+
+      initThree() {
+        this.cleanup();
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        this.camera.position.z = 2;
+
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+        this.renderer.setSize(width, height);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setClearColor(this.dominantColorHex, 1);
+        this.container.appendChild(this.renderer.domElement);
+
+        let planeW = 1.5, planeH = 1.5;
+        if (this.imageAspectRatio >= 1) {
+          planeW = 1.5;
+          planeH = 1.5 / this.imageAspectRatio;
+        } else {
+          planeH = 1.5;
+          planeW = 1.5 * this.imageAspectRatio;
+        }
+
+        const geometry = new THREE.PlaneGeometry(planeW, planeH);
+        const material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 1, side: THREE.DoubleSide });
+        this.plane = new THREE.Mesh(geometry, material);
+        this.scene.add(this.plane);
+
+        this.setupEvents();
+        requestAnimationFrame(this.animate.bind(this));
+      }
+
+      cleanup() {
+        const canvas = this.container.querySelector('canvas');
+        if (canvas) canvas.remove();
+        this.container.querySelectorAll('.single-media').forEach(el => el.remove());
+        this.textures.forEach(t => t?.dispose());
+        this.textures = [];
+        if (this.renderer) {
+          this.renderer.dispose();
+          this.renderer.forceContextLoss();
+          this.renderer = null;
+        }
+        if (this.scene) {
+          while (this.scene.children.length) this.scene.remove(this.scene.children[0]);
+        }
+        this.scene = null;
+        this.camera = null;
+        this.plane = null;
+      }
+
+      setupEvents() {
+        const wrap = this.container;
+        wrap.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        wrap.addEventListener('mouseup', () => this.onMouseUp());
+        wrap.addEventListener('mouseleave', () => this.onMouseUp());
+        wrap.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        wrap.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
+        wrap.addEventListener('touchend', () => this.onTouchEnd());
+        wrap.addEventListener('touchcancel', () => this.onTouchEnd());
+        wrap.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
+      }
+
+      async loadFromSku(sku) {
+        const code = (sku || '').trim();
+        if (!code) {
+          this.setLoading('No video found', true);
+          return;
+        }
+
+        this.hasLoaded = false;
+        this.setLoading('Loading…');
+
+        const type = getAndPersistType();
+        const fullUrl = await callApi(code, type);
+        console.log('fullUrl', fullUrl);
+        if (!fullUrl) {
+          this.setLoading('No video found', true);
+          return;
+        }
+
+        if (isImageUrl(fullUrl)) {
+          await this.loadAndShowImage(fullUrl);
+          return;
+        }
+
+        const baseUrl = fullUrl;
+        const loader = new THREE.TextureLoader();
+        loader.setCrossOrigin('anonymous');
+        this.textures = new Array(this.frameCount);
+
+        const firstUrl = getFrameImageUrl(baseUrl, 0);
+        const firstImg = new Image();
+        firstImg.crossOrigin = 'anonymous';
+        firstImg.src = firstUrl;
+        try {
+          await new Promise((resolve, reject) => {
+            firstImg.onload = () => resolve();
+            firstImg.onerror = () => reject(new Error('First frame failed to load'));
+          });
+        } catch (_) {
+          this.setLoading('No video found', true);
+          return;
+        }
+        this.imageAspectRatio = firstImg.naturalWidth / firstImg.naturalHeight;
+        this.dominantColorHex = getDominantColorFromImage(firstImg);
+        const hexStr = '#' + (this.dominantColorHex.toString(16).padStart(6, '0'));
+        this.container.style.backgroundColor = hexStr;
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.background = hexStr;
+
+        this.initThree();
+        const firstTexture = new THREE.Texture(firstImg);
+        firstTexture.minFilter = THREE.LinearFilter;
+        firstTexture.magFilter = THREE.LinearFilter;
+        firstTexture.colorSpace = THREE.SRGBColorSpace;
+        firstTexture.flipY = true;
+        firstTexture.needsUpdate = true;
+        this.textures[0] = firstTexture;
+        this.setFrame(0);
+        this.hasLoaded = true;
+        this.hideLoading();
+
+        const loadOne = (i) =>
+          new Promise((resolve) => {
+            if (i === 0) return resolve();
+            const url = getFrameImageUrl(baseUrl, i);
+            loader.load(
+              url,
+              (texture) => {
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                texture.colorSpace = THREE.SRGBColorSpace;
+                texture.flipY = true;
+                this.textures[i] = texture;
+                resolve();
+              },
+              undefined,
+              () => resolve()
+            );
+          });
+
+        for (let start = 0; start < this.frameCount; start += PARALLEL_LOAD) {
+          const batch = [];
+          for (let i = start; i < Math.min(start + PARALLEL_LOAD, this.frameCount); i++) {
+            batch.push(loadOne(i));
+          }
+          await Promise.all(batch);
+        }
+      }
+
+      setFrame(index) {
+        const safe = ((index % this.frameCount) + this.frameCount) % this.frameCount;
+        if (!this.plane || !this.textures[safe]) return;
+        this.currentFrame = safe;
+        this.plane.material.map = this.textures[safe];
+        this.plane.material.needsUpdate = true;
+      }
+
+      animate(time) {
+        requestAnimationFrame(this.animate.bind(this));
+        if (!this.lastTimestamp) this.lastTimestamp = time;
+        const delta = (time - this.lastTimestamp) / 1000;
+        this.lastTimestamp = time;
+
+        if (this.hasLoaded && this.autoRotate) {
+          this.accumulatedTime += delta;
+          const frameDuration = 1 / 36;
+          while (this.accumulatedTime >= frameDuration) {
+            this.accumulatedTime -= frameDuration;
+            this.currentFrame = (this.currentFrame + 1) % this.frameCount;
+            this.setFrame(this.currentFrame);
+          }
+        }
+
+        if (this.renderer && this.scene && this.camera) {
+          this.renderer.render(this.scene, this.camera);
+        }
+      }
+
+      onMouseDown(e) {
+        if (!this.hasLoaded) return;
+        this.isDragging = true;
+        this.autoRotate = false;
+        this.lastX = e.clientX;
+      }
+      onMouseUp() {
+        if (!this.hasLoaded) return;
+        this.isDragging = false;
+        this.lastX = null;
+        this.autoRotate = getParam('autoplay', 'true').toLowerCase() !== 'false';
+      }
+      onMouseMove(e) {
+        if (!this.isDragging || this.lastX == null || !this.hasLoaded) return;
+        const delta = e.clientX - this.lastX;
+        if (Math.abs(delta) >= 1) {
+          const step = Math.floor(delta * this.sensitivity);
+          this.currentFrame = (this.currentFrame - step + this.frameCount) % this.frameCount;
+          this.setFrame(this.currentFrame);
+          this.lastX = e.clientX;
+        }
+      }
+      onTouchStart(e) {
+        if (!this.hasLoaded) return;
+        e.preventDefault();
+        this.isDragging = true;
+        this.autoRotate = false;
+        this.lastX = e.touches[0]?.clientX ?? null;
+      }
+      onTouchEnd() {
+        if (!this.hasLoaded) return;
+        this.isDragging = false;
+        this.lastX = null;
+        this.autoRotate = getParam('autoplay', 'true').toLowerCase() !== 'false';
+      }
+      onTouchMove(e) {
+        if (!this.isDragging || this.lastX == null || !this.hasLoaded) return;
+        e.preventDefault();
+        const x = e.touches[0]?.clientX;
+        if (x == null) return;
+        const delta = x - this.lastX;
+        if (Math.abs(delta) >= 1) {
+          const step = Math.floor(delta * this.sensitivity);
+          this.currentFrame = (this.currentFrame - step + this.frameCount) % this.frameCount;
+          this.setFrame(this.currentFrame);
+          this.lastX = x;
+        }
+      }
+      onResize() {
+        if (!this.renderer || !this.camera) return;
+        const w = this.container.clientWidth;
+        const h = this.container.clientHeight;
+        this.camera.aspect = w / h;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(w, h);
+      }
+    }
+
+    const viewer = new Diamond360Viewer('viewerContainer');
+    applySizeFromParams();
+    window.addEventListener('resize', () => {
+      applySizeFromParams();
+      viewer.onResize();
+    });
+
+    getAndPersistType();
+
+    const sku = getParam('id', '');
+    if (sku) {
+      viewer.loadFromSku(sku);
+    } else {
+      viewer.setLoading('No video found', true);
+    }
+  </script>
+</body>
+</html>

@@ -23,7 +23,7 @@ type Props = {
 
 function buildSrc(stockNum: string, tier: Tier) {
   const t = tier === "outline" ? "image" : tier;
-  return `https://www.viewmydiamonds.com/?id=${encodeURIComponent(
+  return `/360-viewer.html?id=${encodeURIComponent(
     stockNum
   )}&type=${t}`;
 }

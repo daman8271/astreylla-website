@@ -55,6 +55,12 @@ export async function GET(
     return new NextResponse("no asset", { status: 404 });
   }
 
+  // Support ?json=true to bypass redirection and get the raw base URL (used by our 360 viewer!)
+  const isJson = _req.nextUrl.searchParams.get("json") === "true";
+  if (isJson) {
+    return NextResponse.json({ fullUrl: target });
+  }
+
   // Bunny CDN returns a folder base (no filename); the still image is at
   // `{base}/still.jpg`. Only append when the URL isn't already a file.
   const hasImageFile = /\.(jpe?g|png|webp|gif)$/i.test(target);
