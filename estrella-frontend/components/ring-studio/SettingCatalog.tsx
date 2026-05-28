@@ -20,6 +20,7 @@ export function SettingCatalog({ shape, onOpenSetting }: Props) {
   const list = useMemo(() => {
     const base = filterSettings({
       shape,
+      shapes: filters.shapes,
       styles: filters.styles,
       metalKeys: filters.metalKeys,
       priceMin: filters.priceRange[0] > PRICE_FLOOR ? filters.priceRange[0] : undefined,
@@ -30,9 +31,21 @@ export function SettingCatalog({ shape, onOpenSetting }: Props) {
     return base;
   }, [filters, shape, sort]);
 
+  // The metal filter is keyed by "{karat}-{color}". Reduce to the set of chosen
+  // colors so each card can render in the selected metal colour.
+  const selectedColors = useMemo(() => {
+    const colors = new Set<string>();
+    filters.metalKeys.forEach((key) => {
+      const color = key.split("-")[1];
+      if (color) colors.add(color);
+    });
+    return colors;
+  }, [filters.metalKeys]);
+
   const activeCount =
     (filters.styles.size > 0 ? 1 : 0) +
     (filters.metalKeys.size > 0 ? 1 : 0) +
+    (filters.shapes.size > 0 ? 1 : 0) +
     (filters.priceRange[0] > PRICE_FLOOR || filters.priceRange[1] < PRICE_CEIL ? 1 : 0);
 
   return (
@@ -60,7 +73,12 @@ export function SettingCatalog({ shape, onOpenSetting }: Props) {
 
       <div className="rs-setting-grid">
         {list.map((s) => (
-          <SettingCard key={s.sku} setting={s} onClick={() => onOpenSetting(s.sku)} />
+          <SettingCard
+            key={s.sku}
+            setting={s}
+            selectedColors={selectedColors}
+            onClick={() => onOpenSetting(s.sku)}
+          />
         ))}
       </div>
 

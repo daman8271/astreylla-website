@@ -20,6 +20,7 @@ import {
 } from "./DiamondFilters";
 import { DiamondCard } from "./DiamondCard";
 import { DiamondDetailView } from "./DiamondDetailView";
+import { DiamondGridSkeleton } from "./DiamondCardSkeleton";
 
 type Props = {
   shop: string;
@@ -126,7 +127,10 @@ export function DiamondCatalog({
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // Start in the loading state so the skeleton grid paints immediately on mount
+  // (the first-mount effect kicks off the fetch) instead of flashing the empty
+  // "no diamonds" message before data arrives.
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currency, setCurrency] = useState("USD");
   const [sort, setSort] = useState<SortKey>("price-asc");
@@ -456,31 +460,26 @@ export function DiamondCatalog({
         </div>
       ) : null}
 
-      <div
-        className={`ds-grid ${view === "list" ? "ds-grid--list" : "ds-grid--grid"}`}
-      >
-        {loading && diamonds.length === 0
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={`sk-${i}`} className="ds-card ds-card--skeleton">
-                <div className="ds-card__media" />
-                <div className="ds-card__skeleton-line" />
-                <div className="ds-card__skeleton-line ds-card__skeleton-line--short" />
-                <div className="ds-card__skeleton-line ds-card__skeleton-line--med" />
-              </div>
-            ))
-          : sorted.map((d) => (
-              <DiamondCard
-                key={d.id}
-                diamond={d}
-                currency={currency}
-                onAddToCart={handleAdd}
-                onOpen={openDiamond}
-                busy={busyAddId === d.id}
-                mode={mode}
-                onSelect={onSelect}
-              />
-            ))}
-      </div>
+      {loading && diamonds.length === 0 ? (
+        <DiamondGridSkeleton count={perPage} />
+      ) : (
+        <div
+          className={`ds-grid ${view === "list" ? "ds-grid--list" : "ds-grid--grid"}`}
+        >
+          {sorted.map((d) => (
+            <DiamondCard
+              key={d.id}
+              diamond={d}
+              currency={currency}
+              onAddToCart={handleAdd}
+              onOpen={openDiamond}
+              busy={busyAddId === d.id}
+              mode={mode}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      )}
 
       {!loading && sorted.length === 0 && !error ? (
         <div className="ds-empty">

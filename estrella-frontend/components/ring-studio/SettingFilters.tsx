@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { SettingStyle, SettingKarat, SettingColor } from "./setting-types";
 import { SETTING_STYLES } from "./setting-types";
+import { SHAPES_PRIMARY, SHAPES_MORE } from "@/components/diamonds/types";
 import { RangeSlider } from "@/components/diamonds/RangeSlider";
 import { ShapeMaskIcon, type ShapeName } from "@/components/nav/ShapeMaskIcon";
 import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyleMaskIcon";
@@ -10,6 +11,7 @@ import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyl
 export type SettingFilterState = {
   styles: Set<SettingStyle>;
   metalKeys: Set<string>;
+  shapes: Set<string>;
   priceRange: [number, number];
 };
 
@@ -19,6 +21,7 @@ export const PRICE_CEIL = 5000;
 export const DEFAULT_SETTING_FILTERS: SettingFilterState = {
   styles: new Set(),
   metalKeys: new Set(),
+  shapes: new Set(),
   priceRange: [PRICE_FLOOR, PRICE_CEIL],
 };
 
@@ -59,6 +62,7 @@ type Props = {
 export function SettingFilters({ value, onChange, lockedShape, hidden, onToggleHide, onClearAll, activeCount }: Props) {
   const [moreStyles, setMoreStyles] = useState(false);
   const [moreMetals, setMoreMetals] = useState(false);
+  const [moreShapes, setMoreShapes] = useState(false);
 
   const set = <K extends keyof SettingFilterState>(k: K, v: SettingFilterState[K]) =>
     onChange({ ...value, [k]: v });
@@ -76,6 +80,17 @@ export function SettingFilters({ value, onChange, lockedShape, hidden, onToggleH
     else next.add(key);
     set("metalKeys", next);
   };
+
+  const toggleShape = (shape: string) => {
+    const next = new Set(value.shapes);
+    if (next.has(shape)) next.delete(shape);
+    else next.add(shape);
+    set("shapes", next);
+  };
+
+  const shapesShown: string[] = moreShapes
+    ? [...SHAPES_PRIMARY, ...SHAPES_MORE]
+    : [...SHAPES_PRIMARY];
 
   const stylesShown: SettingStyle[] = moreStyles
     ? SETTING_STYLES
@@ -213,18 +228,43 @@ export function SettingFilters({ value, onChange, lockedShape, hidden, onToggleH
 
             <div className="rs-field">
               <label className="rs-field__label">Shape</label>
-              <div className="rs-shape-locked">
-                <span className="rs-shape-locked__chip" aria-disabled>
-                  {lockedShape ? (
-                    <ShapeMaskIcon
-                      name={lockedShape.toLowerCase() as ShapeName}
-                      size={16}
-                    />
-                  ) : null}
-                  {lockedShape || "—"}
-                </span>
-                <span className="rs-shape-locked__note">Locked to your chosen diamond</span>
-              </div>
+              {lockedShape ? (
+                <div className="rs-shape-locked">
+                  <span className="rs-shape-locked__chip" aria-disabled>
+                    <ShapeMaskIcon name={lockedShape.toLowerCase() as ShapeName} size={16} />
+                    {lockedShape}
+                  </span>
+                  <span className="rs-shape-locked__note">Locked to your chosen diamond</span>
+                </div>
+              ) : (
+                <>
+                  <div className="rs-shape-row">
+                    {shapesShown.map((s) => {
+                      const active = value.shapes.has(s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          className={`rs-shape-cell ${active ? "rs-shape-cell--active" : ""}`}
+                          onClick={() => toggleShape(s)}
+                          aria-pressed={active}
+                        >
+                          <span className="rs-shape-cell__icon" aria-hidden>
+                            <ShapeMaskIcon name={s.toLowerCase() as ShapeName} size={22} />
+                          </span>
+                          <span className="rs-shape-cell__label">{s}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button type="button" className="rs-more" onClick={() => setMoreShapes((s) => !s)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path d={moreShapes ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>{moreShapes ? "Less Shapes" : "More Shapes"}</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

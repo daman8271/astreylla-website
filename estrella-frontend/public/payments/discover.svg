@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 16" role="img" aria-label="Discover">
+  <text x="0" y="13" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="800" letter-spacing="0.4" fill="#1A1A1A">DISC</text>
+  <circle cx="37.5" cy="8.5" r="5.5" fill="#F47216"/>
+  <text x="45" y="13" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="800" letter-spacing="0.4" fill="#1A1A1A">VER</text>
+</svg>

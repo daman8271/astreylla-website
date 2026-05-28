@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { RingStudioProvider } from "./RingStudioContext";
@@ -14,7 +13,7 @@ function stageFromPath(p: string): Stage {
 }
 
 export function RingStudioShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname() || "/ring-studio/diamond";
+  const pathname = usePathname() || "/ring-studio/setting";
   const stage = stageFromPath(pathname);
   return (
     <RingStudioProvider>
@@ -22,12 +21,6 @@ export function RingStudioShell({ children }: { children: React.ReactNode }) {
         <RingStudioHydrator />
       </Suspense>
       <div className="rs-shell">
-        <nav className="rs-breadcrumb" aria-label="Breadcrumb">
-          <Link href="/">Home</Link>
-          <span aria-hidden> / </span>
-          <span>Ring Studio</span>
-        </nav>
-
         <header className="rs-pagehead">
           <h1 className="rs-pagehead__title">
             <span style={{ fontStyle: "italic" }}>Ring Studio</span>

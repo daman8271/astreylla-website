@@ -186,17 +186,18 @@ export function SiteFooter() {
         >
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <span>USD $</span>
-            <span style={{ color: "var(--brand-text-primary)" }}>
-              hello@astreylla.example
-            </span>
+            <a
+              href="mailto:platform.support@augmont.com"
+              style={{ color: "var(--brand-text-primary)" }}
+            >
+              platform.support@augmont.com
+            </a>
           </div>
 
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <PaymentChip>VISA</PaymentChip>
-            <PaymentChip>MC</PaymentChip>
-            <PaymentChip>AMEX</PaymentChip>
-            <PaymentChip>PAYPAL</PaymentChip>
-            <PaymentChip>DISC</PaymentChip>
+            {PAYMENTS.map((p) => (
+              <PaymentBadge key={p.src} src={p.src} alt={p.alt} />
+            ))}
           </div>
 
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
@@ -268,28 +269,30 @@ function FooterCol({
   );
 }
 
-function PaymentChip({ children }: { children: React.ReactNode }) {
+const PAYMENTS = [
+  { src: "/payments/visa.svg", alt: "Visa" },
+  { src: "/payments/mastercard.svg", alt: "Mastercard" },
+  { src: "/payments/amex.svg", alt: "American Express" },
+  { src: "/payments/paypal.svg", alt: "PayPal" },
+  { src: "/payments/discover.svg", alt: "Discover" },
+];
+
+function PaymentBadge({ src, alt }: { src: string; alt: string }) {
   return (
     <span
-      aria-hidden="true"
       style={{
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        minWidth: 36,
-        height: 22,
-        padding: "0 6px",
-        background: "var(--brand-bg)",
+        height: 26,
+        padding: "0 8px",
+        background: "#ffffff",
         border: "1px solid var(--brand-border-subtle)",
-        borderRadius: 3,
-        fontFamily: "var(--font-sans)",
-        fontSize: 9,
-        fontWeight: 700,
-        letterSpacing: "0.08em",
-        color: "var(--brand-text-secondary)",
+        borderRadius: 4,
       }}
     >
-      {children}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} style={{ height: 15, width: "auto", display: "block" }} />
     </span>
   );
 }

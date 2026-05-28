@@ -35,19 +35,40 @@ function StepNumber({ n, active }: { n: number; active: boolean }) {
 export function RingStudioStepper({ current }: Props) {
   const router = useRouter();
   const { state, setDiamond, setSetting } = useRingStudio();
-  const { diamond, setting, metalKey } = state;
+  const { diamond, setting, metalKey, shape } = state;
   const metal = getMetalFromKey(setting, metalKey);
 
-  const removeDiamond = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setDiamond(null);
-    router.push("/ring-studio/diamond");
-  };
+  // Reopen the chosen setting's detail (to tweak metal / shape).
+  const settingDetailUrl = setting
+    ? (() => {
+        const sp = new URLSearchParams();
+        sp.set("settingSku", setting.sku);
+        if (metalKey) sp.set("metal", metalKey);
+        if (shape) sp.set("shape", shape);
+        return `/ring-studio/setting?${sp.toString()}`;
+      })()
+    : "/ring-studio/setting";
+
+  // Step 2 (Diamond) URL, carrying the setting context for filtering.
+  const diamondStepUrl = setting
+    ? (() => {
+        const sp = new URLSearchParams();
+        sp.set("settingSku", setting.sku);
+        if (metalKey) sp.set("metal", metalKey);
+        if (shape) sp.set("shape", shape);
+        return `/ring-studio/diamond?${sp.toString()}`;
+      })()
+    : "/ring-studio/setting";
+
   const removeSetting = (e: React.MouseEvent) => {
     e.preventDefault();
     setSetting(null);
-    if (diamond) router.push(`/ring-studio/setting?diamondId=${encodeURIComponent(diamond.stockNum || diamond.id)}`);
-    else router.push("/ring-studio/diamond");
+    router.push("/ring-studio/setting");
+  };
+  const removeDiamond = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setDiamond(null);
+    router.push(diamondStepUrl);
   };
 
   const total = (diamond?.price || 0) + (metal?.priceUsd || 0);
@@ -55,10 +76,38 @@ export function RingStudioStepper({ current }: Props) {
 
   return (
     <ol className="rs-stepper" aria-label="Ring studio progress">
-      {/* Slot 1: Diamond */}
+      {/* Slot 1: Setting */}
+      <li className={`rs-step ${current === "setting" ? "rs-step--active" : ""} ${setting ? "rs-step--filled" : ""}`} aria-current={current === "setting" ? "step" : undefined}>
+        {setting ? (
+          <Link href={settingDetailUrl} className="rs-step__chip">
+            <span className="rs-step__chip-thumb">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={metal?.imageUrl || setting.defaultThumbnail} alt="" />
+            </span>
+            <span className="rs-step__chip-meta">
+              <span className="rs-step__chip-title">{setting.name} ({setting.sku})</span>
+              <span className="rs-step__chip-row">
+                <strong>{formatUsd(settingPrice)}</strong>
+                <button type="button" className="rs-step__remove" onClick={removeSetting}>Remove</button>
+              </span>
+            </span>
+            <span className="rs-step__check" aria-label="Selected">{CheckIcon}</span>
+          </Link>
+        ) : (
+          <Link href="/ring-studio/setting" className="rs-step__label">
+            <StepNumber n={1} active={current === "setting"} />
+            <span className="rs-step__title">
+              <span className="rs-step__sub">Choose a</span>
+              <span className="rs-step__main">{RingIcon} Setting</span>
+            </span>
+          </Link>
+        )}
+      </li>
+
+      {/* Slot 2: Diamond */}
       <li className={`rs-step ${current === "diamond" ? "rs-step--active" : ""} ${diamond ? "rs-step--filled" : ""}`} aria-current={current === "diamond" ? "step" : undefined}>
         {diamond ? (
-          <Link href="/ring-studio/diamond" className="rs-step__chip">
+          <Link href={diamondStepUrl} className="rs-step__chip">
             <span className="rs-step__chip-thumb">
               {diamond.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -76,43 +125,20 @@ export function RingStudioStepper({ current }: Props) {
             </span>
             <span className="rs-step__check" aria-label="Selected">{CheckIcon}</span>
           </Link>
-        ) : (
-          <Link href="/ring-studio/diamond" className="rs-step__label">
-            <StepNumber n={1} active={current === "diamond"} />
+        ) : setting ? (
+          <Link href={diamondStepUrl} className="rs-step__label">
+            <StepNumber n={2} active={current === "diamond"} />
             <span className="rs-step__title">
               <span className="rs-step__sub">Choose a</span>
               <span className="rs-step__main">{DiamondIcon} Diamond</span>
             </span>
           </Link>
-        )}
-      </li>
-
-      {/* Slot 2: Setting */}
-      <li className={`rs-step ${current === "setting" ? "rs-step--active" : ""} ${setting ? "rs-step--filled" : ""}`} aria-current={current === "setting" ? "step" : undefined}>
-        {setting ? (
-          <Link
-            href={diamond ? `/ring-studio/setting?diamondId=${encodeURIComponent(diamond.stockNum || diamond.id)}` : "/ring-studio/setting"}
-            className="rs-step__chip"
-          >
-            <span className="rs-step__chip-thumb">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={metal?.imageUrl || setting.defaultThumbnail} alt="" />
-            </span>
-            <span className="rs-step__chip-meta">
-              <span className="rs-step__chip-title">{setting.name} ({setting.sku})</span>
-              <span className="rs-step__chip-row">
-                <strong>{formatUsd(settingPrice)}</strong>
-                <button type="button" className="rs-step__remove" onClick={removeSetting}>Remove</button>
-              </span>
-            </span>
-            <span className="rs-step__check" aria-label="Selected">{CheckIcon}</span>
-          </Link>
         ) : (
-          <span className={`rs-step__label ${current === "setting" ? "" : "rs-step__label--disabled"}`}>
-            <StepNumber n={2} active={current === "setting"} />
+          <span className="rs-step__label rs-step__label--disabled">
+            <StepNumber n={2} active={current === "diamond"} />
             <span className="rs-step__title">
               <span className="rs-step__sub">Choose a</span>
-              <span className="rs-step__main">{RingIcon} Setting</span>
+              <span className="rs-step__main">{DiamondIcon} Diamond</span>
             </span>
           </span>
         )}

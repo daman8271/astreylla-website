@@ -201,6 +201,7 @@ export function listSettingsByStyle(style?: SettingStyle): Setting[] {
 
 export function filterSettings(opts: {
   shape?: string | null;
+  shapes?: Set<string>;
   styles?: Set<SettingStyle>;
   metalKeys?: Set<string>;
   priceMin?: number;
@@ -209,6 +210,10 @@ export function filterSettings(opts: {
   return SETTINGS.filter((s) => {
     if (opts.shape && !s.availableShapes.some((sh) => sh.toLowerCase() === opts.shape!.toLowerCase())) {
       return false;
+    }
+    if (opts.shapes && opts.shapes.size > 0) {
+      const hasShape = s.availableShapes.some((sh) => opts.shapes!.has(sh));
+      if (!hasShape) return false;
     }
     if (opts.styles && opts.styles.size > 0 && !opts.styles.has(s.style)) {
       return false;

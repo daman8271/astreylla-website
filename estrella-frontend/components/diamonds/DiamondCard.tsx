@@ -56,12 +56,26 @@ function titleCase(s: string) {
 function formatTitle(d: Diamond) {
   // Prefer the server-formatted title; fall back to a minimal carat+shape
   // string built from raw API fields when title is missing. Never invent
-  // attributes that aren't in the API response.
+  // attributes that aren't in the API response. Used for the full a11y label.
   if (d.title && d.title.trim()) return d.title.trim();
   const ct = Number(d.carat || 0).toFixed(2);
   const rawShape = d.shape || "";
   const shape = SHAPE_LABELS[titleCase(rawShape)] || titleCase(rawShape) || "Diamond";
   return `${ct}ct ${shape}`.trim();
+}
+
+function shapeLabel(d: Diamond) {
+  const rawShape = d.shape || "";
+  return SHAPE_LABELS[titleCase(rawShape)] || titleCase(rawShape) || "Diamond";
+}
+
+// Clean, uncluttered heading for the card face: "Princess · 2.03 ct". The
+// colour / clarity / cut live in the spec chips below, so the title no longer
+// duplicates them the way the verbose API title did.
+function cardTitle(d: Diamond) {
+  const shape = shapeLabel(d);
+  const ct = d.carat ? `${Number(d.carat).toFixed(2)} ct` : "";
+  return ct ? `${shape} · ${ct}` : shape;
 }
 
 function certBadge(lab: string | undefined) {
@@ -144,72 +158,72 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode
         ) : null}
       </div>
 
-      <h3 className="ds-card__title">{formatTitle(diamond)}</h3>
+      <div className="ds-card__body">
+        <h3 className="ds-card__title">{cardTitle(diamond)}</h3>
 
-      <div className="ds-card__attrs">
-        {diamond.color ? (
-          <>
-            <span className="ds-card__attr-key">Colour:</span>{" "}
-            <span className="ds-card__attr-val">{diamond.color}</span>
-          </>
-        ) : null}
-        {diamond.clarity ? (
-          <>
-            ,{" "}
-            <span className="ds-card__attr-key">Clarity:</span>{" "}
-            <span className="ds-card__attr-val">{diamond.clarity}</span>
-          </>
-        ) : null}
-        {diamond.cut ? (
-          <>
-            ,{" "}
-            <span className="ds-card__attr-key">Cut:</span>{" "}
-            <span className="ds-card__attr-val">{cutShort(diamond.cut)}</span>
-          </>
-        ) : null}
-      </div>
-
-      <div className="ds-card__price-row">
-        <div className="ds-card__price">
-          <strong>{formatMoney(diamond.price || 0, currency)}</strong>
-          <span className="ds-card__currency">{currency}</span>
+        <div className="ds-card__specs">
+          {diamond.color ? (
+            <span className="ds-spec">
+              <span className="ds-spec__v">{diamond.color}</span>
+              <span className="ds-spec__k">Colour</span>
+            </span>
+          ) : null}
+          {diamond.clarity ? (
+            <span className="ds-spec">
+              <span className="ds-spec__v">{diamond.clarity}</span>
+              <span className="ds-spec__k">Clarity</span>
+            </span>
+          ) : null}
+          {diamond.cut ? (
+            <span className="ds-spec">
+              <span className="ds-spec__v">{cutShort(diamond.cut)}</span>
+              <span className="ds-spec__k">Cut</span>
+            </span>
+          ) : null}
         </div>
-        <div className="ds-card__cert">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path
-              d="M6 3 L18 3 L21 9 L12 21 L3 9 Z"
-              stroke="currentColor"
-              strokeWidth="1.4"
-            />
-          </svg>
-          <span>{certBadge(diamond.lab)}</span>
-        </div>
-      </div>
 
-      {isRingStudio ? (
-        <button
-          type="button"
-          className="ds-card__cta ds-card__cta--outline"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect?.(diamond);
-          }}
-        >
-          Select diamond
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="ds-card__cta"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToCart?.(diamond);
-          }}
-          disabled={busy}
-        >
-          {busy ? "Adding…" : "Add to cart"}
-        </button>
-      )}
+        <div className="ds-card__price-row">
+          <div className="ds-card__price">
+            <strong>{formatMoney(diamond.price || 0, currency)}</strong>
+            <span className="ds-card__currency">{currency}</span>
+          </div>
+          <div className="ds-card__cert">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path
+                d="M6 3 L18 3 L21 9 L12 21 L3 9 Z"
+                stroke="currentColor"
+                strokeWidth="1.4"
+              />
+            </svg>
+            <span>{certBadge(diamond.lab)}</span>
+          </div>
+        </div>
+
+        {isRingStudio ? (
+          <button
+            type="button"
+            className="ds-card__cta ds-card__cta--outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect?.(diamond);
+            }}
+          >
+            Select diamond
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="ds-card__cta"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart?.(diamond);
+            }}
+            disabled={busy}
+          >
+            {busy ? "Adding…" : "Add to cart"}
+          </button>
+        )}
+      </div>
     </article>
     <DiamondViewer
       stockNum={diamond.stockNum}

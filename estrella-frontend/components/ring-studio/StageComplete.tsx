@@ -33,21 +33,30 @@ const RulerIcon = (
 
 export function StageComplete() {
   const router = useRouter();
-  const { state, setRegion, setSize, reset } = useRingStudio();
+  const { state, setRegion, setSize, setSetting, setDiamond } = useRingStudio();
   const { diamond, setting, metalKey: chosenMetalKey, shape, region, size } = state;
   const metal = getMetalFromKey(setting, chosenMetalKey);
+
+  // URL back to Step 2 (Diamond), carrying the chosen setting context.
+  const diamondStepUrl = (() => {
+    const sp = new URLSearchParams();
+    if (setting) sp.set("settingSku", setting.sku);
+    if (chosenMetalKey) sp.set("metal", chosenMetalKey);
+    if (shape || diamond?.shape) sp.set("shape", (shape || diamond?.shape) as string);
+    return `/ring-studio/diamond?${sp.toString()}`;
+  })();
 
   const [busy, setBusy] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Bounce back if missing context.
+  // Bounce back if missing context (Setting → Diamond order).
   useEffect(() => {
-    if (!diamond) {
-      router.replace("/ring-studio/diamond");
-    } else if (!setting) {
-      router.replace(`/ring-studio/setting?diamondId=${encodeURIComponent(diamond.stockNum || diamond.id)}`);
+    if (!setting) {
+      router.replace("/ring-studio/setting");
+    } else if (!diamond) {
+      router.replace(diamondStepUrl);
     }
-  }, [diamond, setting, router]);
+  }, [diamond, setting, router, diamondStepUrl]);
 
   if (!diamond || !setting || !metal) {
     return (
@@ -88,12 +97,15 @@ export function StageComplete() {
     setSuccessMessage("Saved to your wishlist.");
   };
 
+  // Removing the setting (Step 1) invalidates the build — start over at Step 1.
   const removeSetting = () => {
-    router.push(`/ring-studio/setting?diamondId=${encodeURIComponent(diamond.stockNum || diamond.id)}`);
+    setSetting(null);
+    router.push("/ring-studio/setting");
   };
+  // Removing the diamond (Step 2) keeps the setting — back to the diamond grid.
   const removeDiamond = () => {
-    reset();
-    router.push("/ring-studio/diamond");
+    setDiamond(null);
+    router.push(diamondStepUrl);
   };
 
   return (

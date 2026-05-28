@@ -3,7 +3,7 @@ import Image from "next/image";
 
 const TILES = [
   {
-    href: "/ring-studio/diamond",
+    href: "/ring-studio/setting",
     label: "Start with a",
     italicLabel: "ring",
     image: "/ring-studio/start-with-ring.jpg",
@@ -11,7 +11,7 @@ const TILES = [
     objectPosition: "center",
   },
   {
-    href: "/ring-studio/diamond",
+    href: "/ring-studio/setting",
     label: "Start with a",
     italicLabel: "diamond",
     image: "/ring-studio/start-with-diamond.jpg",

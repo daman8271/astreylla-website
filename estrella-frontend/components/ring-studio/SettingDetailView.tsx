@@ -78,7 +78,11 @@ export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBac
     return SHAPES_PRIMARY.filter((s) => setting.availableShapes.includes(s as never));
   }, [setting]);
 
-  const chosenShape = lockedShape || setting.availableShapes[0];
+  // Shape is selectable here (no diamond chosen yet). When a lockedShape is
+  // passed (legacy diamond-first flow) it stays fixed.
+  const [chosenShape, setChosenShape] = useState<string>(
+    lockedShape || (setting.availableShapes[0] as string)
+  );
 
   return (
     <div className="rs-detail">
@@ -160,6 +164,7 @@ export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBac
                     className={`rs-shape-cell ${isActive ? "rs-shape-cell--active" : ""}`}
                     disabled={!enabled}
                     aria-pressed={isActive}
+                    onClick={() => enabled && setChosenShape(s)}
                   >
                     <span className="rs-shape-cell__icon">{SHAPE_ICONS[s] || null}</span>
                     <span className="rs-shape-cell__label">{s}</span>

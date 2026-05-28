@@ -62,7 +62,7 @@ export function RingStudioBanner() {
             ASTREYLLA
           </div>
           <Link
-            href="/ring-studio/diamond"
+            href="/ring-studio/setting"
             className="estrella-btn estrella-btn--pill-outline"
           >
             Explore the Ring Studio

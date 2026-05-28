@@ -406,22 +406,12 @@
 /* ── GRID + CARDS ──────────────────────────────────────────────────────── */
 .ds-grid {
   display: grid;
-  gap: 24px;
+  gap: 28px;
 }
 .ds-grid--grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
-@media (max-width: 1100px) {
-  .ds-grid--grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (max-width: 800px) {
-  .ds-grid--grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (max-width: 480px) {
+@media (max-width: 520px) {
   .ds-grid--grid {
     grid-template-columns: 1fr;
   }
@@ -434,21 +424,31 @@
   align-items: stretch;
 }
 .ds-grid--list .ds-card__media {
-  flex: 0 0 280px;
-  height: 220px;
+  flex: 0 0 240px;
+  aspect-ratio: auto;
+  align-self: stretch;
+}
+.ds-grid--list .ds-card__body {
+  flex: 1;
+  justify-content: center;
+  padding: 4px 4px 4px 22px;
 }
 
 .ds-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   background: var(--brand-bg);
+  border: 1px solid var(--brand-border-subtle);
+  border-radius: 16px;
+  padding: 12px;
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0.16, 1),
+    box-shadow 0.35s ease, border-color 0.35s ease;
 }
 .ds-card__media {
   position: relative;
   aspect-ratio: 1 / 1;
-  background: linear-gradient(135deg, #ecebe6 0%, #d8d4cc 100%);
-  border-radius: 6px;
+  background: linear-gradient(150deg, #fbfaf7 0%, #eceae3 100%);
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -458,6 +458,21 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
+}
+.ds-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 14px;
+}
+.ds-card--clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 46px -24px rgba(40, 35, 25, 0.45);
+  border-color: color-mix(in srgb, var(--brand-accent-gold) 55%, var(--brand-border-subtle));
+}
+.ds-card--clickable:hover .ds-card__media img {
+  transform: scale(1.06);
 }
 .ds-card__placeholder {
   display: flex;
@@ -468,101 +483,160 @@
 }
 .ds-card__title {
   font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--brand-text-primary);
-  letter-spacing: -0.005em;
-  margin-top: 8px;
-  line-height: 1.3;
-}
-.ds-card__attrs {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  color: var(--brand-text-secondary);
-}
-.ds-card__attr-key {
-  color: var(--brand-text-secondary);
-}
-.ds-card__attr-val {
-  color: var(--brand-text-primary);
+  font-size: 17px;
   font-weight: 600;
+  color: var(--brand-text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* Spec chips — value stacked above its label, like a premium catalog. */
+.ds-card__specs {
+  display: flex;
+  gap: 8px;
+}
+.ds-spec {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px;
+  background: var(--surface-soft);
+  border: 1px solid var(--brand-border-subtle);
+  border-radius: 9px;
+  font-family: var(--font-sans);
+}
+.ds-spec__v {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-text-primary);
+  line-height: 1.1;
+}
+.ds-spec__k {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--brand-text-muted);
 }
 
 .ds-card__price-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
   gap: 12px;
+  padding-top: 2px;
 }
 .ds-card__price {
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 5px;
   font-family: var(--font-sans);
   color: var(--brand-text-primary);
 }
 .ds-card__price strong {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .ds-card__currency {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--brand-text-primary);
+  color: var(--brand-text-muted);
 }
 
 .ds-card__cert {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--brand-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--brand-accent-gold);
+  background: color-mix(in srgb, var(--brand-accent-gold) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand-accent-gold) 30%, transparent);
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .ds-card__cta {
-  margin-top: 8px;
+  margin-top: 2px;
   padding: 12px 18px;
-  background: var(--brand-bg);
-  border: 1px solid var(--brand-border-subtle);
-  border-radius: 8px;
+  background: var(--brand-text-primary);
+  border: 1px solid var(--brand-text-primary);
+  border-radius: 10px;
   font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--brand-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--brand-bg);
   cursor: pointer;
-  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease,
+    opacity 150ms ease;
 }
 .ds-card__cta:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-text-primary) 86%, var(--brand-accent-gold));
+  border-color: color-mix(in srgb, var(--brand-text-primary) 86%, var(--brand-accent-gold));
+}
+.ds-card__cta--outline {
+  background: var(--brand-bg);
+  color: var(--brand-text-primary);
+  border-color: var(--brand-border-subtle);
+}
+.ds-card__cta--outline:hover:not(:disabled) {
   background: var(--brand-text-primary);
   color: var(--brand-bg);
   border-color: var(--brand-text-primary);
 }
 .ds-card__cta:disabled {
   cursor: progress;
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
-/* Skeleton loading state */
-.ds-card--skeleton .ds-card__media {
-  background: linear-gradient(110deg, #ecebe6 30%, #f5f4ef 50%, #ecebe6 70%);
+/* ── SKELETON CARD (loading placeholder) ───────────────────────────────── */
+.ds-card--skeleton {
+  pointer-events: none;
+}
+.ds-card--skeleton .ds-card__media,
+.ds-card__skeleton-line,
+.ds-card__skeleton-chip,
+.ds-card__skeleton-cta {
+  background: linear-gradient(110deg, #ececec 30%, #f6f6f6 50%, #ececec 70%);
   background-size: 200% 100%;
   animation: ds-skeleton 1.4s linear infinite;
+  border-radius: 8px;
 }
 .ds-card__skeleton-line {
-  height: 14px;
-  border-radius: 4px;
-  background: linear-gradient(110deg, #ecebe6 30%, #f5f4ef 50%, #ecebe6 70%);
-  background-size: 200% 100%;
-  animation: ds-skeleton 1.4s linear infinite;
+  height: 15px;
 }
-.ds-card__skeleton-line--short { width: 40%; }
-.ds-card__skeleton-line--med { width: 70%; }
-
+.ds-card__skeleton-line--price {
+  height: 22px;
+  width: 52%;
+}
+.ds-card__skeleton-specs {
+  display: flex;
+  gap: 8px;
+}
+.ds-card__skeleton-chip {
+  flex: 1;
+  height: 42px;
+  border-radius: 9px;
+}
+.ds-card__skeleton-cta {
+  height: 44px;
+  border-radius: 10px;
+}
 @keyframes ds-skeleton {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 
 .ds-error {
@@ -906,6 +980,15 @@
 [data-theme="dark"] .ds-card__placeholder {
   background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
 }
+/* Solid primary CTA stays inverted in dark mode — the blanket `.ds-card *`
+   colour rule above would otherwise force light-on-light text. */
+[data-theme="dark"] .ds-card__cta:not(.ds-card__cta--outline),
+[data-theme="dark"] .ds-card__cta:not(.ds-card__cta--outline) * {
+  color: var(--brand-bg);
+}
+[data-theme="dark"] .ds-spec {
+  background: #161616;
+}
 
 /* Filters / sliders. */
 [data-theme="dark"] .ds-filter,
@@ -971,7 +1054,9 @@
    `[data-theme="dark"] .ds-card__media` rule above and preserves the
    animated shimmer rather than flattening to a solid gradient. */
 [data-theme="dark"] .ds-card--skeleton .ds-card__media,
-[data-theme="dark"] .ds-card__skeleton-line {
+[data-theme="dark"] .ds-card__skeleton-line,
+[data-theme="dark"] .ds-card__skeleton-chip,
+[data-theme="dark"] .ds-card__skeleton-cta {
   background: linear-gradient(110deg, #1c1c1c 30%, #262626 50%, #1c1c1c 70%);
   background-size: 200% 100%;
   animation: ds-skeleton 1.4s linear infinite;
@@ -999,12 +1084,29 @@
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
   cursor: pointer;
-  transition: transform 150ms ease, background 150ms ease;
+  transition: transform 280ms ease, background 150ms ease, opacity 280ms ease;
 }
 .ds-card__view360:hover,
 .ds-detail__360:hover {
   transform: scale(1.04);
   background: #ffffff;
+}
+/* Diamonds have one still + a 360 viewer — surface the 360 affordance on
+   card hover (kept visible on touch devices that have no hover). */
+.ds-card__view360 {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.ds-card--clickable:hover .ds-card__view360,
+.ds-card--clickable:focus-within .ds-card__view360 {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (hover: none) {
+  .ds-card__view360 {
+    opacity: 1;
+    transform: none;
+  }
 }
 .ds-detail__360 {
   left: 14px;

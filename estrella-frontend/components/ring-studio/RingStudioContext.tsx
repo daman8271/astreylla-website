@@ -71,32 +71,33 @@ export function RingStudioProvider({ children }: { children: React.ReactNode }) 
     writeStorage(state);
   }, [state]);
 
+  // Diamond is the LAST pick in the Setting → Diamond → Complete flow, so it
+  // never clears the upstream setting. Selecting a diamond only sets/updates it;
+  // clearing it (null) leaves the chosen setting intact.
   const setDiamond = useCallback((d: Diamond | null) => {
-    setState((prev) => {
-      if (!d) {
-        return { ...EMPTY };
-      }
-      // Changing diamond invalidates downstream selections (setting may not
-      // support the new shape; metal pricing tied to the chosen setting).
-      const sameId =
-        prev.diamond && (prev.diamond.id === d.id || prev.diamond.stockNum === d.stockNum);
-      if (sameId) return { ...prev, diamond: d };
-      return { ...EMPTY, diamond: d };
-    });
+    setState((prev) => ({ ...prev, diamond: d }));
   }, []);
 
   const setSetting = useCallback(
     (s: Setting | null, metal?: SettingMetal | null, shape?: string | null) => {
       setState((prev) => {
         if (!s) {
-          return { ...prev, setting: null, metalKey: null };
+          // Removing the setting (Step 1) invalidates the whole build.
+          return { ...EMPTY };
         }
         const nextMetal = metal ?? s.metals[0];
+        const nextShape = shape ?? prev.shape ?? prev.diamond?.shape ?? null;
+        // Setting is now Step 1: a new setting or a changed shape invalidates a
+        // previously shape-matched diamond. Preserve the diamond only on an
+        // identical re-selection / re-hydration (same sku AND same shape) so a
+        // reload of the Complete page doesn't wipe the restored diamond.
+        const unchanged = prev.setting?.sku === s.sku && prev.shape === nextShape;
         return {
           ...prev,
           setting: s,
           metalKey: nextMetal ? `${nextMetal.karat}-${nextMetal.color}` : null,
-          shape: shape ?? prev.shape ?? prev.diamond?.shape ?? null,
+          shape: nextShape,
+          diamond: unchanged ? prev.diamond : null,
         };
       });
     },
