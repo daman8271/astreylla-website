@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRingStudio, getMetalFromKey } from "./RingStudioContext";
 import { formatUsd } from "@/lib/settings";
+import { diamondImageUrl } from "@/lib/diamondImage";
 
 export type Stage = "diamond" | "setting" | "complete";
 
@@ -109,9 +110,9 @@ export function RingStudioStepper({ current }: Props) {
         {diamond ? (
           <Link href={diamondStepUrl} className="rs-step__chip">
             <span className="rs-step__chip-thumb">
-              {diamond.image_url ? (
+              {diamond.id ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={diamond.image_url} alt="" />
+                <img src={diamondImageUrl(diamond.id)} alt="" />
               ) : (
                 <span aria-hidden>{DiamondIcon}</span>
               )}

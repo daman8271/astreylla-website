@@ -5,6 +5,7 @@ import type { Setting, SettingMetal } from "./setting-types";
 import type { Diamond } from "@/components/diamonds/types";
 import { SettingPlaceholder } from "./SettingPlaceholder";
 import { metalLabel } from "./setting-types";
+import { diamondImageUrl } from "@/lib/diamondImage";
 
 type GalleryItem = {
   url: string;
@@ -23,9 +24,7 @@ export function RingGallery({
 }) {
   const items: GalleryItem[] = [
     { url: metal.imageUrl, kind: "image", alt: `${setting.name} in ${metalLabel(metal)}` },
-    ...(diamond.image_url ? [{ url: diamond.image_url, kind: "image" as const, alt: "Centre stone" }] : []),
-    ...(diamond.video_url ? [{ url: diamond.video_url, kind: "video" as const, alt: "Centre stone — video" }] : []),
-    ...(setting.videoUrl ? [{ url: setting.videoUrl, kind: "video" as const, alt: "Ring — video" }] : []),
+    ...(diamond.id ? [{ url: diamondImageUrl(diamond.id), kind: "image" as const, alt: "Centre stone" }] : []),
   ];
   const [active, setActive] = useState(0);
   const [imgFailed, setImgFailed] = useState<Record<number, boolean>>({});

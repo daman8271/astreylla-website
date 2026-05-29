@@ -186,7 +186,7 @@
       const canvas = document.createElement('canvas');
       canvas.width = w;
       canvas.height = h;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return 0xffffff;
       ctx.drawImage(img, 0, 0);
       const sampleSize = Math.max(2, Math.min(20, Math.floor(w * 0.08), Math.floor(h * 0.08)));

@@ -86,8 +86,8 @@ function ItemList({
 }) {
   return (
     <ul className="ds-mega__list">
-      {items.map((item) => (
-        <li key={item.label}>
+      {items.map((item, idx) => (
+        <li key={`${item.label}-${idx}`}>
           <Link href={item.href} className="ds-mega__link" onClick={onClose}>
             {item.icon ? <span className="ds-mega__icon" aria-hidden>{item.icon}</span> : null}
             <span>{item.label}</span>
@@ -104,14 +104,14 @@ export function MegaMenu({ config, onClose }: Props) {
     <div className="ds-mega" role="menu" onMouseLeave={onClose}>
       <div className="estrella-container ds-mega__inner">
         {config.columns.map((col, ci) => (
-          <div className="ds-mega__col" key={col.heading || `col-${ci}`}>
+          <div className="ds-mega__col" key={col.heading ? `${col.heading}-${ci}` : `col-${ci}`}>
             {col.heading ? (
               <div className="ds-mega__col-h">{col.heading}</div>
             ) : null}
             {col.items ? <ItemList items={col.items} onClose={onClose} /> : null}
             {col.groups
               ? col.groups.map((g, gi) => (
-                  <div className="ds-mega__group" key={g.heading || `g-${gi}`}>
+                  <div className="ds-mega__group" key={g.heading ? `${g.heading}-${gi}` : `g-${gi}`}>
                     {g.heading ? (
                       <div className="ds-mega__group-h">{g.heading}</div>
                     ) : null}
@@ -155,8 +155,8 @@ export function MegaMenu({ config, onClose }: Props) {
         <div className="estrella-container ds-mega__footer">
           <span className="ds-mega__footer-h">{config.footer.heading}</span>
           <ul className="ds-mega__footer-list">
-            {config.footer.items.map((item) => (
-              <li key={item.label}>
+            {config.footer.items.map((item, idx) => (
+              <li key={`${item.label}-${idx}`}>
                 <Link
                   href={item.href}
                   className="ds-mega__link"
