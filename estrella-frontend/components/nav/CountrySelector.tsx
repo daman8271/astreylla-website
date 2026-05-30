@@ -8,7 +8,7 @@ function flagUrl(code: string, size: 80 | 160 = 80) {
   return `https://flagcdn.com/w${size}/${code}.png`;
 }
 
-export function CountrySelector({ fg }: { fg: string }) {
+export function CountrySelector({ fg, align = "right" }: { fg: string; align?: "left" | "right" }) {
   const [open, setOpen] = useState(false);
   const { country: selected, setCountryCode } = useCurrency();
   const [query, setQuery] = useState("");
@@ -111,8 +111,9 @@ export function CountrySelector({ fg }: { fg: string }) {
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
-            right: 0,
-            width: 360,
+            left: align === "left" ? 0 : undefined,
+            right: align === "right" ? 0 : undefined,
+            width: "min(360px, calc(100vw - 48px))",
             maxHeight: 520,
             background: "var(--brand-bg)",
             color: "var(--brand-text-primary)",

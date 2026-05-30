@@ -398,6 +398,7 @@ export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [expandedMobileItem, setExpandedMobileItem] = useState<string | null>(null);
   const closeTimerRef = useRef<number | null>(null);
 
   // Hover-to-open with a small grace delay so moving the cursor across the
@@ -458,6 +459,8 @@ export function SiteHeader() {
   // Route changes close the menu.
   useEffect(() => {
     setOpenMenu(null);
+    setMobileOpen(false);
+    setExpandedMobileItem(null);
   }, [pathname]);
 
   const onCartClick = () => {
@@ -469,9 +472,9 @@ export function SiteHeader() {
   // Mega-menu open forces the header into its solid-white "scrolled" state
   // even on the dark-hero homepage, so the dropdown panel reads cleanly.
   const onDarkHero =
-    DARK_HERO_PATHS.has(pathname || "/") && !scrolled && !openMenu;
+    DARK_HERO_PATHS.has(pathname || "/") && !scrolled && !openMenu && !mobileOpen;
   const fg = onDarkHero ? "#ffffff" : "var(--brand-text-primary)";
-  const headerSolid = scrolled || !!openMenu;
+  const headerSolid = scrolled || !!openMenu || mobileOpen;
 
   return (
     <>
@@ -488,14 +491,14 @@ export function SiteHeader() {
         onMouseLeave={scheduleClose}
         className="fixed top-0 left-0 right-0 z-50 transition-[background-color,backdrop-filter,border-color,color] duration-300"
         style={{
-          backgroundColor: openMenu
+          backgroundColor: openMenu || mobileOpen
             ? "var(--brand-bg)"
             : headerSolid
               ? "var(--glass-bg)"
               : "transparent",
-          backdropFilter: headerSolid && !openMenu ? "blur(var(--glass-blur))" : "none",
+          backdropFilter: headerSolid && !openMenu && !mobileOpen ? "blur(var(--glass-blur))" : "none",
           WebkitBackdropFilter:
-            headerSolid && !openMenu ? "blur(var(--glass-blur))" : "none",
+            headerSolid && !openMenu && !mobileOpen ? "blur(var(--glass-blur))" : "none",
           borderBottom: headerSolid
             ? "1px solid var(--glass-border)"
             : "1px solid transparent",
@@ -518,7 +521,7 @@ export function SiteHeader() {
           >
             <img
               src={
-                onDarkHero || theme === "dark"
+                (onDarkHero && !mobileOpen) || theme === "dark"
                   ? "/logo/logo-dark.png"
                   : "/logo/logo-light.png"
               }
@@ -696,25 +699,507 @@ export function SiteHeader() {
           className="md:hidden fixed inset-0 z-40 flex flex-col"
           style={{
             background: "var(--brand-bg)",
-            paddingTop: 72,
+            paddingTop: 75,
           }}
         >
-          <nav aria-label="Mobile" className="estrella-container flex flex-col py-8" style={{ gap: 24 }}>
-            {NAV_ITEMS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 32,
-                  color: "var(--brand-text-primary)",
-                }}
-              >
-                {l.label}
-              </Link>
-            ))}
-          </nav>
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "24px 24px 60px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <nav aria-label="Mobile" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {NAV_ITEMS.map((l) => (
+                <div
+                  key={l.href}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    borderBottom: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.06))",
+                    paddingBottom: "16px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedMobileItem(expandedMobileItem === l.label ? null : l.label)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      background: "transparent",
+                      border: 0,
+                      padding: 0,
+                      textAlign: "left",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: 26,
+                        letterSpacing: "0.02em",
+                        color: "var(--brand-text-primary)",
+                      }}
+                    >
+                      {l.label}
+                    </span>
+                    {l.menu && (
+                      <ChevronDown
+                        size={22}
+                        strokeWidth={1.5}
+                        style={{
+                          transform: expandedMobileItem === l.label ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 250ms ease",
+                          color: "var(--brand-text-primary)",
+                        }}
+                      />
+                    )}
+                  </button>
+
+                  {l.menu && expandedMobileItem === l.label && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "20px",
+                        paddingLeft: "12px",
+                        marginTop: "16px",
+                        borderLeft: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.06))",
+                      }}
+                    >
+                      {/* Parent CTA: Shop All */}
+                      <Link
+                        href={l.href}
+                        onClick={() => setMobileOpen(false)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          fontFamily: "var(--font-sans)",
+                          fontSize: "15px",
+                          fontWeight: 600,
+                          color: "var(--brand-text-primary)",
+                          textDecoration: "none",
+                          paddingBottom: "8px",
+                          borderBottom: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.06))",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        <span>Shop All {l.label}</span>
+                        <span style={{ fontSize: "12px" }}>→</span>
+                      </Link>
+
+                      {l.menu.columns.map((col, colIdx) => (
+                        <div key={colIdx} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                          {col.heading && (
+                            <h4
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.1em",
+                                color: "var(--brand-text-muted, #7a7a7a)",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {col.heading}
+                            </h4>
+                          )}
+
+                          {col.items && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                              {col.items.map((item, itemIdx) => (
+                                <Link
+                                  key={itemIdx}
+                                  href={item.href}
+                                  onClick={() => setMobileOpen(false)}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "12px",
+                                    fontFamily: "var(--font-sans)",
+                                    fontSize: "15px",
+                                    color: "var(--brand-text-secondary)",
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  {item.icon && (
+                                    <span
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        width: "24px",
+                                        height: "24px",
+                                        color: "var(--brand-text-primary)",
+                                      }}
+                                    >
+                                      {item.icon}
+                                    </span>
+                                  )}
+                                  <span>{item.label}</span>
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+
+                          {col.groups &&
+                            col.groups.map((g, gIdx) => (
+                              <div key={gIdx} style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+                                {g.heading && (
+                                  <h5
+                                    style={{
+                                      fontFamily: "var(--font-sans)",
+                                      fontSize: "13px",
+                                      fontWeight: 600,
+                                      color: "var(--brand-text-secondary)",
+                                      opacity: 0.8,
+                                    }}
+                                  >
+                                    {g.heading}
+                                  </h5>
+                                )}
+                                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                                  {g.items.map((item, itemIdx) => (
+                                    <Link
+                                      key={itemIdx}
+                                      href={item.href}
+                                      onClick={() => setMobileOpen(false)}
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "12px",
+                                        fontFamily: "var(--font-sans)",
+                                        fontSize: "15px",
+                                        color: "var(--brand-text-secondary)",
+                                        textDecoration: "none",
+                                        paddingLeft: g.heading ? "8px" : "0px",
+                                      }}
+                                    >
+                                      {item.icon && (
+                                        <span
+                                          style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            width: "24px",
+                                            height: "24px",
+                                            color: "var(--brand-text-primary)",
+                                          }}
+                                        >
+                                          {item.icon}
+                                        </span>
+                                      )}
+                                      <span>{item.label}</span>
+                                    </Link>
+                                  ))}
+                                </div>
+                                {g.more && (
+                                  <Link
+                                    href={g.more.href}
+                                    onClick={() => setMobileOpen(false)}
+                                    style={{
+                                      fontFamily: "var(--font-sans)",
+                                      fontSize: "13px",
+                                      color: "var(--brand-text-primary)",
+                                      textDecoration: "underline",
+                                      textUnderlineOffset: "3px",
+                                      paddingLeft: g.heading ? "8px" : "0px",
+                                    }}
+                                  >
+                                    {g.more.label} →
+                                  </Link>
+                                )}
+                              </div>
+                            ))}
+
+                          {col.more && (
+                            <Link
+                              href={col.more.href}
+                              onClick={() => setMobileOpen(false)}
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: "13px",
+                                color: "var(--brand-text-primary)",
+                                textDecoration: "underline",
+                                textUnderlineOffset: "3px",
+                              }}
+                            >
+                              {col.more.label} →
+                            </Link>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Promo section */}
+                      {l.menu.promos && l.menu.promos.length > 0 && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
+                          {l.menu.promos.map((promo, pIdx) => (
+                            <Link
+                              key={pIdx}
+                              href={promo.cta.href}
+                              onClick={() => setMobileOpen(false)}
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "6px",
+                                padding: "16px",
+                                borderRadius: "8px",
+                                background: "linear-gradient(135deg, var(--brand-bg-warm, #f5efe6) 0%, var(--brand-bg, #fbf8f3) 100%)",
+                                border: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.06))",
+                                textDecoration: "none",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-sans)",
+                                  fontSize: "10px",
+                                  fontWeight: 700,
+                                  letterSpacing: "0.12em",
+                                  color: "var(--brand-text-muted, #7a7a7a)",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {promo.eyebrow}
+                              </span>
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-sans)",
+                                  fontSize: "13px",
+                                  fontWeight: 600,
+                                  color: "var(--brand-text-primary)",
+                                  textDecoration: "underline",
+                                  textUnderlineOffset: "2px",
+                                }}
+                              >
+                                {promo.cta.label} →
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Education footer row in mobile */}
+                      {l.menu.footer && (
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                            paddingTop: "16px",
+                            marginTop: "8px",
+                            borderTop: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.06))",
+                          }}
+                        >
+                          <h4
+                            style={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.1em",
+                              color: "var(--brand-text-muted, #7a7a7a)",
+                            }}
+                          >
+                            {l.menu.footer.heading}
+                          </h4>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                            {l.menu.footer.items.map((fItem, fIdx) => (
+                              <Link
+                                key={fIdx}
+                                href={fItem.href}
+                                onClick={() => setMobileOpen(false)}
+                                style={{
+                                  fontFamily: "var(--font-sans)",
+                                  fontSize: "14px",
+                                  color: "var(--brand-text-secondary)",
+                                  textDecoration: "none",
+                                }}
+                              >
+                                {fItem.label}
+                              </Link>
+                            ))}
+                          </div>
+                          {l.menu.footer.more && (
+                            <Link
+                              href={l.menu.footer.more.href}
+                              onClick={() => setMobileOpen(false)}
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: "13px",
+                                color: "var(--brand-text-primary)",
+                                textDecoration: "underline",
+                                textUnderlineOffset: "3px",
+                              }}
+                            >
+                              {l.menu.footer.more.label} →
+                            </Link>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </nav>
+
+            <hr
+              style={{
+                border: 0,
+                borderTop: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.08))",
+                margin: "12px 0 8px",
+              }}
+            />
+
+            {/* Quick Actions Panel */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {/* Region and Currency */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color: "var(--brand-text-muted, #7a7a7a)",
+                  }}
+                >
+                  Region & Currency
+                </span>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <CountrySelector fg="var(--brand-text-primary)" align="left" />
+                </div>
+              </div>
+
+              {/* Theme Settings */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color: "var(--brand-text-muted, #7a7a7a)",
+                  }}
+                >
+                  Theme
+                </span>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => theme === "dark" && toggleTheme()}
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: `1px solid ${theme === "light" ? "var(--brand-text-primary)" : "var(--brand-border-subtle)"}`,
+                      background: theme === "light" ? "var(--brand-text-primary)" : "transparent",
+                      color: theme === "light" ? "var(--brand-bg)" : "var(--brand-text-primary)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 200ms ease",
+                    }}
+                  >
+                    <Sun size={16} strokeWidth={1.5} />
+                    <span>Light</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => theme === "light" && toggleTheme()}
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: `1px solid ${theme === "dark" ? "var(--brand-text-primary)" : "var(--brand-border-subtle)"}`,
+                      background: theme === "dark" ? "var(--brand-text-primary)" : "transparent",
+                      color: theme === "dark" ? "var(--brand-bg)" : "var(--brand-text-primary)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 200ms ease",
+                    }}
+                  >
+                    <Moon size={16} strokeWidth={1.5} />
+                    <span>Dark</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Shortcuts */}
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    onCartClick();
+                  }}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.08))",
+                    background: "transparent",
+                    color: "var(--brand-text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "opacity 150ms ease",
+                  }}
+                  className="hover:opacity-75"
+                >
+                  <span>Cart ({cartCount > 99 ? "99+" : cartCount})</span>
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.08))",
+                    background: "transparent",
+                    color: "var(--brand-text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "opacity 150ms ease",
+                  }}
+                  className="hover:opacity-75"
+                >
+                  <Search size={16} strokeWidth={1.5} />
+                  <span>Search</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>
