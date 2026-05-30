@@ -4,10 +4,10 @@ import { useState } from "react";
 import type { Diamond } from "./types";
 import { DiamondViewer } from "./DiamondViewer";
 import { diamondImageUrl } from "@/lib/diamondImage";
+import { useCurrency } from "@/components/currency/CurrencyContext";
 
 type Props = {
   diamond: Diamond;
-  currency: string;
   onAddToCart?: (d: Diamond) => void;
   onOpen?: (d: Diamond) => void;
   busy?: boolean;
@@ -29,20 +29,6 @@ const SHAPE_LABELS: Record<string, string> = {
   Asscher: "Asscher",
   Radiant: "Radiant",
 };
-
-function formatMoney(amount: number, currency: string) {
-  // No rounding. Use the API's own value verbatim — Intl applies standard
-  // currency formatting (thousands separators + the currency's own minor-unit
-  // precision, e.g. 2 decimals for USD).
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount}`;
-  }
-}
 
 function titleCase(s: string) {
   return s
@@ -86,7 +72,8 @@ function certBadge(lab: string | undefined) {
 
 type ImgStage = "resolver" | "placeholder";
 
-export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode = "default", onSelect }: Props) {
+export function DiamondCard({ diamond, onAddToCart, onOpen, busy, mode = "default", onSelect }: Props) {
+  const { formatPrice, currency: activeCurrency } = useCurrency();
   // Image source: the diamond's still photo loaded straight from the Bunny CDN
   // (built from diamond.id via diamondImageUrl — no Augmont resolver hop). On a
   // genuinely-missing asset, onError fires and we fall through to the SVG
@@ -184,8 +171,8 @@ export function DiamondCard({ diamond, currency, onAddToCart, onOpen, busy, mode
 
         <div className="ds-card__price-row">
           <div className="ds-card__price">
-            <strong>{formatMoney(diamond.price || 0, currency)}</strong>
-            <span className="ds-card__currency">{currency}</span>
+            <strong>{formatPrice(diamond.price || 0)}</strong>
+            <span className="ds-card__currency">{activeCurrency}</span>
           </div>
           <div className="ds-card__cert">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>

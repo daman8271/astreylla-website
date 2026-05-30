@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/footer/SiteFooter";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { CurrencyProvider } from "@/components/currency/CurrencyContext";
 import { getCartAction } from "@/lib/cart-actions";
 
 // Runs before React hydration so the saved theme is applied before paint —
@@ -75,14 +76,16 @@ export default async function RootLayout({
         }}
       >
         <ThemeProvider>
-          <CartProvider initialCart={initialCart}>
-            <SiteHeader />
-            <main id="main" style={{ flex: 1 }}>
-              {children}
-            </main>
-            <SiteFooter />
-            <CartDrawer />
-          </CartProvider>
+          <CurrencyProvider>
+            <CartProvider initialCart={initialCart}>
+              <SiteHeader />
+              <main id="main" style={{ flex: 1 }}>
+                {children}
+              </main>
+              <SiteFooter />
+              <CartDrawer />
+            </CartProvider>
+          </CurrencyProvider>
         </ThemeProvider>
       </body>
     </html>

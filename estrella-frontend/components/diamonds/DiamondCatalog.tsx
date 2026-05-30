@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCurrency } from "@/components/currency/CurrencyContext";
 import {
   CARAT_MAX,
   CARAT_MIN,
@@ -132,7 +133,7 @@ export function DiamondCatalog({
   // "no diamonds" message before data arrives.
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currency, setCurrency] = useState("USD");
+  const { currency } = useCurrency();
   const [sort, setSort] = useState<SortKey>("price-asc");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [pagination, setPagination] = useState({ from: 1, to: perPage });
@@ -179,7 +180,6 @@ export function DiamondCatalog({
           setHasMore(!!data.pagination?.hasMore);
           if (typeof data.totalCount === "number") setTotal(data.totalCount);
           else if (typeof data.count === "number") setTotal(data.count);
-          if (data.currencyCode) setCurrency(data.currencyCode);
           if (myReq === seq.current) setLoading(false);
         } catch (e) {
           if (myReq !== seq.current) return; // a newer request took over
@@ -360,7 +360,6 @@ export function DiamondCatalog({
         <DiamondDetailView
           diamondId={selectedId}
           diamond={diamonds.find((x) => x.id === selectedId) || null}
-          currency={currency}
           onBack={closeDrawer}
           onAddToCart={handleAdd}
           busyAddId={busyAddId}
@@ -470,7 +469,6 @@ export function DiamondCatalog({
             <DiamondCard
               key={d.id}
               diamond={d}
-              currency={currency}
               onAddToCart={handleAdd}
               onOpen={openDiamond}
               busy={busyAddId === d.id}

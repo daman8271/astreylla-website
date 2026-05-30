@@ -4,13 +4,13 @@ import { useEffect, useState, useMemo } from "react";
 import type { Diamond } from "./types";
 import { DiamondViewer } from "./DiamondViewer";
 import { diamondImageUrl } from "@/lib/diamondImage";
+import { useCurrency } from "@/components/currency/CurrencyContext";
 
 type ImgStage = "resolver" | "placeholder";
 
 type Props = {
   diamond: Diamond | null;
   diamondId: string | null;
-  currency: string;
   onBack: () => void;
   onAddToCart?: (d: Diamond) => void;
   busyAddId?: string | null;
@@ -27,17 +27,6 @@ function formatTitle(d: Diamond): string {
   return `${ct}ct ${shape ? shape + " " : ""}Diamond`.trim();
 }
 
-function formatMoney(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount}`;
-  }
-}
-
 function certLabel(lab: string | undefined | null) {
   const v = (lab || "").trim();
   if (!v || v.toLowerCase() === "no-cert") return null;
@@ -49,11 +38,11 @@ function certLabel(lab: string | undefined | null) {
 export function DiamondDetailView({
   diamond,
   diamondId,
-  currency,
   onBack,
   onAddToCart,
   busyAddId,
 }: Props) {
+  const { formatPrice } = useCurrency();
   const [imgStage, setImgStage] = useState<ImgStage>(() =>
     diamond?.id ? "resolver" : "placeholder"
   );
@@ -91,7 +80,12 @@ export function DiamondDetailView({
   const galleryItems = useMemo(() => {
     if (!d.id) return [];
 
-    const items = [
+    const items: Array<{
+      id: string;
+      type: "image" | "video" | "360";
+      url: string;
+      label: string;
+    }> = [
       {
         id: "front",
         type: "image" as const,
@@ -373,7 +367,7 @@ export function DiamondDetailView({
               <span>Price only for diamond</span>
             </div>
             <div className="ds-detail__price-val">
-              {formatMoney(d.price || 0, currency)}
+              {formatPrice(d.price || 0)}
             </div>
           </div>
 

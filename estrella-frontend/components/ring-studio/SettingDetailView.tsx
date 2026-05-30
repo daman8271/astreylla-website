@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SHAPES_PRIMARY } from "@/components/diamonds/types";
 import type { Setting, SettingMetal, SettingColor, SettingKarat } from "./setting-types";
 import { metalKey, metalLabel } from "./setting-types";
-import { formatUsd } from "@/lib/settings";
+import { useCurrency } from "@/components/currency/CurrencyContext";
 import { RingSpinner } from "./RingSpinner";
 import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyleMaskIcon";
 
@@ -57,6 +57,7 @@ const SHAPE_ICONS: Record<string, JSX.Element> = {
 };
 
 export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBack, onSelect }: Props) {
+  const { formatPrice, currency } = useCurrency();
   const [chosenMetalKey, setChosenMetalKey] = useState<string>(
     initialMetalKey || metalKey(setting.metals[0])
   );
@@ -222,7 +223,7 @@ export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBac
           <div className="rs-detail__price">
             <span className="rs-detail__price-row">
               <span className="rs-detail__price-key">Price</span>
-              <strong>{formatUsd(metal.priceUsd)} USD</strong>
+              <strong>{formatPrice(metal.priceUsd)} {currency}</strong>
             </span>
             <span className="rs-detail__price-note">Price only for Setting</span>
           </div>

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Setting } from "./setting-types";
-import { formatUsd } from "@/lib/settings";
+import { useCurrency } from "@/components/currency/CurrencyContext";
 import { SettingPlaceholder } from "./SettingPlaceholder";
 
 const COLOR_DOT: Record<string, string> = {
@@ -21,6 +21,7 @@ export function SettingCard({
   selectedColors?: Set<string>;
   onClick: () => void;
 }) {
+  const { formatPrice, currency } = useCurrency();
   const [failedSrcs, setFailedSrcs] = useState<Set<string>>(new Set());
   const [overrideColor, setOverrideColor] = useState<string | null>(null);
 
@@ -137,7 +138,7 @@ export function SettingCard({
           );
         })}
       </div>
-      <div className="rs-setting-card__price">{formatUsd(setting.basePriceUsd)} USD</div>
+      <div className="rs-setting-card__price">{formatPrice(setting.basePriceUsd)} {currency}</div>
     </article>
   );
 }

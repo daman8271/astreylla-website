@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRingStudio, getMetalFromKey } from "./RingStudioContext";
-import { formatUsd } from "@/lib/settings";
+import { useCurrency } from "@/components/currency/CurrencyContext";
 import { diamondImageUrl } from "@/lib/diamondImage";
 
 export type Stage = "diamond" | "setting" | "complete";
@@ -36,6 +36,7 @@ function StepNumber({ n, active }: { n: number; active: boolean }) {
 export function RingStudioStepper({ current }: Props) {
   const router = useRouter();
   const { state, setDiamond, setSetting } = useRingStudio();
+  const { formatPrice } = useCurrency();
   const { diamond, setting, metalKey, shape } = state;
   const metal = getMetalFromKey(setting, metalKey);
 
@@ -88,7 +89,7 @@ export function RingStudioStepper({ current }: Props) {
             <span className="rs-step__chip-meta">
               <span className="rs-step__chip-title">{setting.name} ({setting.sku})</span>
               <span className="rs-step__chip-row">
-                <strong>{formatUsd(settingPrice)}</strong>
+                <strong>{formatPrice(settingPrice)}</strong>
                 <button type="button" className="rs-step__remove" onClick={removeSetting}>Remove</button>
               </span>
             </span>
@@ -120,7 +121,7 @@ export function RingStudioStepper({ current }: Props) {
             <span className="rs-step__chip-meta">
               <span className="rs-step__chip-title">{diamond.title || `${Number(diamond.carat).toFixed(2)}ct ${diamond.shape || "Diamond"}`}</span>
               <span className="rs-step__chip-row">
-                <strong>{formatUsd(diamond.price || 0)}</strong>
+                <strong>{formatPrice(diamond.price || 0)}</strong>
                 <button type="button" className="rs-step__remove" onClick={removeDiamond}>Remove</button>
               </span>
             </span>
@@ -156,7 +157,7 @@ export function RingStudioStepper({ current }: Props) {
             <span className="rs-step__chip-meta">
               <span className="rs-step__chip-title">Complete ring</span>
               <span className="rs-step__chip-row">
-                <strong>{formatUsd(total)}</strong>
+                <strong>{formatPrice(total)}</strong>
               </span>
             </span>
           </span>

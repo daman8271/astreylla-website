@@ -1,6 +1,6 @@
 "use client";
 
-import { formatUsd } from "@/lib/settings";
+import { useCurrency } from "@/components/currency/CurrencyContext";
 
 type Props = {
   totalUsd: number;
@@ -14,11 +14,12 @@ type Props = {
 };
 
 export function OrderTotal({ totalUsd, ctaLabel, ctaDisabled, ctaIcon, onPrimary, onWishlist, busy, successMessage }: Props) {
+  const { formatPrice, currency } = useCurrency();
   return (
     <div className="rs-order">
       <div className="rs-order__total">
         <span>Total</span>
-        <strong>{formatUsd(totalUsd)} USD</strong>
+        <strong>{formatPrice(totalUsd)} {currency}</strong>
       </div>
       <button
         type="button"
