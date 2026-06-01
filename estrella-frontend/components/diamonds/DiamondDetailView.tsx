@@ -16,6 +16,7 @@ type Props = {
   busyAddId?: string | null;
   mode?: "default" | "ring-studio";
   onSelect?: (d: Diamond) => void;
+  shop?: string;
 };
 
 function capFirst(s: string) {
@@ -45,8 +46,13 @@ export function DiamondDetailView({
   busyAddId,
   mode = "default",
   onSelect,
+  shop,
 }: Props) {
   const { formatPrice } = useCurrency();
+  const [localDiamond, setLocalDiamond] = useState<Diamond | null>(diamond);
+  const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   const [imgStage, setImgStage] = useState<ImgStage>(() =>
     diamond?.id ? "resolver" : "placeholder"
   );
@@ -55,13 +61,51 @@ export function DiamondDetailView({
   const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
-    setImgStage(diamond?.id ? "resolver" : "placeholder");
+    setLocalDiamond(diamond);
+  }, [diamond]);
+
+  useEffect(() => {
+    setImgStage(localDiamond?.id ? "resolver" : "placeholder");
     setViewerOpen(false);
     setActiveTab(0);
-  }, [diamond?.id]);
+  }, [localDiamond?.id]);
+
+  useEffect(() => {
+    if (localDiamond || !diamondId || !shop) return;
+
+    let active = true;
+    setFetching(true);
+    setFetchError(null);
+
+    const fetchSingle = async () => {
+      try {
+        const url = `/api/widget/api/public/diamonds?shop=${encodeURIComponent(shop)}&id=${encodeURIComponent(diamondId)}`;
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        if (!active) return;
+        const rows = data.diamonds || [];
+        if (rows.length > 0) {
+          setLocalDiamond(rows[0]);
+        } else {
+          setFetchError("The diamond is no longer available in the catalogue.");
+        }
+      } catch (e) {
+        if (!active) return;
+        setFetchError("Failed to load diamond details. Please try again.");
+      } finally {
+        if (active) setFetching(false);
+      }
+    };
+
+    fetchSingle();
+    return () => {
+      active = false;
+    };
+  }, [diamondId, shop, localDiamond]);
 
   const galleryItems = useMemo(() => {
-    if (!diamond || !diamond.id) return [];
+    if (!localDiamond || !localDiamond.id) return [];
 
     const items: Array<{
       id: string;
@@ -72,36 +116,50 @@ export function DiamondDetailView({
       {
         id: "front",
         type: "image" as const,
-        url: diamondImageUrl(diamond.id),
+        url: diamondImageUrl(localDiamond.id),
         label: "Front View",
       },
       {
         id: "side",
         type: "image" as const,
-        url: `https://augmont-lgd-prod.b-cdn.net/products/${diamond.id}/image/64.jpg`,
+        url: `https://augmont-lgd-prod.b-cdn.net/products/${localDiamond.id}/image/64.jpg`,
         label: "Side View",
       },
       {
         id: "back",
         type: "image" as const,
-        url: `https://augmont-lgd-prod.b-cdn.net/products/${diamond.id}/image/128.jpg`,
+        url: `https://augmont-lgd-prod.b-cdn.net/products/${localDiamond.id}/image/128.jpg`,
         label: "Back View",
       },
     ];
 
-    if (diamond.stockNum) {
+    if (localDiamond.stockNum) {
       items.push({
         id: "360",
         type: "360" as const,
-        url: `/360-viewer.html?id=${encodeURIComponent(diamond.stockNum)}&type=video`,
+        url: `/360-viewer.html?id=${encodeURIComponent(localDiamond.stockNum)}&type=video`,
         label: "360° View",
       });
     }
 
     return items;
-  }, [diamond?.id, diamond?.stockNum]);
+  }, [localDiamond?.id, localDiamond?.stockNum]);
 
-  if (!diamond) {
+  if (fetching) {
+    return (
+      <div className="ds-detail">
+        <button type="button" className="ds-detail__back" onClick={onBack}>
+          ← Back to browse
+        </button>
+        <div className="ds-detail__loading">
+          <div className="ds-detail__spinner" />
+          <p>Loading diamond details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError || !localDiamond) {
     return (
       <div className="ds-detail">
         <button type="button" className="ds-detail__back" onClick={onBack}>
@@ -110,15 +168,14 @@ export function DiamondDetailView({
         <div className="ds-detail__missing">
           <h2>Diamond unavailable</h2>
           <p>
-            The diamond you&apos;re looking for{diamondId ? ` (${diamondId})` : ""} isn&apos;t
-            in the current catalog. Head back and try again.
+            {fetchError || `The diamond you're looking for${diamondId ? ` (${diamondId})` : ""} isn't in the current catalog. Head back and try again.`}
           </p>
         </div>
       </div>
     );
   }
 
-  const d = diamond;
+  const d = localDiamond;
   const title = formatTitle(d);
   const cert = certLabel(d.lab);
 

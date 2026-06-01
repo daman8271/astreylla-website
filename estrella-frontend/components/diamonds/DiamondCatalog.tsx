@@ -364,6 +364,7 @@ export function DiamondCatalog({
           busyAddId={busyAddId}
           mode={mode}
           onSelect={onSelect}
+          shop={shop}
         />
       </div>
     );

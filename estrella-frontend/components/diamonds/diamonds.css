@@ -169,6 +169,7 @@
   transform: translateY(-50%);
   pointer-events: none;
   transition: background-color 0.2s ease;
+  z-index: 0;
 }
 .ds-range__input {
   position: absolute;
@@ -184,6 +185,7 @@
   appearance: none;
   margin: 0;
   outline: none;
+  z-index: 2;
 }
 .ds-range__input:focus {
   outline: none;
@@ -272,19 +274,16 @@
 }
 .ds-range__tick {
   position: absolute;
-  top: 0;
-  width: 5px;
-  height: 5px;
+  top: 50%;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  background-color: #ffffff;
-  border: 1.5px solid #e5e2da;
+  background-color: #eae6df;
   transform: translate(-50%, -50%);
-  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+  transition: background-color 150ms ease, transform 150ms ease;
 }
 .ds-range__tick--active {
   background-color: #1a1a1a;
-  border-color: #1a1a1a;
-  transform: translate(-50%, -50%) scale(1.2);
 }
 
 /* Scale labels under sliders — mathematically aligned under slider ticks */
@@ -1041,6 +1040,36 @@
   font-size: 14px;
   color: #5a5750;
   margin: 0;
+}
+
+.ds-detail__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 16px;
+  font-family: var(--font-sans);
+}
+.ds-detail__loading p {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #7d7a71;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.ds-detail__spinner {
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid #eae6df;
+  border-top-color: var(--brand-accent-gold, #a48e68);
+  border-radius: 50%;
+  animation: ds-spin 0.8s linear infinite;
+}
+
+@keyframes ds-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── DARK MODE OVERRIDES ──────────────────────────────────────────────
