@@ -57,9 +57,39 @@ export function RangeSlider({
     onChange([lo, v]);
   };
 
+  const showTicks = step === 1 && (max - min) <= 10;
+  const ticks = useMemo(() => {
+    if (!showTicks) return [];
+    const arr = [];
+    const count = max - min;
+    for (let i = 0; i <= count; i++) {
+      const val = min + i;
+      const active = val >= lo && val <= hi;
+      arr.push({
+        pct: (i / count) * 100,
+        active,
+        val,
+      });
+    }
+    return arr;
+  }, [min, max, step, lo, hi, showTicks]);
+
   return (
     <div className="ds-range" aria-label={label}>
       <div className="ds-range__track" style={trackStyle} />
+      
+      {showTicks && (
+        <div className="ds-range__ticks" aria-hidden="true">
+          {ticks.map((t, idx) => (
+            <div
+              key={idx}
+              className={`ds-range__tick ${t.active ? "ds-range__tick--active" : ""}`}
+              style={{ left: `${t.pct}%` }}
+            />
+          ))}
+        </div>
+      )}
+
       <input
         id={`${id}-lo`}
         type="range"

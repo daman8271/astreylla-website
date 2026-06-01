@@ -46,7 +46,6 @@ type Props = {
 
 export function DiamondFilters({ value, onChange }: Props) {
   const [showMoreShapes, setShowMoreShapes] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const set = <K extends keyof FilterState>(k: K, v: FilterState[K]) =>
     onChange({ ...value, [k]: v });
@@ -251,30 +250,7 @@ export function DiamondFilters({ value, onChange }: Props) {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="ds-advanced"
-        onClick={() => setAdvancedOpen((s) => !s)}
-        aria-expanded={advancedOpen}
-      >
-        <span>Advanced Filters</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d={advancedOpen ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"}
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-      {advancedOpen ? (
-        <div className="ds-advanced__panel">
-          <p className="ds-advanced__placeholder">
-            Polish, symmetry, fluorescence, and certificate filters coming soon.
-          </p>
-        </div>
-      ) : null}
+
     </section>
   );
 }

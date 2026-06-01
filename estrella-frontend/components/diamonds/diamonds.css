@@ -259,6 +259,34 @@
   background-color: #fbfbf9;
 }
 
+/* Elegant Step Ticks on range tracks for categorical sliders */
+.ds-range__ticks {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  top: 50%;
+  height: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+.ds-range__tick {
+  position: absolute;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1.5px solid #e5e2da;
+  transform: translate(-50%, -50%);
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+.ds-range__tick--active {
+  background-color: #1a1a1a;
+  border-color: #1a1a1a;
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
 /* Scale labels under sliders — mathematically aligned under slider ticks */
 .ds-scale {
   display: flex;
@@ -274,10 +302,11 @@
   overflow: visible;
   white-space: nowrap;
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  color: #5a5750;
-  letter-spacing: -0.01em;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7c776b;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 .ds-scale--6,
 .ds-scale--3 {
