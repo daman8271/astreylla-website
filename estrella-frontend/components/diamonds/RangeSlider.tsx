@@ -37,12 +37,12 @@ export function RangeSlider({
     () => ({
       background: `linear-gradient(
         to right,
-        #d8d4cc 0%,
-        #d8d4cc ${pct(lo)}%,
-        #3D3D3D ${pct(lo)}%,
-        #3D3D3D ${pct(hi)}%,
-        #d8d4cc ${pct(hi)}%,
-        #d8d4cc 100%
+        #e5e2da 0%,
+        #e5e2da ${pct(lo)}%,
+        #1a1a1a ${pct(lo)}%,
+        #1a1a1a ${pct(hi)}%,
+        #e5e2da ${pct(hi)}%,
+        #e5e2da 100%
       )`,
     }),
     [lo, hi, pct]

@@ -14,6 +14,8 @@ type Props = {
   onBack: () => void;
   onAddToCart?: (d: Diamond) => void;
   busyAddId?: string | null;
+  mode?: "default" | "ring-studio";
+  onSelect?: (d: Diamond) => void;
 };
 
 function capFirst(s: string) {
@@ -41,6 +43,8 @@ export function DiamondDetailView({
   onBack,
   onAddToCart,
   busyAddId,
+  mode = "default",
+  onSelect,
 }: Props) {
   const { formatPrice } = useCurrency();
   const [imgStage, setImgStage] = useState<ImgStage>(() =>
@@ -55,6 +59,47 @@ export function DiamondDetailView({
     setViewerOpen(false);
     setActiveTab(0);
   }, [diamond?.id]);
+
+  const galleryItems = useMemo(() => {
+    if (!diamond || !diamond.id) return [];
+
+    const items: Array<{
+      id: string;
+      type: "image" | "video" | "360";
+      url: string;
+      label: string;
+    }> = [
+      {
+        id: "front",
+        type: "image" as const,
+        url: diamondImageUrl(diamond.id),
+        label: "Front View",
+      },
+      {
+        id: "side",
+        type: "image" as const,
+        url: `https://augmont-lgd-prod.b-cdn.net/products/${diamond.id}/image/64.jpg`,
+        label: "Side View",
+      },
+      {
+        id: "back",
+        type: "image" as const,
+        url: `https://augmont-lgd-prod.b-cdn.net/products/${diamond.id}/image/128.jpg`,
+        label: "Back View",
+      },
+    ];
+
+    if (diamond.stockNum) {
+      items.push({
+        id: "360",
+        type: "360" as const,
+        url: `/360-viewer.html?id=${encodeURIComponent(diamond.stockNum)}&type=video`,
+        label: "360° View",
+      });
+    }
+
+    return items;
+  }, [diamond?.id, diamond?.stockNum]);
 
   if (!diamond) {
     return (
@@ -76,56 +121,6 @@ export function DiamondDetailView({
   const d = diamond;
   const title = formatTitle(d);
   const cert = certLabel(d.lab);
-
-  const galleryItems = useMemo(() => {
-    if (!d.id) return [];
-
-    const items: Array<{
-      id: string;
-      type: "image" | "video" | "360";
-      url: string;
-      label: string;
-    }> = [
-      {
-        id: "front",
-        type: "image" as const,
-        url: diamondImageUrl(d.id),
-        label: "Front View",
-      },
-      {
-        id: "side",
-        type: "image" as const,
-        url: `https://augmont-lgd-prod.b-cdn.net/products/${d.id}/image/64.jpg`,
-        label: "Side View",
-      },
-      {
-        id: "back",
-        type: "image" as const,
-        url: `https://augmont-lgd-prod.b-cdn.net/products/${d.id}/image/128.jpg`,
-        label: "Back View",
-      },
-    ];
-
-    if (d.video_url) {
-      items.push({
-        id: "video",
-        type: "video" as const,
-        url: d.video_url,
-        label: "Video",
-      });
-    }
-
-    if (d.stockNum) {
-      items.push({
-        id: "360",
-        type: "360" as const,
-        url: `/360-viewer.html?id=${encodeURIComponent(d.stockNum)}&type=video`,
-        label: "360° View",
-      });
-    }
-
-    return items;
-  }, [d.id, d.video_url, d.stockNum]);
 
   const segments: { k: string; v: string }[] = [];
   if (d.color) segments.push({ k: "Color", v: d.color });
@@ -371,14 +366,24 @@ export function DiamondDetailView({
             </div>
           </div>
 
-          <button
-            type="button"
-            className="ds-detail__cta"
-            onClick={() => onAddToCart?.(d)}
-            disabled={busyAddId === d.id}
-          >
-            {busyAddId === d.id ? "Adding…" : "Add to cart"}
-          </button>
+          {mode === "ring-studio" ? (
+            <button
+              type="button"
+              className="ds-detail__cta"
+              onClick={() => onSelect?.(d)}
+            >
+              Select diamond
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="ds-detail__cta"
+              onClick={() => onAddToCart?.(d)}
+              disabled={busyAddId === d.id}
+            >
+              {busyAddId === d.id ? "Adding…" : "Add to cart"}
+            </button>
+          )}
 
           <a className="ds-detail__cta ds-detail__cta--ghost" href={expertHref}>
             Talk to an expert

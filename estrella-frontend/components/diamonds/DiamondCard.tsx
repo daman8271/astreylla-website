@@ -85,8 +85,7 @@ export function DiamondCard({ diamond, onAddToCart, onOpen, busy, mode = "defaul
   const [viewerOpen, setViewerOpen] = useState(false);
   const isRingStudio = mode === "ring-studio";
   const open = () => {
-    if (isRingStudio) onSelect?.(diamond);
-    else onOpen?.(diamond);
+    onOpen?.(diamond);
   };
   const onKeyOpen = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -192,10 +191,10 @@ export function DiamondCard({ diamond, onAddToCart, onOpen, busy, mode = "defaul
             className="ds-card__cta ds-card__cta--outline"
             onClick={(e) => {
               e.stopPropagation();
-              onSelect?.(diamond);
+              onOpen?.(diamond);
             }}
           >
-            Select diamond
+            View diamond
           </button>
         ) : (
           <button

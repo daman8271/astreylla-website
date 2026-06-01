@@ -246,7 +246,7 @@ export function DiamondCatalog({
   // never reload, so the catalog grid + scroll position are preserved.
   // Ring Studio mode owns its own URL — skip this sync entirely.
   useEffect(() => {
-    if (typeof window === "undefined" || isRingStudio) return;
+    if (typeof window === "undefined") return;
     const sync = () => {
       const id = new URL(window.location.href).searchParams.get("id");
       setSelectedId(id);
@@ -254,7 +254,7 @@ export function DiamondCatalog({
     sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, [isRingStudio]);
+  }, []);
 
   const openDiamond = useCallback((d: Diamond) => {
     if (typeof window === "undefined") return;
@@ -353,8 +353,7 @@ export function DiamondCatalog({
   // Inline view-swap (Nivoda pattern): when a diamond is selected, the
   // catalog renders the detail view in place of filters + grid. Hero
   // and page header live in app/diamonds/page.tsx and remain visible.
-  // Ring Studio mode skips this — selection advances to Stage 2 instead.
-  if (selectedId && !isRingStudio) {
+  if (selectedId) {
     return (
       <div className="ds-catalog">
         <DiamondDetailView
@@ -363,6 +362,8 @@ export function DiamondCatalog({
           onBack={closeDrawer}
           onAddToCart={handleAdd}
           busyAddId={busyAddId}
+          mode={mode}
+          onSelect={onSelect}
         />
       </div>
     );
