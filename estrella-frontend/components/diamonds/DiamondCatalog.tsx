@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useCurrency } from "@/components/currency/CurrencyContext";
 import {
   CARAT_MAX,
@@ -216,30 +217,37 @@ export function DiamondCatalog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  // first mount — also parse initial filter state from URL search params so
-  // deep links from the nav mega-menu (e.g. /diamonds?shape=Round) land
-  // pre-filtered. Only reads the params we currently link from; ignores
-  // unknown params silently.
+  const searchParams = useSearchParams();
+
+  // Parse initial & dynamic filter state from URL search params so
+  // deep links from the nav mega-menu (e.g. /diamonds?shape=Round)
+  // dynamically filter the catalog list on navigation.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const sp = new URL(window.location.href).searchParams;
-      const shape = sp.get("shape");
-      const treatment = sp.get("treatment");
-      if (shape || treatment) {
-        setFilters((f) => ({
-          ...f,
-          ...(shape ? { shape } : {}),
-          ...(treatment === "lab-grown" || treatment === "natural"
-            ? { treatment: treatment as FilterState["treatment"] }
-            : {}),
-        }));
-        // setFilters triggers the debounced refetch — no manual call needed
-        return;
+    const shape = searchParams.get("shape") || "";
+    const treatment = searchParams.get("treatment") || "";
+    const maxFinalPrice = searchParams.get("maxFinalPrice");
+
+    setFilters((f) => {
+      const nextShape = shape;
+      const nextTreatment = (treatment === "lab-grown" || treatment === "natural" ? treatment : "") as FilterState["treatment"];
+      const nextMaxPrice = maxFinalPrice ? Number(maxFinalPrice) : PRICE_MAX;
+
+      if (
+        f.shape === nextShape &&
+        f.treatment === nextTreatment &&
+        f.price[1] === nextMaxPrice
+      ) {
+        return f;
       }
-    }
-    refetch(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+      return {
+        ...f,
+        shape: nextShape,
+        treatment: nextTreatment,
+        price: [f.price[0], nextMaxPrice],
+      };
+    });
+  }, [searchParams]);
 
   // Read ?id= on mount + react to back/forward navigation. The drawer is
   // URL-driven: pushState on open, popstate or replaceState on close. We

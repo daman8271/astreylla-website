@@ -11,10 +11,11 @@ import { getSettingBySku } from "@/lib/settings";
 export function StageSetting() {
   const router = useRouter();
   const params = useSearchParams();
-  const { setSetting } = useRingStudio();
+  const { state, setSetting } = useRingStudio();
 
   const sku = params.get("settingSku");
   const setting = sku ? getSettingBySku(sku) : null;
+  const lockedShape = state.diamond?.shape || null;
 
   const openSetting = (sku: string) => {
     const sp = new URLSearchParams(params.toString());
@@ -34,8 +35,7 @@ export function StageSetting() {
     return (
       <SettingDetailView
         setting={setting}
-        // No diamond yet — the shape is chosen here, not locked.
-        lockedShape={null}
+        lockedShape={lockedShape}
         initialMetalKey={initialMetalKey}
         onBack={closeDetail}
         onSelect={({ sku, metalKey, shape }) => {
@@ -51,5 +51,5 @@ export function StageSetting() {
     );
   }
 
-  return <SettingCatalog shape={null} onOpenSetting={openSetting} />;
+  return <SettingCatalog shape={lockedShape} onOpenSetting={openSetting} />;
 }

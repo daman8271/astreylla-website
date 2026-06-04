@@ -27,6 +27,32 @@ export async function validateMerchantWidget(req, res, next) {
       return res.status(400).json({ error: "shop is required" });
     }
 
+    if (process.env.NODE_ENV === "development") {
+      // Auto-create/upsert the session and merchant row so local database is populated
+      // and doesn't break foreign key constraints on CartItem or Order.
+      const sessionExist = await prisma.session.findFirst({ where: { shop } });
+      if (!sessionExist) {
+        await prisma.session.create({
+          data: {
+            id: `offline_${shop}`,
+            shop,
+            state: "local_dev",
+            isOnline: false,
+            accessToken: "local_dev_token",
+          },
+        });
+      }
+
+      await prisma.merchant.upsert({
+        where: { shopId: shop },
+        update: { widgetEnabled: true },
+        create: { shopId: shop, widgetEnabled: true },
+      });
+
+      req.shop = shop;
+      return next();
+    }
+
     const session = await prisma.session.findFirst({ where: { shop } });
     if (!session) {
       return res.status(403).json({ error: "shop not authorized" });

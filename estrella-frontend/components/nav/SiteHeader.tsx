@@ -273,58 +273,58 @@ const GEMSTONES_MENU: MegaMenuConfig = {
 
 // ── RINGS MEGA-MENU ──────────────────────────────────────────────────────
 const RING_SHAPES: MegaMenuItem[] = [
-  SHAPE_ITEM("Round", "round", "/ring-studio/setting"),
-  SHAPE_ITEM("Princess", "princess", "/ring-studio/setting"),
-  SHAPE_ITEM("Oval", "oval", "/ring-studio/setting"),
-  SHAPE_ITEM("Radiant", "radiant", "/ring-studio/setting"),
-  SHAPE_ITEM("Pear", "pear", "/ring-studio/setting"),
-  SHAPE_ITEM("Heart", "heart", "/ring-studio/setting"),
+  SHAPE_ITEM("Round", "round", "/ring-studio/setting?shapes=Round"),
+  SHAPE_ITEM("Princess", "princess", "/ring-studio/setting?shapes=Princess"),
+  SHAPE_ITEM("Oval", "oval", "/ring-studio/setting?shapes=Oval"),
+  SHAPE_ITEM("Radiant", "radiant", "/ring-studio/setting?shapes=Radiant"),
+  SHAPE_ITEM("Pear", "pear", "/ring-studio/setting?shapes=Pear"),
+  SHAPE_ITEM("Heart", "heart", "/ring-studio/setting?shapes=Heart"),
 ];
 
 const RING_STYLES: MegaMenuItem[] = [
-  { label: "Solitaire", href: "/ring-studio/setting", icon: <RingStyleMaskIcon name="solitaire" /> },
-  { label: "Pave", href: "/ring-studio/setting", icon: <RingStyleMaskIcon name="pave" /> },
-  { label: "Halo", href: "/ring-studio/setting", icon: <RingStyleMaskIcon name="halo" /> },
-  { label: "Hidden Halo", href: "/ring-studio/setting", icon: <RingStyleMaskIcon name="hidden-halo" /> },
-  { label: "Nature", href: "/ring-studio/setting", icon: <RingStyleMaskIcon name="nature" /> },
-  { label: "Trilogy", href: "/ring-studio/setting", icon: <RingStyleMaskIcon name="trilogy" /> },
-  { label: "Vintage", href: "/ring-studio/setting", icon: <RingStyleMaskIcon name="vintage" /> },
+  { label: "Solitaire", href: "/ring-studio/setting?styles=Solitaire", icon: <RingStyleMaskIcon name="solitaire" /> },
+  { label: "Pave", href: "/ring-studio/setting?styles=Pave", icon: <RingStyleMaskIcon name="pave" /> },
+  { label: "Halo", href: "/ring-studio/setting?styles=Halo", icon: <RingStyleMaskIcon name="halo" /> },
+  { label: "Hidden Halo", href: "/ring-studio/setting?styles=Hidden%20Halo", icon: <RingStyleMaskIcon name="hidden-halo" /> },
+  { label: "Nature", href: "/ring-studio/setting?styles=Nature", icon: <RingStyleMaskIcon name="nature" /> },
+  { label: "Trilogy", href: "/ring-studio/setting?styles=Three-Stone", icon: <RingStyleMaskIcon name="trilogy" /> },
+  { label: "Vintage", href: "/ring-studio/setting?styles=Side%20Stone", icon: <RingStyleMaskIcon name="vintage" /> },
 ];
 
 const RING_METALS: MegaMenuItem[] = [
   {
     label: "14k Yellow Gold",
-    href: "/ring-studio/setting",
+    href: "/ring-studio/setting?metalKeys=14K-Yellow",
     icon: <MetalChip bg="#f1d27a" fg="#7a5b1a" text="14K" />,
   },
   {
     label: "18k Yellow Gold",
-    href: "/ring-studio/setting",
+    href: "/ring-studio/setting?metalKeys=18K-Yellow",
     icon: <MetalChip bg="#e9c25a" fg="#5a4112" text="18K" />,
   },
   {
     label: "14k Rose Gold",
-    href: "/ring-studio/setting",
+    href: "/ring-studio/setting?metalKeys=14K-Rose",
     icon: <MetalChip bg="#eac0b0" fg="#7a3f2c" text="14K" />,
   },
   {
     label: "18k Rose Gold",
-    href: "/ring-studio/setting",
+    href: "/ring-studio/setting?metalKeys=18K-Rose",
     icon: <MetalChip bg="#dba38e" fg="#5e2d1d" text="18K" />,
   },
   {
     label: "14k White Gold",
-    href: "/ring-studio/setting",
+    href: "/ring-studio/setting?metalKeys=14K-White",
     icon: <MetalChip bg="#e8e6e0" fg="#3d3d3d" text="14K" border="#cfcdc7" />,
   },
   {
     label: "18k White Gold",
-    href: "/ring-studio/setting",
+    href: "/ring-studio/setting?metalKeys=18K-White",
     icon: <MetalChip bg="#dcdad4" fg="#2c2c2c" text="18K" border="#bfbdb7" />,
   },
   {
     label: "950 Platinum",
-    href: "/ring-studio/setting",
+    href: "/ring-studio/setting?metalKeys=PT-Platinum",
     icon: <MetalChip bg="#e2e1dc" fg="#3d3d3d" text="PT" border="#bfbdb7" />,
   },
 ];

@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { SettingCard } from "./SettingCard";
 import { SettingFilters, DEFAULT_SETTING_FILTERS, PRICE_FLOOR, PRICE_CEIL, type SettingFilterState } from "./SettingFilters";
 import { filterSettings } from "@/lib/settings";
+import type { SettingStyle } from "./setting-types";
 
 type SortKey = "featured" | "price-asc" | "price-desc";
 
@@ -16,6 +18,40 @@ export function SettingCatalog({ shape, onOpenSetting }: Props) {
   const [filters, setFilters] = useState<SettingFilterState>(DEFAULT_SETTING_FILTERS);
   const [hidden, setHidden] = useState(false);
   const [sort, setSort] = useState<SortKey>("featured");
+  const searchParams = useSearchParams();
+
+  // Sync URL search parameters to catalog filters
+  useEffect(() => {
+    const nextFilters: SettingFilterState = {
+      styles: new Set<SettingStyle>(),
+      metalKeys: new Set<string>(),
+      shapes: new Set<string>(),
+      priceRange: [PRICE_FLOOR, PRICE_CEIL],
+    };
+
+    const shapesParam = searchParams.get("shapes") || searchParams.get("shape");
+    if (shapesParam) {
+      shapesParam.split(",").forEach((s) => {
+        if (s) nextFilters.shapes.add(s);
+      });
+    }
+
+    const stylesParam = searchParams.get("styles") || searchParams.get("style");
+    if (stylesParam) {
+      stylesParam.split(",").forEach((s) => {
+        if (s) nextFilters.styles.add(s as SettingStyle);
+      });
+    }
+
+    const metalsParam = searchParams.get("metalKeys") || searchParams.get("metal");
+    if (metalsParam) {
+      metalsParam.split(",").forEach((m) => {
+        if (m) nextFilters.metalKeys.add(m);
+      });
+    }
+
+    setFilters(nextFilters);
+  }, [searchParams]);
 
   const list = useMemo(() => {
     const base = filterSettings({
