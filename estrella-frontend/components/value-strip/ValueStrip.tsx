@@ -21,19 +21,22 @@ const ITEMS = [
 export function ValueStrip() {
   return (
     <section
-      className="estrella-section"
-      style={{ background: "var(--brand-bg-warm)" }}
+      style={{ 
+        background: "var(--brand-bg-warm)",
+        paddingBlock: "clamp(80px, 10vw, 120px)"
+      }}
       aria-label="Why Astreylla"
     >
       <div className="estrella-container">
         <ul
           style={{
             display: "grid",
-            gap: "clamp(32px, 4vw, 56px)",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: "clamp(40px, 5vw, 64px)",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             listStyle: "none",
             padding: 0,
-            margin: 0,
+            margin: "0 auto",
+            maxWidth: 1200,
           }}
         >
           {ITEMS.map(({ Icon, title, desc }) => (
@@ -42,31 +45,39 @@ export function ValueStrip() {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "flex-start",
+                alignItems: "center",
+                textAlign: "center",
                 gap: 16,
+                padding: "32px 24px",
+                borderRadius: "16px",
+                transition: "transform 300ms ease, background-color 300ms ease",
               }}
+              className="group hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
             >
               <span
                 aria-hidden="true"
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 64,
+                  height: 64,
                   borderRadius: "var(--radius-pill)",
-                  background: "rgba(181, 154, 111, 0.14)",
+                  background: "rgba(181, 154, 111, 0.12)",
                   color: "var(--brand-accent-gold)",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  transition: "transform 300ms ease, background-color 300ms ease",
+                  marginBottom: 8,
                 }}
+                className="group-hover:scale-110 group-hover:bg-[rgba(181,154,111,0.18)]"
               >
-                <Icon size={20} strokeWidth={1.5} />
+                <Icon size={28} strokeWidth={1.5} />
               </span>
               <h3
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: 16,
+                  fontSize: "clamp(18px, 2vw, 22px)",
                   fontWeight: 600,
-                  letterSpacing: 0,
+                  letterSpacing: "-0.01em",
                   color: "var(--brand-text-primary)",
                   margin: 0,
                 }}
@@ -76,10 +87,11 @@ export function ValueStrip() {
               <p
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: 14,
+                  fontSize: "clamp(14px, 1.6vw, 15px)",
                   lineHeight: 1.6,
                   color: "var(--brand-text-secondary)",
-                  maxWidth: "32ch",
+                  maxWidth: "36ch",
+                  margin: 0,
                 }}
               >
                 {desc}

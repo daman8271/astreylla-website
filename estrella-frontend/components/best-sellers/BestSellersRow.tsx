@@ -15,22 +15,22 @@ type Product = {
 const PRODUCTS: Product[] = [
   {
     name: "Classic Ring",
-    sku: "AUG-S-046",
-    priceFrom: "$860",
+    sku: "AUG001-R-SOL",
+    priceFrom: "$680",
     glyph: "solitaire",
     image: "/best-sellers/classic-ring.jpeg",
   },
   {
     name: "The Cluster Halo Ring",
-    sku: "AUG-C-044",
-    priceFrom: "$940",
+    sku: "AUG004-R-HAL",
+    priceFrom: "$1,240",
     glyph: "cluster",
     image: "/best-sellers/cluster-halo-ring.jpeg",
   },
   {
     name: "The Tapered Solitaire",
-    sku: "AUG-S-037",
-    priceFrom: "$830",
+    sku: "AUG002-R-SOL",
+    priceFrom: "$720",
     glyph: "solitaire-thin",
     image: "/best-sellers/tapered-solitaire.jpeg",
   },
@@ -179,47 +179,55 @@ export function BestSellersRow() {
           }}
         >
           {PRODUCTS.map((p) => (
-            <article
+            <Link
               key={p.sku}
-              style={{
-                background: "#ffffff",
-                color: "#1a1a1a",
-                borderRadius: "var(--radius-sm)",
-                padding: 32,
-                scrollSnapAlign: "start",
-                display: "flex",
-                flexDirection: "column",
-                gap: 24,
-                aspectRatio: "1 / 1.05",
-              }}
+              href={`/ring-studio/setting?settingSku=${p.sku}`}
+              style={{ display: "block", textDecoration: "none" }}
             >
-              <div
+              <article
                 style={{
-                  flex: 1,
-                  background: "transparent",
+                  background: "#ffffff",
+                  color: "#1a1a1a",
+                  borderRadius: "var(--radius-sm)",
+                  padding: 32,
+                  scrollSnapAlign: "start",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
+                  flexDirection: "column",
+                  gap: 24,
+                  aspectRatio: "1 / 1.05",
+                  cursor: "pointer",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 }}
+                className="best-seller-card"
               >
-                {p.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    loading="lazy"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                ) : (
-                  <RingGlyph kind={p.glyph} />
-                )}
-              </div>
-            </article>
+                <div
+                  style={{
+                    flex: 1,
+                    background: "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                  }}
+                >
+                  {p.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      loading="lazy"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                      }}
+                    />
+                  ) : (
+                    <RingGlyph kind={p.glyph} />
+                  )}
+                </div>
+              </article>
+            </Link>
           ))}
         </div>
 
@@ -237,32 +245,40 @@ export function BestSellersRow() {
             <li
               key={`${p.sku}-meta`}
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 16,
                 fontFamily: "var(--font-sans)",
                 fontSize: 14,
                 color: "var(--brand-text-primary)",
               }}
             >
-              <span>
-                <span style={{ fontWeight: 500 }}>{p.name}</span>{" "}
-                <span style={{ color: "var(--brand-text-secondary)", fontWeight: 400 }}>
-                  ({p.sku})
+              <Link
+                href={`/ring-studio/setting?settingSku=${p.sku}`}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
+              >
+                <span>
+                  <span style={{ fontWeight: 500 }} className="best-seller-link">{p.name}</span>{" "}
+                  <span style={{ color: "var(--brand-text-secondary)", fontWeight: 400 }}>
+                    ({p.sku})
+                  </span>
                 </span>
-              </span>
-              <span style={{ whiteSpace: "nowrap" }}>
-                <span
-                  style={{
-                    color: "var(--brand-text-secondary)",
-                    fontWeight: 400,
-                    fontSize: 13,
-                  }}
-                >
-                  From{" "}
+                <span style={{ whiteSpace: "nowrap" }}>
+                  <span
+                    style={{
+                      color: "var(--brand-text-secondary)",
+                      fontWeight: 400,
+                      fontSize: 13,
+                    }}
+                  >
+                    From{" "}
+                  </span>
+                  <span style={{ fontWeight: 500 }}>{p.priceFrom}</span>
                 </span>
-                <span style={{ fontWeight: 500 }}>{p.priceFrom}</span>
-              </span>
+              </Link>
             </li>
           ))}
         </ul>

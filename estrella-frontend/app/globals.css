@@ -256,7 +256,7 @@ img, svg, video { display: block; max-width: 100%; }
 .express-band {
   position: relative;
   overflow: hidden;
-  padding-block: clamp(72px, 10vw, 120px);
+  width: 100%;
   background: linear-gradient(135deg, #faf7f1 0%, #f3ede2 100%);
   color: var(--brand-text-primary);
 }
@@ -266,31 +266,26 @@ img, svg, video { display: block; max-width: 100%; }
 
 .express-band__grid {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  gap: clamp(32px, 6vw, 80px);
-  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  width: 100%;
 }
 
 .express-band__media {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--radius-lg);
+  min-height: 600px;
   overflow: hidden;
   /* poster shows before the video loads and under reduced-motion */
   background: #0e0e0e url("/express-diamonds-poster.jpg") center / cover no-repeat;
-  border: 1px solid var(--brand-border-subtle);
-  box-shadow: 0 30px 60px -24px rgba(60, 40, 20, 0.30),
-    0 8px 20px -10px rgba(60, 40, 20, 0.18);
-}
-[data-theme="dark"] .express-band__media {
-  border-color: rgba(255, 255, 255, 0.10);
-  box-shadow: 0 30px 70px -24px rgba(0, 0, 0, 0.70),
-    0 8px 20px -10px rgba(0, 0, 0, 0.55);
 }
 .express-band__video {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 100%;
+  min-height: 100%;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -346,8 +341,17 @@ img, svg, video { display: block; max-width: 100%; }
 }
 
 @media (max-width: 768px) {
-  .express-band__grid { grid-template-columns: 1fr; gap: 32px; }
-  .express-band__title { max-width: none; }
+  .express-band__grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .express-band__media {
+    aspect-ratio: 1.5 / 1;
+    min-height: unset;
+  }
+  .express-band__title {
+    max-width: none;
+  }
 }
 
 /* ─── Diamonds-on-Sale grid — responsive column count ─────────────────────
@@ -380,14 +384,22 @@ img, svg, video { display: block; max-width: 100%; }
    and clipped the banner image. Collapse to one column under 768px. */
 .rs-home-banner__grid {
   display: grid;
-  grid-template-columns: minmax(320px, 1.4fr) 1fr;
-  gap: 64px;
-  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  width: 100%;
+}
+.rs-home-banner__image-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 600px;
 }
 @media (max-width: 768px) {
   .rs-home-banner__grid {
     grid-template-columns: 1fr;
-    gap: 28px;
+  }
+  .rs-home-banner__image-wrapper {
+    aspect-ratio: 1.5 / 1;
+    min-height: unset;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -11,6 +11,7 @@ import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyl
 type Props = {
   setting: Setting;
   lockedShape: string | null;
+  defaultShape?: string | null;
   initialMetalKey?: string | null;
   onBack: () => void;
   onSelect: (params: { sku: string; metalKey: string; shape: string }) => void;
@@ -56,7 +57,7 @@ const SHAPE_ICONS: Record<string, JSX.Element> = {
   ),
 };
 
-export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBack, onSelect }: Props) {
+export function SettingDetailView({ setting, lockedShape, defaultShape, initialMetalKey, onBack, onSelect }: Props) {
   const { formatPrice, currency } = useCurrency();
   const [chosenMetalKey, setChosenMetalKey] = useState<string>(
     initialMetalKey || metalKey(setting.metals[0])
@@ -76,14 +77,26 @@ export function SettingDetailView({ setting, lockedShape, initialMetalKey, onBac
   const stills = metal.thumbnails ?? [];
 
   const shapesToShow = useMemo(() => {
+    const activeShape = lockedShape || defaultShape;
+    if (activeShape && setting.availableShapes.includes(activeShape as never)) {
+      return [activeShape];
+    }
     return SHAPES_PRIMARY.filter((s) => setting.availableShapes.includes(s as never));
-  }, [setting]);
+  }, [setting, lockedShape, defaultShape]);
+
+  const initialShape = useMemo(() => {
+    if (lockedShape && setting.availableShapes.includes(lockedShape as never)) {
+      return lockedShape;
+    }
+    if (defaultShape && setting.availableShapes.includes(defaultShape as never)) {
+      return defaultShape;
+    }
+    return setting.availableShapes[0] as string;
+  }, [lockedShape, defaultShape, setting.availableShapes]);
 
   // Shape is selectable here (no diamond chosen yet). When a lockedShape is
   // passed (legacy diamond-first flow) it stays fixed.
-  const [chosenShape, setChosenShape] = useState<string>(
-    lockedShape || (setting.availableShapes[0] as string)
-  );
+  const [chosenShape, setChosenShape] = useState<string>(initialShape);
 
   return (
     <div className="rs-detail">

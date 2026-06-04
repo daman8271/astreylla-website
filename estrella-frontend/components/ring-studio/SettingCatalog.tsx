@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SettingCard } from "./SettingCard";
 import { SettingFilters, DEFAULT_SETTING_FILTERS, PRICE_FLOOR, PRICE_CEIL, type SettingFilterState } from "./SettingFilters";
@@ -19,9 +19,14 @@ export function SettingCatalog({ shape, onOpenSetting }: Props) {
   const [hidden, setHidden] = useState(false);
   const [sort, setSort] = useState<SortKey>("featured");
   const searchParams = useSearchParams();
+  const lastParamsRef = useRef<string>("");
 
   // Sync URL search parameters to catalog filters
   useEffect(() => {
+    const paramsStr = searchParams.toString();
+    if (paramsStr === lastParamsRef.current) return;
+    lastParamsRef.current = paramsStr;
+
     const nextFilters: SettingFilterState = {
       styles: new Set<SettingStyle>(),
       metalKeys: new Set<string>(),

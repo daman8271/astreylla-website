@@ -76,89 +76,10 @@ export function SiteFooter() {
           paddingTop: 56,
           paddingBottom: 40,
           display: "grid",
-          gridTemplateColumns:
-            "minmax(220px, 1.2fr) repeat(auto-fit, minmax(180px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
           gap: 48,
         }}
       >
-        <div>
-          <p
-            style={{
-              fontFamily: "var(--font-display)",
-              fontStyle: "italic",
-              fontSize: 18,
-              color: "var(--brand-text-primary)",
-              marginBottom: 4,
-            }}
-          >
-            Subscribe <span style={{ fontStyle: "normal" }}>now</span>
-          </p>
-          <p
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 14,
-              color: "var(--brand-text-secondary)",
-              marginBottom: 16,
-            }}
-          >
-            Learn more about us and our reviews
-          </p>
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            style={{
-              display: "flex",
-              alignItems: "stretch",
-              border: "1px solid var(--brand-text-primary)",
-              maxWidth: 360,
-            }}
-          >
-            <label htmlFor="footer-email" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="footer-email"
-              type="email"
-              placeholder="ENTER YOUR EMAIL"
-              style={{
-                flex: 1,
-                background: "transparent",
-                border: 0,
-                outline: "none",
-                padding: "12px 14px",
-                fontFamily: "var(--font-sans)",
-                fontSize: 12,
-                letterSpacing: "0.12em",
-                color: "var(--brand-text-primary)",
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                background: "var(--brand-text-primary)",
-                color: "var(--brand-bg)",
-                border: 0,
-                padding: "12px 22px",
-                fontFamily: "var(--font-sans)",
-                fontSize: 12,
-                letterSpacing: "0.16em",
-                fontWeight: 500,
-              }}
-            >
-              JOIN
-            </button>
-          </form>
-          <p
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              color: "var(--brand-text-muted)",
-              marginTop: 12,
-            }}
-          >
-            By subscribing, you agree to our terms &amp; conditions.
-          </p>
-        </div>
-
         <FooterCol title="LEARN & GROW" links={COL_LEARN} />
         <FooterCol title="DIAMONDS & GEMSTONES" links={COL_DIAMONDS} />
         <FooterCol title="BRIDAL & RINGS" links={COL_BRIDAL} />

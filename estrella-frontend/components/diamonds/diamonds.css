@@ -810,21 +810,21 @@
   gap: 5%;
   align-items: flex-start;
 }
-@media (max-width: 1040px) {
-  .ds-detail__layout { flex-direction: column; gap: 24px; }
-  /* Stacked on mobile — no sticky; restore normal flow (relative keeps the
-     360° badge anchored). */
-  .ds-detail__media { position: relative; top: auto; }
-}
 
-.ds-detail__media {
-  /* Desktop: pin the image while the details panel on the right scrolls.
-     `position: sticky` still establishes a containing block for the absolutely
-     positioned 360° badge. top clears the 75px fixed header. */
+.ds-detail__gallery-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 1 50%;
+  width: 100%;
   position: sticky;
   top: 90px;
   align-self: flex-start;
-  flex: 1 1 50%;
+}
+
+.ds-detail__media {
+  position: relative;
+  width: 100%;
   aspect-ratio: 1 / 1;
   background: linear-gradient(135deg, #d8d4cc 0%, #b9b4a8 100%);
   border-radius: 8px;
@@ -836,12 +836,28 @@
 .ds-detail__media img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 .ds-detail__placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 1040px) {
+  .ds-detail__layout {
+    flex-direction: column;
+    gap: 24px;
+  }
+  .ds-detail__gallery-col {
+    flex: none;
+    position: relative;
+    top: auto;
+  }
+  .ds-detail__panel {
+    flex: none;
+    width: 100%;
+  }
 }
 .ds-detail__360 {
   position: absolute;

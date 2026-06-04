@@ -218,11 +218,16 @@ export function DiamondCatalog({
   }, [filters]);
 
   const searchParams = useSearchParams();
+  const lastParamsRef = useRef<string>("");
 
   // Parse initial & dynamic filter state from URL search params so
   // deep links from the nav mega-menu (e.g. /diamonds?shape=Round)
   // dynamically filter the catalog list on navigation.
   useEffect(() => {
+    const paramsStr = searchParams.toString();
+    if (paramsStr === lastParamsRef.current) return;
+    lastParamsRef.current = paramsStr;
+
     const shape = searchParams.get("shape") || "";
     const treatment = searchParams.get("treatment") || "";
     const maxFinalPrice = searchParams.get("maxFinalPrice");

@@ -32,10 +32,12 @@ export function StageSetting() {
 
   if (sku && setting) {
     const initialMetalKey = params.get("metal");
+    const searchShape = (params.get("shapes") || params.get("shape") || "").split(",")[0] || null;
     return (
       <SettingDetailView
         setting={setting}
         lockedShape={lockedShape}
+        defaultShape={searchShape}
         initialMetalKey={initialMetalKey}
         onBack={closeDetail}
         onSelect={({ sku, metalKey, shape }) => {

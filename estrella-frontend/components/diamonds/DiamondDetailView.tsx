@@ -222,8 +222,8 @@ export function DiamondDetailView({
 
       <div className="ds-detail__layout">
         {/* Left Side: Interactive Media Gallery */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: "1 1 50%", width: "100%", position: "sticky", top: 90, alignSelf: "flex-start" }} className="ds-detail__gallery-col">
-          <div className="ds-detail__media" style={{ width: "100%", margin: 0, position: "relative", top: "auto" }}>
+        <div className="ds-detail__gallery-col">
+          <div className="ds-detail__media">
             {galleryItems.length === 0 ? (
               <div className="ds-detail__placeholder" aria-hidden>
                 <svg width="120" height="120" viewBox="0 0 24 24" fill="none">
