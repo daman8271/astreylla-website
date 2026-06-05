@@ -1,68 +1,42 @@
-import Link from "next/link";
+import { ComingSoonShowcase } from "@/components/ComingSoonShowcase";
 
 export const metadata = {
-  title: "Fancy Diamonds — Astreylla",
-  description: "Fancy color lab-grown diamonds. Coming soon.",
+  title: "Fancy Color Diamonds — Astreylla",
+  description: "Fancy color lab-grown diamonds. Arriving soon.",
 };
+
+const FANCY_DIAMOND_PREVIEWS = [
+  {
+    name: "Canary Yellow",
+    shape: "Radiant",
+    description: "A vivid, sun-drenched yellow diamond radiating warmth and unparalleled brilliance. A statement of pure luxury.",
+    colorHex: "#fadf66",
+    gradient: "linear-gradient(135deg, #ffe066 0%, #e8c044 100%)",
+  },
+  {
+    name: "Blushing Pink",
+    shape: "Pear",
+    description: "A delicate, romantic rose-tinted pink diamond. Exquisitely cut to capture light in soft, glistening pink hues.",
+    colorHex: "#f7c4d2",
+    gradient: "linear-gradient(135deg, #ffccd5 0%, #ec97b3 100%)",
+  },
+  {
+    name: "Royal Azure Blue",
+    shape: "Oval",
+    description: "An ocean-deep fancy blue diamond, extremely rare and mysterious. Captivates with its cool, hypnotic depth.",
+    colorHex: "#5a86d6",
+    gradient: "linear-gradient(135deg, #729fcf 0%, #2f5fb5 100%)",
+  },
+];
 
 export default function ColorDiamondsPage() {
   return (
-    <>
-      <section
-        style={{
-          background: "var(--brand-bg-warm)",
-          paddingTop: "calc(72px + clamp(32px, 6vw, 80px))",
-          paddingBottom: "clamp(32px, 5vw, 64px)",
-        }}
-      >
-        <div className="estrella-container" style={{ textAlign: "center" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "var(--brand-text-muted)",
-              marginBottom: 12,
-            }}
-          >
-            Coming soon
-          </p>
-          <h1
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(40px, 6vw, 64px)",
-              color: "var(--brand-text-primary)",
-              marginBottom: 16,
-            }}
-          >
-            Fancy Diamonds
-          </h1>
-        </div>
-      </section>
-
-      <section
-        className="estrella-section"
-        style={{ background: "var(--brand-bg)" }}
-      >
-        <div className="estrella-container" style={{ textAlign: "center", maxWidth: 640, marginInline: "auto" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: 18,
-              lineHeight: 1.7,
-              color: "var(--brand-text-secondary)",
-              marginBottom: 32,
-            }}
-          >
-            Our fancy yellow, blue and pink lab-grown stones are inbound.
-            Until then, browse our certified colorless collection.
-          </p>
-          <Link href="/diamonds" className="estrella-btn estrella-btn--primary">
-            Browse Only Diamonds
-          </Link>
-        </div>
-      </section>
-    </>
+    <ComingSoonShowcase
+      title="Fancy Color Diamonds"
+      subtitle="Coming Soon"
+      description="Our hand-selected fancy yellow, blushing pink, and royal blue lab-grown diamonds are arriving soon. In the meantime, browse our exquisite colorless settings and rings."
+      type="diamonds"
+      previews={FANCY_DIAMOND_PREVIEWS}
+    />
   );
 }

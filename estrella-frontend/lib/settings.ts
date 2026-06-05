@@ -1,5 +1,6 @@
-import type { Setting, SettingStyle, SettingMetal } from "@/components/ring-studio/setting-types";
-import { RINGS, resolveMedia, type AkoProduct } from "@/lib/akoirah";
+import type { Setting, SettingStyle, SettingMetal, Shape } from "@/components/ring-studio/setting-types";
+import { RINGS, resolveMedia, type AkoProduct, ALL_PRODUCTS } from "@/lib/akoirah";
+import crmData from "@/data/orior-data.json";
 
 const PALETTE: Record<string, { bg: string; fg: string }> = {
   Rose: { bg: "e3b8a4", fg: "5a3328" },
@@ -190,8 +191,37 @@ function buildSetting(seed: SettingSeed, ring: AkoProduct | undefined): Setting 
 // Map each curated setting to a usable Bunny ring (1:1 by catalogue order).
 export const SETTINGS: Setting[] = SEEDS.map((seed, i) => buildSetting(seed, RINGS[i]));
 
+let _crmSettings: Setting[] | null = null;
+function getCrmSettings(): Setting[] {
+  if (_crmSettings) return _crmSettings;
+  try {
+    const cdnMap = new Map<string, any>();
+    for (const p of ALL_PRODUCTS) {
+      cdnMap.set(p.bunnyFolder, p);
+    }
+    _crmSettings = (crmData as any[])
+      .filter((crmItem: any) => {
+        const isRing = crmItem.CATEGORY?.toLowerCase() === "rings";
+        const folderName = crmItem.ECOM_SKU;
+        const cdnProduct = folderName ? cdnMap.get(folderName) : null;
+        return isRing && cdnProduct && cdnProduct.cdnOk;
+      })
+      .map((crmItem: any) => {
+        const folderName = crmItem.ECOM_SKU;
+        const cdnProduct = cdnMap.get(folderName)!;
+        return mapCrmToSetting(crmItem, cdnProduct);
+      });
+  } catch (e) {
+    console.error("Failed to map crmData in settings.ts:", e);
+    _crmSettings = [];
+  }
+  return _crmSettings;
+}
+
 export function getSettingBySku(sku: string): Setting | undefined {
-  return SETTINGS.find((s) => s.sku === sku);
+  const staticSetting = SETTINGS.find((s) => s.sku === sku);
+  if (staticSetting) return staticSetting;
+  return getCrmSettings().find((s) => s.sku === sku);
 }
 
 export function listSettingsByStyle(style?: SettingStyle): Setting[] {
@@ -199,15 +229,18 @@ export function listSettingsByStyle(style?: SettingStyle): Setting[] {
   return SETTINGS.filter((s) => s.style === style);
 }
 
-export function filterSettings(opts: {
-  shape?: string | null;
-  shapes?: Set<string>;
-  styles?: Set<SettingStyle>;
-  metalKeys?: Set<string>;
-  priceMin?: number;
-  priceMax?: number;
-}): Setting[] {
-  return SETTINGS.filter((s) => {
+export function filterSettings(
+  opts: {
+    shape?: string | null;
+    shapes?: Set<string>;
+    styles?: Set<SettingStyle>;
+    metalKeys?: Set<string>;
+    priceMin?: number;
+    priceMax?: number;
+  },
+  settingsList: Setting[] = SETTINGS
+): Setting[] {
+  return settingsList.filter((s) => {
     if (opts.shape && !s.availableShapes.some((sh) => sh.toLowerCase() === opts.shape!.toLowerCase())) {
       return false;
     }
@@ -238,4 +271,96 @@ export function formatUsd(amount: number): string {
   } catch {
     return `$${Math.round(amount).toLocaleString()}`;
   }
+}
+
+export function mapCrmToSetting(crmItem: any, cdnProduct: AkoProduct): Setting {
+  const title = (crmItem.TITLE || "").toLowerCase();
+  let style: SettingStyle = "Solitaire";
+  if (title.includes("hidden halo")) {
+    style = "Hidden Halo";
+  } else if (title.includes("halo")) {
+    style = "Halo";
+  } else if (title.includes("three stone") || title.includes("three-stone") || title.includes("trio")) {
+    style = "Three-Stone";
+  } else if (title.includes("pave") || title.includes("pave-set")) {
+    style = "Pave";
+  } else if (title.includes("side stone") || title.includes("sidestone")) {
+    style = "Side Stone";
+  } else if (title.includes("nature") || title.includes("leaf") || title.includes("vine")) {
+    style = "Nature";
+  }
+
+  const mrp18K = crmItem.APPROX_MRP_LIST?.find((x: any) => x.KT === "18KT")?.MRP;
+  const mrp14K = crmItem.APPROX_MRP_LIST?.find((x: any) => x.KT === "14KT")?.MRP;
+  const baseMrp = mrp18K || mrp14K || crmItem.APPROX_MRP_LIST?.[0]?.MRP || 0;
+  const basePriceUsd = Math.round(baseMrp / 83.5);
+
+  const shapeStr = crmItem.SHAPE || "Round";
+  const shapeMap: Record<string, Shape> = {
+    "round": "Round",
+    "oval": "Oval",
+    "pear": "Pear",
+    "emerald": "Emerald",
+    "cushion": "Cushion",
+    "marquise": "Marquise",
+    "radiant": "Radiant",
+    "princess": "Princess",
+    "heart": "Heart",
+    "asscher": "Asscher",
+  };
+  const mappedShape = shapeMap[shapeStr.toLowerCase()] || "Round";
+  const availableShapes: Shape[] = [mappedShape];
+
+  const metals: SettingMetal[] = [];
+  const metalColors: Array<{ color: "Rose" | "White" | "Yellow"; key: "RG" | "WG" | "YG" }> = [
+    { color: "White", key: "WG" },
+    { color: "Yellow", key: "YG" },
+    { color: "Rose", key: "RG" }
+  ];
+
+  for (const mc of metalColors) {
+    if (cdnProduct.metalCodes.includes(mc.key)) {
+      const media = resolveMedia(cdnProduct, mc.color);
+      const karatList = crmItem.APPROX_MRP_LIST || [];
+      const karat = karatList.find((x: any) => x.KT === "18KT") ? "18K" : (karatList.find((x: any) => x.KT === "14KT") ? "14K" : "18K");
+      const mrp = karatList.find((x: any) => x.KT === (karat + "T"))?.MRP || baseMrp;
+      const priceUsd = Math.round(mrp / 83.5);
+
+      metals.push({
+        karat: karat as any,
+        color: mc.color,
+        priceUsd,
+        imageUrl: media.card || media.lifestyle || "",
+        thumbnails: media.gallery.length ? media.gallery : undefined,
+        videoUrl: media.video || undefined,
+      });
+    }
+  }
+
+  if (metals.length === 0) {
+    const media = resolveMedia(cdnProduct, "White");
+    metals.push({
+      karat: "18K",
+      color: "White",
+      priceUsd: basePriceUsd,
+      imageUrl: media.card || media.lifestyle || "",
+      thumbnails: media.gallery.length ? media.gallery : undefined,
+      videoUrl: media.video || undefined,
+    });
+  }
+
+  const whiteMedia = resolveMedia(cdnProduct, "White");
+  const defaultThumbnail = whiteMedia.card || whiteMedia.lifestyle || metals[0]?.imageUrl || "";
+
+  return {
+    sku: crmItem.SKU,
+    name: crmItem.TITLE,
+    style,
+    description: crmItem.DESCRIPTION || crmItem.POST_CONTENT || "",
+    basePriceUsd,
+    availableShapes,
+    metals,
+    defaultThumbnail,
+    videoUrl: whiteMedia.video || undefined,
+  };
 }

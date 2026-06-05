@@ -6,15 +6,17 @@ import { SettingDetailView } from "./SettingDetailView";
 import { useRingStudio } from "./RingStudioContext";
 import { getSettingBySku } from "@/lib/settings";
 
+import type { Setting } from "./setting-types";
+
 // Step 1 — the Ring Studio entry. The customer picks a setting (metal + shape)
 // before choosing a diamond.
-export function StageSetting() {
+export function StageSetting({ customSettings }: { customSettings?: Setting[] }) {
   const router = useRouter();
   const params = useSearchParams();
   const { state, setSetting } = useRingStudio();
 
   const sku = params.get("settingSku");
-  const setting = sku ? getSettingBySku(sku) : null;
+  const setting = sku ? (customSettings?.find((s) => s.sku === sku) || getSettingBySku(sku)) : null;
   const lockedShape = state.diamond?.shape || null;
 
   const openSetting = (sku: string) => {
@@ -53,5 +55,5 @@ export function StageSetting() {
     );
   }
 
-  return <SettingCatalog shape={lockedShape} onOpenSetting={openSetting} />;
+  return <SettingCatalog shape={lockedShape} onOpenSetting={openSetting} customSettings={customSettings} />;
 }

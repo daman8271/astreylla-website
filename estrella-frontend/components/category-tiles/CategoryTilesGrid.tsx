@@ -24,19 +24,11 @@ const TILES: Tile[] = [
     image: "/categories/labgrown.jpg",
   },
   {
-    href: "/color-diamonds",
-    label: "Fancy Diamonds",
+    href: "/ring-studio/setting?category=engagement",
+    label: "Rings",
     bg: "linear-gradient(135deg, #2c1d2a 0%, #3a2536 60%, #1a131a 100%)",
     accent: "#e2c9d9",
-    image: "/categories/fancydiamond.jpg",
-  },
-  {
-    href: "/gemstones",
-    label: "Gemstones",
-    bg: "linear-gradient(135deg, #1a2436 0%, #243049 60%, #11182a 100%)",
-    accent: "#cdd6e4",
-    image: "/categories/gemstones.jpg",
-    imagePosition: "65% center",
+    image: "/categories/rings.png",
   },
 ];
 

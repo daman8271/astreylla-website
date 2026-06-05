@@ -5,6 +5,7 @@ import Link from "next/link";
 const COL_LEARN = [
   { href: "#", label: "Email Us" },
   { href: "#", label: "Plans" },
+  { href: "/orior-catalog", label: "Orior Catalog Explorer" },
 ];
 
 const COL_DIAMONDS = [

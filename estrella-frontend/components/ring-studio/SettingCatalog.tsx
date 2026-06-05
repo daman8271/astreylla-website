@@ -5,16 +5,17 @@ import { useSearchParams } from "next/navigation";
 import { SettingCard } from "./SettingCard";
 import { SettingFilters, DEFAULT_SETTING_FILTERS, PRICE_FLOOR, PRICE_CEIL, type SettingFilterState } from "./SettingFilters";
 import { filterSettings } from "@/lib/settings";
-import type { SettingStyle } from "./setting-types";
+import type { Setting, SettingStyle } from "./setting-types";
 
 type SortKey = "featured" | "price-asc" | "price-desc";
 
 type Props = {
   shape: string | null;
   onOpenSetting: (sku: string) => void;
+  customSettings?: Setting[];
 };
 
-export function SettingCatalog({ shape, onOpenSetting }: Props) {
+export function SettingCatalog({ shape, onOpenSetting, customSettings }: Props) {
   const [filters, setFilters] = useState<SettingFilterState>(DEFAULT_SETTING_FILTERS);
   const [hidden, setHidden] = useState(false);
   const [sort, setSort] = useState<SortKey>("featured");
@@ -66,11 +67,11 @@ export function SettingCatalog({ shape, onOpenSetting }: Props) {
       metalKeys: filters.metalKeys,
       priceMin: filters.priceRange[0] > PRICE_FLOOR ? filters.priceRange[0] : undefined,
       priceMax: filters.priceRange[1] < PRICE_CEIL ? filters.priceRange[1] : undefined,
-    });
+    }, customSettings);
     if (sort === "price-asc") return base.slice().sort((a, b) => a.basePriceUsd - b.basePriceUsd);
     if (sort === "price-desc") return base.slice().sort((a, b) => b.basePriceUsd - a.basePriceUsd);
     return base;
-  }, [filters, shape, sort]);
+  }, [filters, shape, sort, customSettings]);
 
   // The metal filter is keyed by "{karat}-{color}". Reduce to the set of chosen
   // colors so each card can render in the selected metal colour.
@@ -89,8 +90,40 @@ export function SettingCatalog({ shape, onOpenSetting }: Props) {
     (filters.shapes.size > 0 ? 1 : 0) +
     (filters.priceRange[0] > PRICE_FLOOR || filters.priceRange[1] < PRICE_CEIL ? 1 : 0);
 
+  const isEngagement = searchParams.get("category")?.toLowerCase() === "engagement";
+
   return (
     <div className="rs-setting-catalog">
+      {isEngagement && (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          backgroundColor: "rgba(181, 154, 111, 0.08)",
+          border: "1px solid rgba(181, 154, 111, 0.25)",
+          color: "var(--brand-accent-gold, #b59a6f)",
+          padding: "12px 18px",
+          borderRadius: "8px",
+          marginBottom: "24px",
+          fontFamily: "var(--font-sans, system-ui), sans-serif",
+          fontSize: "13.5px",
+          fontWeight: 500,
+          letterSpacing: "0.02em",
+          lineHeight: "1.4",
+        }}>
+          <span style={{
+            display: "inline-block",
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            backgroundColor: "var(--brand-accent-gold, #b59a6f)",
+            boxShadow: "0 0 0 4px rgba(181, 154, 111, 0.2)",
+            flexShrink: 0
+          }} />
+          <span>Active collection: <strong>Engagement rings</strong> option is selected</span>
+        </div>
+      )}
+
       <SettingFilters
         value={filters}
         onChange={setFilters}

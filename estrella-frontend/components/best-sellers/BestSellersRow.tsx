@@ -70,7 +70,12 @@ function RingGlyph({ kind }: { kind: string }) {
   );
 }
 
-export function BestSellersRow() {
+interface BestSellersRowProps {
+  products?: Product[];
+}
+
+export function BestSellersRow({ products }: BestSellersRowProps) {
+  const displayProducts = products && products.length > 0 ? products : PRODUCTS;
   const railRef = useRef<HTMLDivElement | null>(null);
 
   const scroll = (dir: "left" | "right") => {
@@ -175,10 +180,10 @@ export function BestSellersRow() {
             overflowX: "auto",
             scrollSnapType: "x mandatory",
             scrollbarWidth: "none",
-            paddingBottom: 4,
+            paddingBottom: 16,
           }}
         >
-          {PRODUCTS.map((p) => (
+          {displayProducts.map((p) => (
             <Link
               key={p.sku}
               href={`/ring-studio/setting?settingSku=${p.sku}`}
@@ -189,14 +194,15 @@ export function BestSellersRow() {
                   background: "#ffffff",
                   color: "#1a1a1a",
                   borderRadius: "var(--radius-sm)",
-                  padding: 32,
+                  padding: 24,
                   scrollSnapAlign: "start",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 24,
-                  aspectRatio: "1 / 1.05",
+                  gap: 16,
+                  height: "380px",
                   cursor: "pointer",
                   transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  border: "1px solid var(--brand-border-light, #eaeaea)",
                 }}
                 className="best-seller-card"
               >
@@ -208,6 +214,7 @@ export function BestSellersRow() {
                     alignItems: "center",
                     justifyContent: "center",
                     overflow: "hidden",
+                    minHeight: 0,
                   }}
                 >
                   {p.image ? (
@@ -223,65 +230,54 @@ export function BestSellersRow() {
                       }}
                     />
                   ) : (
-                    <RingGlyph kind={p.glyph} />
+                    <RingGlyph kind={p.glyph || "solitaire"} />
                   )}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 14,
+                    color: "var(--brand-text-primary)",
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: "var(--brand-text-primary)",
+                      margin: 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      lineHeight: "1.3",
+                    }}
+                  >
+                    {p.name}
+                  </h3>
+                  <span
+                    style={{
+                      color: "var(--brand-text-secondary)",
+                      fontSize: 12,
+                      fontWeight: 400,
+                    }}
+                  >
+                    SKU: {p.sku}
+                  </span>
+                  <div style={{ marginTop: 4, fontWeight: 500, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontSize: 12, color: "var(--brand-text-secondary)", fontWeight: 400 }}>Price</span>
+                    <span>{p.priceFrom}</span>
+                  </div>
                 </div>
               </article>
             </Link>
           ))}
         </div>
-
-        <ul
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 16,
-            marginTop: 16,
-            listStyle: "none",
-            padding: 0,
-          }}
-        >
-          {PRODUCTS.map((p) => (
-            <li
-              key={`${p.sku}-meta`}
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 14,
-                color: "var(--brand-text-primary)",
-              }}
-            >
-              <Link
-                href={`/ring-studio/setting?settingSku=${p.sku}`}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  textDecoration: "none",
-                  color: "inherit",
-                }}
-              >
-                <span>
-                  <span style={{ fontWeight: 500 }} className="best-seller-link">{p.name}</span>{" "}
-                  <span style={{ color: "var(--brand-text-secondary)", fontWeight: 400 }}>
-                    ({p.sku})
-                  </span>
-                </span>
-                <span style={{ whiteSpace: "nowrap" }}>
-                  <span
-                    style={{
-                      color: "var(--brand-text-secondary)",
-                      fontWeight: 400,
-                      fontSize: 13,
-                    }}
-                  >
-                    From{" "}
-                  </span>
-                  <span style={{ fontWeight: 500 }}>{p.priceFrom}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );

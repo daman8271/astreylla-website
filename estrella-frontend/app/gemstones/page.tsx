@@ -1,71 +1,42 @@
-import Link from "next/link";
+import { ComingSoonShowcase } from "@/components/ComingSoonShowcase";
 
 export const metadata = {
-  title: "Gemstones — Astreylla",
-  description: "Lab-grown sapphires, rubies, emeralds. Coming soon.",
+  title: "Precious Gemstones — Astreylla",
+  description: "Lab-grown rubies, emeralds, and sapphires. Arriving soon.",
 };
+
+const GEMSTONE_PREVIEWS = [
+  {
+    name: "Verdant Emerald",
+    shape: "Emerald",
+    description: "A rich, deep forest green emerald symbolizing growth and eternity. Grown to display spectacular clarity and fire.",
+    colorHex: "#7fc06d",
+    gradient: "linear-gradient(135deg, #a3e635 0%, #15803d 100%)",
+  },
+  {
+    name: "Pigeon Blood Ruby",
+    shape: "Cushion",
+    description: "A passionate crimson-red ruby with an intense internal glow. A classic centerpiece of strength and romance.",
+    colorHex: "#e74c4c",
+    gradient: "linear-gradient(135deg, #f87171 0%, #b91c1c 100%)",
+  },
+  {
+    name: "Velvet Blue Sapphire",
+    shape: "Oval",
+    description: "A midnight blue sapphire showing royal blue flashes under light. Epitomizes sophisticated elegance and wisdom.",
+    colorHex: "#2f5fb5",
+    gradient: "linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%)",
+  },
+];
 
 export default function GemstonesPage() {
   return (
-    <>
-      <section
-        style={{
-          background: "var(--brand-bg-warm)",
-          paddingTop: "calc(72px + clamp(32px, 6vw, 80px))",
-          paddingBottom: "clamp(32px, 5vw, 64px)",
-        }}
-      >
-        <div className="estrella-container" style={{ textAlign: "center" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "var(--brand-text-muted)",
-              marginBottom: 12,
-            }}
-          >
-            Coming soon
-          </p>
-          <h1
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(40px, 6vw, 64px)",
-              color: "var(--brand-text-primary)",
-              marginBottom: 16,
-            }}
-          >
-            Gemstones
-          </h1>
-        </div>
-      </section>
-
-      <section
-        className="estrella-section"
-        style={{ background: "var(--brand-bg)" }}
-      >
-        <div
-          className="estrella-container"
-          style={{ textAlign: "center", maxWidth: 640, marginInline: "auto" }}
-        >
-          <p
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: 18,
-              lineHeight: 1.7,
-              color: "var(--brand-text-secondary)",
-              marginBottom: 32,
-            }}
-          >
-            Lab-grown sapphires, rubies and emeralds are landing soon.
-            Meanwhile, our diamond catalogue is fully stocked.
-          </p>
-          <Link href="/diamonds" className="estrella-btn estrella-btn--primary">
-            Browse Only Diamonds
-          </Link>
-        </div>
-      </section>
-    </>
+    <ComingSoonShowcase
+      title="Precious Gemstones"
+      subtitle="Coming Soon"
+      description="Our upcoming curation of ethically grown emeralds, rubies, and sapphires is landing soon. Discover the brilliance of colored gemstones designed for modern heirlooms."
+      type="gemstones"
+      previews={GEMSTONE_PREVIEWS}
+    />
   );
 }

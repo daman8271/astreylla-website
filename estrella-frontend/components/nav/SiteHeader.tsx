@@ -348,6 +348,16 @@ const ENGAGEMENT_MENU: MegaMenuConfig = {
             },
           ],
         },
+        {
+          heading: "Category",
+          items: [
+            {
+              label: "Engagement",
+              href: "/ring-studio/setting?category=engagement",
+              icon: <RingStyleMaskIcon name="halo" size={22} />,
+            },
+          ],
+        },
       ],
     },
     {
@@ -386,7 +396,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/diamonds", label: "Diamonds", menu: DIAMONDS_MENU },
   { href: "/color-diamonds", label: "Fancy Diamonds", menu: COLORED_MENU },
   { href: "/gemstones", label: "Gemstones", menu: GEMSTONES_MENU },
-  { href: "/ring-studio/setting", label: "Rings", menu: ENGAGEMENT_MENU },
+  { href: "/ring-studio/setting?category=engagement", label: "Rings", menu: ENGAGEMENT_MENU },
 ];
 
 const DARK_HERO_PATHS = new Set<string>(["/"]);
