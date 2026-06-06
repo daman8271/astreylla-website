@@ -329,7 +329,7 @@ const RING_METALS: MegaMenuItem[] = [
   },
 ];
 
-const ENGAGEMENT_MENU: MegaMenuConfig = {
+const RINGS_MENU: MegaMenuConfig = {
   columns: [
     {
       groups: [
@@ -355,6 +355,51 @@ const ENGAGEMENT_MENU: MegaMenuConfig = {
               label: "Engagement",
               href: "/ring-studio/setting?category=engagement",
               icon: <RingStyleMaskIcon name="halo" size={22} />,
+            },
+            {
+              label: "Everyday Rings",
+              href: "/ring-studio/setting?category=everyday",
+              icon: <RingStyleMaskIcon name="solitaire" size={22} />,
+            },
+            {
+              label: "Eternity Bands",
+              href: "/ring-studio/setting?category=eternity",
+              icon: <RingStyleMaskIcon name="pave" size={22} />,
+            },
+            {
+              label: "Solitaire Rings",
+              href: "/ring-studio/setting?category=solitaire",
+              icon: <RingStyleMaskIcon name="solitaire" size={22} />,
+            },
+            {
+              label: "Wedding Bands",
+              href: "/ring-studio/setting?category=wedding",
+              icon: <RingStyleMaskIcon name="vintage" size={22} />,
+            },
+            {
+              label: "Cocktail Rings",
+              href: "/ring-studio/setting?category=cocktail",
+              icon: <RingStyleMaskIcon name="halo" size={22} />,
+            },
+          ],
+        },
+        {
+          heading: "Collections",
+          items: [
+            {
+              label: "Trending Now",
+              href: "/ring-studio/setting?collection=trending",
+              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
+            },
+            {
+              label: "Newly Unveiled",
+              href: "/ring-studio/setting?collection=newly",
+              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
+            },
+            {
+              label: "Timeless Favourites",
+              href: "/ring-studio/setting?collection=timeless",
+              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
             },
           ],
         },
@@ -396,7 +441,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/diamonds", label: "Diamonds", menu: DIAMONDS_MENU },
   { href: "/color-diamonds", label: "Fancy Diamonds", menu: COLORED_MENU },
   { href: "/gemstones", label: "Gemstones", menu: GEMSTONES_MENU },
-  { href: "/ring-studio/setting?category=engagement", label: "Rings", menu: ENGAGEMENT_MENU },
+  { href: "/ring-studio/setting", label: "Rings", menu: RINGS_MENU },
 ];
 
 const DARK_HERO_PATHS = new Set<string>(["/"]);

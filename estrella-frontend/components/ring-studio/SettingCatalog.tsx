@@ -90,11 +90,12 @@ export function SettingCatalog({ shape, onOpenSetting, customSettings }: Props) 
     (filters.shapes.size > 0 ? 1 : 0) +
     (filters.priceRange[0] > PRICE_FLOOR || filters.priceRange[1] < PRICE_CEIL ? 1 : 0);
 
-  const isEngagement = searchParams.get("category")?.toLowerCase() === "engagement";
+  const activeCategory = searchParams.get("category");
+  const activeCollection = searchParams.get("collection");
 
   return (
     <div className="rs-setting-catalog">
-      {isEngagement && (
+      {(activeCategory || activeCollection) && (
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -110,6 +111,7 @@ export function SettingCatalog({ shape, onOpenSetting, customSettings }: Props) 
           fontWeight: 500,
           letterSpacing: "0.02em",
           lineHeight: "1.4",
+          textTransform: "capitalize"
         }}>
           <span style={{
             display: "inline-block",
@@ -120,7 +122,21 @@ export function SettingCatalog({ shape, onOpenSetting, customSettings }: Props) 
             boxShadow: "0 0 0 4px rgba(181, 154, 111, 0.2)",
             flexShrink: 0
           }} />
-          <span>Active collection: <strong>Engagement rings</strong> option is selected</span>
+          <span>
+            Active filter:{" "}
+            {activeCategory && (
+              <span>
+                category <strong>"{activeCategory}"</strong>
+              </span>
+            )}
+            {activeCategory && activeCollection && <span> and </span>}
+            {activeCollection && (
+              <span>
+                collection <strong>"{activeCollection}"</strong>
+              </span>
+            )}
+            {" "}is selected
+          </span>
         </div>
       )}
 

@@ -55,38 +55,59 @@ async function fetchOriorCrmData() {
 interface PageProps {
   searchParams: {
     category?: string;
+    collection?: string;
   };
 }
 
 // Step 1 — the Ring Studio entry point. No prerequisites.
 export default async function RingStudioSettingPage({ searchParams }: PageProps) {
-  const isEngagement = searchParams?.category?.toLowerCase() === "engagement";
-  let customSettings = undefined;
+  const categoryParam = searchParams?.category;
+  const collectionParam = searchParams?.collection;
 
-  if (isEngagement) {
-    const crmData = await fetchOriorCrmData();
-    
-    // Build a map of CDN products by bunnyFolder / id
-    const cdnMap = new Map<string, any>();
-    for (const p of ALL_PRODUCTS) {
-      cdnMap.set(p.bunnyFolder, p);
-    }
-
-    // Filter and map only rings that are in subcategory engagement rings and exist on CDN
-    customSettings = crmData
-      .filter((crmItem: any) => {
-        const isRing = crmItem.CATEGORY?.toLowerCase() === "rings";
-        const isEngagementRing = crmItem.SUB_CATEGORY?.toLowerCase().includes("engagement");
-        const folderName = crmItem.ECOM_SKU;
-        const cdnProduct = folderName ? cdnMap.get(folderName) : null;
-        return isRing && isEngagementRing && cdnProduct && cdnProduct.cdnOk;
-      })
-      .map((crmItem: any) => {
-        const folderName = crmItem.ECOM_SKU;
-        const cdnProduct = cdnMap.get(folderName)!;
-        return mapCrmToSetting(crmItem, cdnProduct);
-      });
+  const crmData = await fetchOriorCrmData();
+  
+  // Build a map of CDN products by bunnyFolder / id
+  const cdnMap = new Map<string, any>();
+  for (const p of ALL_PRODUCTS) {
+    cdnMap.set(p.bunnyFolder, p);
   }
+
+  // Filter and map rings that exist on CDN and match category/collection if specified
+  const customSettings = crmData
+    .filter((crmItem: any) => {
+      const isRing = crmItem.CATEGORY?.toLowerCase() === "rings";
+      const folderName = crmItem.ECOM_SKU;
+      const cdnProduct = folderName ? cdnMap.get(folderName) : null;
+      if (!isRing || !cdnProduct || !cdnProduct.cdnOk) {
+        return false;
+      }
+
+      // Filter by category if specified (e.g. category=engagement, everyday, cocktail, solitaire, wedding, etc.)
+      if (categoryParam) {
+        const cat = categoryParam.toLowerCase();
+        const subCat = (crmItem.SUB_CATEGORY || "").toLowerCase();
+        const mainCat = (crmItem.CATEGORY || "").toLowerCase();
+        if (!subCat.includes(cat) && !mainCat.includes(cat)) {
+          return false;
+        }
+      }
+
+      // Filter by collection if specified (e.g. collection=trending, newly, timeless)
+      if (collectionParam) {
+        const col = collectionParam.toLowerCase();
+        const itemCol = (crmItem.COLLECTION || "").toLowerCase();
+        if (!itemCol.includes(col)) {
+          return false;
+        }
+      }
+
+      return true;
+    })
+    .map((crmItem: any) => {
+      const folderName = crmItem.ECOM_SKU;
+      const cdnProduct = cdnMap.get(folderName)!;
+      return mapCrmToSetting(crmItem, cdnProduct);
+    });
 
   return <StageSetting customSettings={customSettings} />;
 }
