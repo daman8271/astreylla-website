@@ -8,7 +8,7 @@ type Product = {
   name: string;
   sku: string;
   priceFrom: string;
-  glyph: string;
+  glyph?: string;
   image?: string;
 };
 
