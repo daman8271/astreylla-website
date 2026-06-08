@@ -121,6 +121,7 @@ const DIAMONDS_MENU: MegaMenuConfig = {
   ],
   promos: [
     {
+      image: "/promo-diamond.png",
       eyebrow: "LOOSE LAB-GROWN DIAMONDS",
       cta: { label: "Browse all", href: "/diamonds?treatment=lab-grown" },
     },
@@ -255,6 +256,7 @@ const GEMSTONES_MENU: MegaMenuConfig = {
   ],
   promos: [
     {
+      image: "/promo-ring.png",
       eyebrow: "GEMSTONES",
       cta: { label: "Shop now", href: "/gemstones" },
     },
@@ -421,6 +423,7 @@ const RINGS_MENU: MegaMenuConfig = {
   ],
   promos: [
     {
+      image: "/promo-ring.png",
       eyebrow: "RINGS",
       cta: { label: "Shop now", href: "/ring-studio/setting" },
     },
@@ -439,7 +442,7 @@ const RINGS_MENU: MegaMenuConfig = {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/diamonds", label: "Diamonds", menu: DIAMONDS_MENU },
-  { href: "/color-diamonds", label: "Fancy Diamonds", menu: COLORED_MENU },
+  { href: "/color-diamonds", label: "Fancy Diamonds" },
   { href: "/gemstones", label: "Gemstones", menu: GEMSTONES_MENU },
   { href: "/ring-studio/setting", label: "Rings", menu: RINGS_MENU },
 ];
@@ -566,23 +569,32 @@ export function SiteHeader() {
           <Link
             href="/"
             aria-label="Astreylla — home"
+            className="flex items-center gap-3"
             style={{
-              display: "inline-flex",
-              alignItems: "flex-start",
               textDecoration: "none",
-              paddingTop: "6px",
               height: "100%",
+              paddingTop: "6px",
             }}
           >
             <img
               src={
                 (onDarkHero && !mobileOpen) || theme === "dark"
-                  ? "/logo/logo-dark.png"
-                  : "/logo/logo-light.png"
+                  ? "/logo/crest-dark.png"
+                  : "/logo/crest-light.png"
               }
               alt="Astreylla"
-              className="h-[75px] md:h-[90px] w-auto max-w-[220px] md:max-w-[280px] block"
+              className="h-[36px] md:h-[42px] w-auto block transition-transform duration-300 hover:scale-105"
             />
+            <span
+              className="text-lg md:text-xl font-light tracking-[0.18em] uppercase transition-colors duration-200"
+              style={{
+                fontFamily: "var(--font-cormorant), var(--font-display), serif",
+                color: fg,
+                textShadow: onDarkHero ? "0 1px 8px rgba(0,0,0,0.35)" : "none",
+              }}
+            >
+              Astreylla
+            </span>
           </Link>
 
           <nav
@@ -778,32 +790,60 @@ export function SiteHeader() {
                     paddingBottom: "16px",
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setExpandedMobileItem(expandedMobileItem === l.label ? null : l.label)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%",
-                      background: "transparent",
-                      border: 0,
-                      padding: 0,
-                      textAlign: "left",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <span
+                  {!l.menu ? (
+                    <Link
+                      href={l.href}
+                      onClick={() => setMobileOpen(false)}
                       style={{
-                        fontFamily: "var(--font-display)",
-                        fontSize: 26,
-                        letterSpacing: "0.02em",
-                        color: "var(--brand-text-primary)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        background: "transparent",
+                        border: 0,
+                        padding: 0,
+                        textAlign: "left",
+                        cursor: "pointer",
+                        textDecoration: "none",
                       }}
                     >
-                      {l.label}
-                    </span>
-                    {l.menu && (
+                      <span
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          fontSize: 26,
+                          letterSpacing: "0.02em",
+                          color: "var(--brand-text-primary)",
+                        }}
+                      >
+                        {l.label}
+                      </span>
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedMobileItem(expandedMobileItem === l.label ? null : l.label)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        background: "transparent",
+                        border: 0,
+                        padding: 0,
+                        textAlign: "left",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          fontSize: 26,
+                          letterSpacing: "0.02em",
+                          color: "var(--brand-text-primary)",
+                        }}
+                      >
+                        {l.label}
+                      </span>
                       <ChevronDown
                         size={22}
                         strokeWidth={1.5}
@@ -813,8 +853,8 @@ export function SiteHeader() {
                           color: "var(--brand-text-primary)",
                         }}
                       />
-                    )}
-                  </button>
+                    </button>
+                  )}
 
                   {l.menu && expandedMobileItem === l.label && (
                     <div

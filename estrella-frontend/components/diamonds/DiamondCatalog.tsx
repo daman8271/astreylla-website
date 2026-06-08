@@ -28,7 +28,7 @@ type Props = {
   shop: string;
   apiBase?: string; // defaults to /api/widget (proxies to Railway)
   perPage?: number;
-  mode?: "default" | "ring-studio";
+  mode?: "default" | "ring-studio" | "fancy";
   onSelect?: (d: Diamond) => void;
   initialFilters?: Partial<FilterState>;
 };
@@ -43,7 +43,8 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 function buildQuery(
   shop: string,
   filters: FilterState,
-  pagination: { from: number; to: number; count: boolean }
+  pagination: { from: number; to: number; count: boolean },
+  mode?: "default" | "ring-studio" | "fancy"
 ) {
   const p = new URLSearchParams();
   p.set("shop", shop);
@@ -62,9 +63,24 @@ function buildQuery(
 
   // Colour: slider thumb 0..4 maps onto COLORS[0..4] = D..H. Send only when
   // the slider is narrowed (full range = no filter).
-  const [cMin, cMax] = filters.colorRange;
-  if (cMin > 0 || cMax < 4) {
-    p.set("color", COLORS.slice(cMin, cMax + 1).join(","));
+  if (mode === "fancy") {
+    const fancyColors = [
+      "FVY", "FIY", "FLY", "FY",
+      "FVB", "FIB", "FLB", "FB",
+      "FVP", "FIP", "FLP", "FDP", "FIBP", "FP",
+      "FVG", "FIG", "FLG", "FG",
+      "FVPurple", "FIPurple", "FLPurple", "FPurple",
+      "FVR", "FIR", "FLR", "FR"
+    ];
+    p.set("color", fancyColors.join(","));
+  } else {
+    const [cMin, cMax] = filters.colorRange;
+    if (cMin > 0 || cMax < 4) {
+      p.set("color", COLORS.slice(cMin, cMax + 1).join(","));
+    } else {
+      // Exclude fancy color diamonds in standard/colorless catalog
+      p.set("color", "D,E,F,G,H,I,J,K");
+    }
   }
   // Clarity: slider 0..5 = VS2..FL.
   const [clMin, clMax] = filters.clarityRange;
@@ -89,6 +105,37 @@ function buildQuery(
   const [pMin, pMax] = filters.price;
   if (pMin > PRICE_MIN) p.set("minFinalPrice", String(pMin));
   if (pMax < PRICE_MAX) p.set("maxFinalPrice", String(pMax));
+
+  // --- Advanced filters ---
+  const [tMin, tMax] = filters.table;
+  if (tMin > 0) p.set("minTable", String(tMin));
+  if (tMax < 100) p.set("maxTable", String(tMax));
+
+  const [rMin, rMax] = filters.ratio;
+  if (rMin > 0.8) p.set("minLwRatio", rMin.toFixed(2));
+  if (rMax < 3.0) p.set("maxLwRatio", rMax.toFixed(2));
+
+  const [polMin, polMax] = filters.polishRange;
+  if (polMin > 0 || polMax < 2) {
+    const polishLabels = ["Good", "Very Good", "Excellent"];
+    p.set("polish", polishLabels.slice(polMin, polMax + 1).join(","));
+  }
+
+  const [symMin, symMax] = filters.symmetryRange;
+  if (symMin > 0 || symMax < 2) {
+    const symmetryLabels = ["Good", "Very Good", "Excellent"];
+    p.set("symmetry", symmetryLabels.slice(symMin, symMax + 1).join(","));
+  }
+
+  const [fMin, fMax] = filters.fluorescenceRange;
+  if (fMin > 0 || fMax < 4) {
+    const fluorescenceLabels = ["None", "Faint", "Medium", "Strong", "Very Strong"];
+    p.set("fluorescenceIntensity", fluorescenceLabels.slice(fMin, fMax + 1).join(","));
+  }
+
+  if (filters.certificate && filters.certificate.length > 0) {
+    p.set("certificate", filters.certificate.join(","));
+  }
 
   p.set("from", String(pagination.from));
   p.set("to", String(pagination.to));
@@ -125,6 +172,9 @@ export function DiamondCatalog({
   initialFilters,
 }: Props) {
   const isRingStudio = mode === "ring-studio";
+  // activeMode allows inline tab switching between colourless and fancy.
+  // The initial value comes from the prop; tabs update it at runtime.
+  const [activeMode, setActiveMode] = useState<"default" | "ring-studio" | "fancy">(mode);
   const [filters, setFilters] = useState<FilterState>({ ...DEFAULT_FILTERS, ...(initialFilters || {}) });
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [total, setTotal] = useState<number | null>(null);
@@ -156,7 +206,7 @@ export function DiamondCatalog({
         from: newPage.from,
         to: newPage.to,
         count: true,
-      });
+      }, activeMode);
 
       // Augmont's catalog upstream is intermittently unavailable and surfaces
       // as a transient 5xx (502/503) that clears within seconds. Auto-retry a
@@ -204,7 +254,7 @@ export function DiamondCatalog({
 
       attempt(0);
     },
-    [shop, filters, pagination, perPage, apiBase]
+    [shop, filters, pagination, perPage, apiBase, activeMode]
   );
 
   // debounced refetch on filter change
@@ -307,7 +357,7 @@ export function DiamondCatalog({
       from: nextFrom,
       to: nextTo,
       count: false,
-    });
+    }, activeMode);
     fetch(`${apiBase}/api/public/diamonds?${qs}`, { cache: "no-store" })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -385,7 +435,16 @@ export function DiamondCatalog({
 
   return (
     <div className="ds-catalog">
-      <DiamondFilters value={filters} onChange={setFilters} />
+      <DiamondFilters
+        value={filters}
+        onChange={setFilters}
+        mode={activeMode}
+        onModeChange={(m) => {
+          setActiveMode(m);
+          // Reset filters when switching categories
+          setFilters({ ...DEFAULT_FILTERS, ...(initialFilters || {}) });
+        }}
+      />
 
       <div className="ds-results-bar">
         <div className="ds-results-bar__left">

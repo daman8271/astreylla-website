@@ -45,6 +45,13 @@ export type Setting = {
   metals: SettingMetal[];
   defaultThumbnail: string;
   videoUrl?: string;
+  bandWidth?: string;
+  sideStonesCount?: number | string;
+  sideStonesWeight?: string;
+  sideStoneColour?: string;
+  sideStoneClarity?: string;
+  grossWeight?: string;
+  netWeight?: string;
 };
 
 export function metalKey(m: { karat: SettingKarat; color: SettingColor }): string {

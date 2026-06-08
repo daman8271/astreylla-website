@@ -147,7 +147,19 @@ export function DiamondViewer({ stockNum, shape, open, onClose }: Props) {
           ×
         </button>
 
-        <div className="ds-viewer-stage">
+        <div
+          className="ds-viewer-stage"
+          onMouseEnter={() => {
+            if (tier === "video" && iframeRef.current?.contentWindow) {
+              iframeRef.current.contentWindow.postMessage("pauseAutoplay", "*");
+            }
+          }}
+          onMouseLeave={() => {
+            if (tier === "video" && iframeRef.current?.contentWindow) {
+              iframeRef.current.contentWindow.postMessage("resumeAutoplay", "*");
+            }
+          }}
+        >
           {tier === "outline" ? (
             <div className="ds-viewer-stage__outline">
               <ShapeOutline shape={shape} />
@@ -182,8 +194,6 @@ export function DiamondViewer({ stockNum, shape, open, onClose }: Props) {
             </button>
           ))}
         </div>
-
-        <div className="ds-viewer-meta">Stock #{stockNum}</div>
       </div>
     </div>
   );

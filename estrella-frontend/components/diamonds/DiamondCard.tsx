@@ -11,7 +11,7 @@ type Props = {
   onAddToCart?: (d: Diamond) => void;
   onOpen?: (d: Diamond) => void;
   busy?: boolean;
-  mode?: "default" | "ring-studio";
+  mode?: "default" | "ring-studio" | "fancy";
   onSelect?: (d: Diamond) => void;
 };
 

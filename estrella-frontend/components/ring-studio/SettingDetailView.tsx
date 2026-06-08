@@ -63,6 +63,7 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
     initialMetalKey || metalKey(setting.metals[0])
   );
   const [descOpen, setDescOpen] = useState(true);
+  const [specsOpen, setSpecsOpen] = useState(true);
   // Which still the gallery is showing; null = the default 360° spin video.
   const [activeStill, setActiveStill] = useState<string | null>(null);
 
@@ -260,6 +261,47 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
               </svg>
             </button>
             {descOpen ? <p className="rs-detail__desc-body">{setting.description}</p> : null}
+          </div>
+
+          <div className="rs-detail__desc" style={{ marginTop: "16px" }}>
+            <button type="button" className="rs-detail__desc-toggle" onClick={() => setSpecsOpen((s) => !s)} aria-expanded={specsOpen}>
+              <span>Product Specifications</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d={specsOpen ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {specsOpen ? (
+              <div className="rs-specs-table" style={{ marginTop: "12px" }}>
+                <div className="rs-spec-row">
+                  <span className="rs-spec-key">Gross weight</span>
+                  <span className="rs-spec-val">{setting.grossWeight || "-"}</span>
+                </div>
+                <div className="rs-spec-row">
+                  <span className="rs-spec-key">Net weight</span>
+                  <span className="rs-spec-val">{setting.netWeight || "-"}</span>
+                </div>
+                <div className="rs-spec-row">
+                  <span className="rs-spec-key">Band width</span>
+                  <span className="rs-spec-val">{setting.bandWidth || "-"}</span>
+                </div>
+                <div className="rs-spec-row">
+                  <span className="rs-spec-key">Side stones count</span>
+                  <span className="rs-spec-val">{setting.sideStonesCount || "-"}</span>
+                </div>
+                <div className="rs-spec-row">
+                  <span className="rs-spec-key">Side stones weight</span>
+                  <span className="rs-spec-val">{setting.sideStonesWeight || "-"}</span>
+                </div>
+                <div className="rs-spec-row">
+                  <span className="rs-spec-key">Side stone colour</span>
+                  <span className="rs-spec-val">{setting.sideStoneColour || "-"}</span>
+                </div>
+                <div className="rs-spec-row">
+                  <span className="rs-spec-key">Side stone clarity</span>
+                  <span className="rs-spec-val">{setting.sideStoneClarity || "-"}</span>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

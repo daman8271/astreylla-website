@@ -25,9 +25,6 @@ export function RingStudioShell({ children }: { children: React.ReactNode }) {
           <h1 className="rs-pagehead__title">
             <span style={{ fontStyle: "italic" }}>Ring Studio</span>
           </h1>
-          <p className="rs-pagehead__sub">
-            All rings shown in the <em>ring studio</em> have a <strong>1.5ct diamond</strong> centre stone.
-          </p>
         </header>
 
         <RingStudioStepper current={stage} />

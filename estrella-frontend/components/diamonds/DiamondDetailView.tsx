@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import type { Diamond } from "./types";
 import { DiamondViewer } from "./DiamondViewer";
 import { diamondImageUrl } from "@/lib/diamondImage";
@@ -14,7 +14,7 @@ type Props = {
   onBack: () => void;
   onAddToCart?: (d: Diamond) => void;
   busyAddId?: string | null;
-  mode?: "default" | "ring-studio";
+  mode?: "default" | "ring-studio" | "fancy";
   onSelect?: (d: Diamond) => void;
   shop?: string;
 };
@@ -38,6 +38,35 @@ function certLabel(lab: string | undefined | null) {
   return `${v} Certified`;
 }
 
+function getCertLogo(lab: string | undefined | null) {
+  const l = (lab || "").trim().toUpperCase();
+  if (l === "GIA") {
+    return (
+      <svg width="36" height="18" viewBox="0 0 76 30" fill="none" className="ds-cert-badge ds-cert-badge--gia" style={{ flexShrink: 0, verticalAlign: "middle" }}>
+        <rect width="76" height="30" rx="4" fill="#141c24" />
+        <text x="50%" y="18" dominantBaseline="middle" textAnchor="middle" fill="#ffffff" fontSize="13" fontFamily="Georgia, serif" fontWeight="bold" letterSpacing="2">GIA</text>
+      </svg>
+    );
+  }
+  if (l === "IGI") {
+    return (
+      <svg width="36" height="18" viewBox="0 0 76 30" fill="none" className="ds-cert-badge ds-cert-badge--igi" style={{ flexShrink: 0, verticalAlign: "middle" }}>
+        <rect width="76" height="30" rx="4" fill="#a48e68" />
+        <text x="50%" y="18" dominantBaseline="middle" textAnchor="middle" fill="#ffffff" fontSize="13" fontFamily="system-ui, sans-serif" fontWeight="800" letterSpacing="2">IGI</text>
+      </svg>
+    );
+  }
+  if (l === "HRD") {
+    return (
+      <svg width="36" height="18" viewBox="0 0 76 30" fill="none" className="ds-cert-badge ds-cert-badge--hrd" style={{ flexShrink: 0, verticalAlign: "middle" }}>
+        <rect width="76" height="30" rx="4" fill="#0c2340" />
+        <text x="50%" y="18" dominantBaseline="middle" textAnchor="middle" fill="#ffffff" fontSize="13" fontFamily="system-ui, sans-serif" fontWeight="bold" letterSpacing="1">HRD</text>
+      </svg>
+    );
+  }
+  return null;
+}
+
 export function DiamondDetailView({
   diamond,
   diamondId,
@@ -59,6 +88,7 @@ export function DiamondDetailView({
   const [viewerOpen, setViewerOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     setLocalDiamond(diamond);
@@ -112,7 +142,18 @@ export function DiamondDetailView({
       type: "image" | "video" | "360";
       url: string;
       label: string;
-    }> = [
+    }> = [];
+
+    if (localDiamond.stockNum) {
+      items.push({
+        id: "360",
+        type: "360" as const,
+        url: `/360-viewer.html?id=${encodeURIComponent(localDiamond.stockNum)}&type=video`,
+        label: "360° View",
+      });
+    }
+
+    items.push(
       {
         id: "front",
         type: "image" as const,
@@ -130,17 +171,8 @@ export function DiamondDetailView({
         type: "image" as const,
         url: `https://augmont-lgd-prod.b-cdn.net/products/${localDiamond.id}/image/128.jpg`,
         label: "Back View",
-      },
-    ];
-
-    if (localDiamond.stockNum) {
-      items.push({
-        id: "360",
-        type: "360" as const,
-        url: `/360-viewer.html?id=${encodeURIComponent(localDiamond.stockNum)}&type=video`,
-        label: "360° View",
-      });
-    }
+      }
+    );
 
     return items;
   }, [localDiamond?.id, localDiamond?.stockNum]);
@@ -207,7 +239,6 @@ export function DiamondDetailView({
     ["Polish", d.polish || dash],
     ["Symmetry", d.symmetry || dash],
     ["Certificate", certName],
-    ["Stock Number", d.stockNum || dash],
     ["Measurements", d.measurements || dash],
   ];
   const expertHref = `mailto:hello@astreylla.example?subject=${encodeURIComponent(
@@ -223,7 +254,19 @@ export function DiamondDetailView({
       <div className="ds-detail__layout">
         {/* Left Side: Interactive Media Gallery */}
         <div className="ds-detail__gallery-col">
-          <div className="ds-detail__media">
+          <div
+            className="ds-detail__media"
+            onMouseEnter={() => {
+              if (galleryItems[activeTab]?.type === "360" && iframeRef.current?.contentWindow) {
+                iframeRef.current.contentWindow.postMessage("pauseAutoplay", "*");
+              }
+            }}
+            onMouseLeave={() => {
+              if (galleryItems[activeTab]?.type === "360" && iframeRef.current?.contentWindow) {
+                iframeRef.current.contentWindow.postMessage("resumeAutoplay", "*");
+              }
+            }}
+          >
             {galleryItems.length === 0 ? (
               <div className="ds-detail__placeholder" aria-hidden>
                 <svg width="120" height="120" viewBox="0 0 24 24" fill="none">
@@ -257,6 +300,7 @@ export function DiamondDetailView({
               </div>
             ) : (
               <iframe
+                ref={iframeRef}
                 src={galleryItems[activeTab].url}
                 title="360° Diamond Viewer"
                 style={{ width: "100%", height: "100%", border: 0, background: "#ffffff", display: "block" }}
@@ -393,23 +437,8 @@ export function DiamondDetailView({
 
           {cert ? (
             <div className="ds-detail__cert">
+              {getCertLogo(d.lab)}
               <div className="ds-detail__cert-title">{cert}</div>
-              {d.stockNum ? (
-                <div className="ds-detail__cert-stock">
-                  <span>Stock Number {d.stockNum}</span>
-                  <button
-                    type="button"
-                    className="ds-detail__cert-copy"
-                    onClick={handleCopyStock}
-                    aria-label="Copy stock number"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.6" />
-                      <path d="M5 15 L5 5 a 1 1 0 0 1 1 -1 L15 4" stroke="currentColor" strokeWidth="1.6" fill="none" />
-                    </svg>
-                  </button>
-                </div>
-              ) : null}
             </div>
           ) : null}
 
@@ -479,7 +508,10 @@ export function DiamondDetailView({
                 {specs.map(([k, v]) => (
                   <div className="ds-detail__spec-row" key={k}>
                     <dt>{k}</dt>
-                    <dd>{v}</dd>
+                    <dd style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      {k === "Certificate" && getCertLogo(d.lab)}
+                      <span>{v}</span>
+                    </dd>
                   </div>
                 ))}
               </dl>

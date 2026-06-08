@@ -352,6 +352,45 @@ export function mapCrmToSetting(crmItem: any, cdnProduct: AkoProduct): Setting {
   const whiteMedia = resolveMedia(cdnProduct, "White");
   const defaultThumbnail = whiteMedia.card || whiteMedia.lifestyle || metals[0]?.imageUrl || "";
 
+  // Extract specs
+  let bandWidth: string | undefined = undefined;
+  const descLower = (crmItem.DESCRIPTION || "").toLowerCase();
+  const widthMatch = descLower.match(/(\d+(?:\.\d+)?)\s*mm/);
+  if (widthMatch) {
+    bandWidth = `${widthMatch[1]} mm`;
+  }
+
+  const sideStonesCount = crmItem.APPROX_DIA_PCS && crmItem.APPROX_DIA_PCS > 0 ? crmItem.APPROX_DIA_PCS : undefined;
+  const sideStonesWeight = crmItem.APPROX_DIA_WT && crmItem.APPROX_DIA_WT > 0 ? `${crmItem.APPROX_DIA_WT} ct` : undefined;
+  const grossWeight = crmItem.APPROX_GROSS_WT && crmItem.APPROX_GROSS_WT > 0 ? `${crmItem.APPROX_GROSS_WT} g` : undefined;
+  const netWeight = crmItem.APPROX_NET_WT && crmItem.APPROX_NET_WT > 0 ? `${crmItem.APPROX_NET_WT} g` : undefined;
+
+  let sideStoneColour: string | undefined = undefined;
+  if (crmItem.APPROX_DIA_QLTY) {
+    const q = crmItem.APPROX_DIA_QLTY.toUpperCase();
+    if (q.includes("EFG")) {
+      sideStoneColour = "E-F / G-H";
+    } else if (q.includes("GH")) {
+      sideStoneColour = "G-H";
+    } else {
+      sideStoneColour = crmItem.DIA_COLOR || undefined;
+    }
+  } else {
+    sideStoneColour = crmItem.DIA_COLOR || undefined;
+  }
+
+  let sideStoneClarity: string | undefined = undefined;
+  if (crmItem.APPROX_DIA_QLTY) {
+    const q = crmItem.APPROX_DIA_QLTY.toUpperCase();
+    if (q.includes("VVS-VS") || q.includes("VVS") || q.includes("VS")) {
+      sideStoneClarity = "VS / VS2";
+    } else {
+      sideStoneClarity = crmItem.DIA_CLARITY || undefined;
+    }
+  } else {
+    sideStoneClarity = crmItem.DIA_CLARITY || undefined;
+  }
+
   return {
     sku: crmItem.SKU,
     name: crmItem.TITLE,
@@ -362,5 +401,12 @@ export function mapCrmToSetting(crmItem: any, cdnProduct: AkoProduct): Setting {
     metals,
     defaultThumbnail,
     videoUrl: whiteMedia.video || undefined,
+    bandWidth,
+    sideStonesCount,
+    sideStonesWeight,
+    sideStoneColour,
+    sideStoneClarity,
+    grossWeight,
+    netWeight,
   };
 }

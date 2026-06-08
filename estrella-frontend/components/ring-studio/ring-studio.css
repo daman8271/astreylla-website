@@ -6,7 +6,7 @@
 .rs-shell {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 32px 32px 80px;
+  padding: 107px 32px 80px; /* Offset the 75px fixed navbar + 32px top gap */
 }
 
 .rs-pagehead { text-align: center; margin: 24px 0 28px; }
@@ -763,3 +763,32 @@
   background: var(--brand-text-primary) !important;
   color: var(--brand-bg) !important;
 }
+
+/* ─── Product Specifications Table ─────────────────────────── */
+.rs-specs-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-sans, system-ui), sans-serif;
+  font-size: 14px;
+}
+.rs-spec-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--brand-border-subtle, #e8e3da);
+  padding-bottom: 8px;
+}
+.rs-spec-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.rs-spec-key {
+  color: var(--brand-text-secondary, #6b6b6b);
+  font-weight: 500;
+}
+.rs-spec-val {
+  color: var(--brand-text-primary, #1a1a1a);
+  font-weight: 600;
+  text-align: right;
+}
+

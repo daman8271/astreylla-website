@@ -26,13 +26,13 @@ export function RoyalLoader({ variant = "overlay", label = "Loading" }: Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="royal-loader__logo royal-loader__logo--light"
-            src="/logo/logo-light.png"
+            src="/logo/crest-light.png"
             alt=""
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="royal-loader__logo royal-loader__logo--dark"
-            src="/logo/logo-dark.png"
+            src="/logo/crest-dark.png"
             alt=""
           />
         </span>

@@ -1,42 +1,129 @@
-import { ComingSoonShowcase } from "@/components/ComingSoonShowcase";
+import "@/components/diamonds/diamonds.css";
+import { DiamondCatalog } from "@/components/diamonds/DiamondCatalog";
 
 export const metadata = {
   title: "Fancy Color Diamonds — Astreylla",
-  description: "Fancy color lab-grown diamonds. Arriving soon.",
+  description:
+    "Browse our curated collection of lab-grown fancy color diamonds — vivid yellows, bold blues, blushing pinks and more. Certified, jeweller-direct.",
 };
 
-const FANCY_DIAMOND_PREVIEWS = [
-  {
-    name: "Canary Yellow",
-    shape: "Radiant",
-    description: "A vivid, sun-drenched yellow diamond radiating warmth and unparalleled brilliance. A statement of pure luxury.",
-    colorHex: "#fadf66",
-    gradient: "linear-gradient(135deg, #ffe066 0%, #e8c044 100%)",
-  },
-  {
-    name: "Blushing Pink",
-    shape: "Pear",
-    description: "A delicate, romantic rose-tinted pink diamond. Exquisitely cut to capture light in soft, glistening pink hues.",
-    colorHex: "#f7c4d2",
-    gradient: "linear-gradient(135deg, #ffccd5 0%, #ec97b3 100%)",
-  },
-  {
-    name: "Royal Azure Blue",
-    shape: "Oval",
-    description: "An ocean-deep fancy blue diamond, extremely rare and mysterious. Captivates with its cool, hypnotic depth.",
-    colorHex: "#5a86d6",
-    gradient: "linear-gradient(135deg, #729fcf 0%, #2f5fb5 100%)",
-  },
-];
+const SHOP =
+  process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN ||
+  "trial-shop-sqxnl71f.myshopify.com";
 
-export default function ColorDiamondsPage() {
+export default function FancyDiamondsPage() {
   return (
-    <ComingSoonShowcase
-      title="Fancy Color Diamonds"
-      subtitle="Coming Soon"
-      description="Our hand-selected fancy yellow, blushing pink, and royal blue lab-grown diamonds are arriving soon. In the meantime, browse our exquisite colorless settings and rings."
-      type="diamonds"
-      previews={FANCY_DIAMOND_PREVIEWS}
-    />
+    <>
+      {/* ── Hero header ─────────────────────────────────────── */}
+      <section
+        style={{
+          background:
+            "linear-gradient(135deg,#fff7e6 0%,#fdf0f8 50%,#eef4ff 100%)",
+          paddingTop: "calc(72px + clamp(32px, 6vw, 80px))",
+          paddingBottom: "clamp(32px, 5vw, 64px)",
+        }}
+        aria-labelledby="fancy-heading"
+      >
+        <div className="estrella-container" style={{ textAlign: "center" }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              color: "var(--brand-text-muted)",
+              marginBottom: 12,
+            }}
+          >
+            A spectrum of rare beauty
+          </p>
+          <h1
+            id="fancy-heading"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(40px, 6vw, 64px)",
+              lineHeight: 1.05,
+              color: "var(--brand-text-primary)",
+              marginBottom: 16,
+            }}
+          >
+            Fancy Diamonds
+          </h1>
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: 18,
+              lineHeight: 1.6,
+              color: "var(--brand-text-secondary)",
+              maxWidth: "60ch",
+              marginInline: "auto",
+            }}
+          >
+            Vivid yellows, royal blues, blushing pinks, forest greens — every
+            colour certified, every stone lab-grown and jeweller-direct.
+          </p>
+
+          {/* colour swatch strip */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 10,
+              marginTop: 28,
+              flexWrap: "wrap",
+            }}
+          >
+            {[
+              { label: "Yellow",  from: "#fadf66", to: "#e8c044" },
+              { label: "Blue",    from: "#729fcf", to: "#2f5fb5" },
+              { label: "Pink",    from: "#ffccd5", to: "#ec97b3" },
+              { label: "Green",   from: "#7fc06d", to: "#3f8a4a" },
+              { label: "Purple",  from: "#a07cc8", to: "#6c4ba0" },
+              { label: "Red",     from: "#e74c4c", to: "#a82a2a" },
+            ].map(({ label, from, to }) => (
+              <span
+                key={label}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: "6px 14px",
+                  borderRadius: 99,
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  background: "#fff",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  color: "var(--brand-text-secondary)",
+                }}
+              >
+                <span
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background: `linear-gradient(135deg,${from},${to})`,
+                    display: "inline-block",
+                    flexShrink: 0,
+                  }}
+                />
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Catalog ─────────────────────────────────────────── */}
+      <section
+        style={{
+          background: "var(--brand-bg)",
+          paddingBlock: "clamp(32px, 5vw, 64px)",
+        }}
+      >
+        <div className="estrella-container">
+          <DiamondCatalog shop={SHOP} perPage={12} mode="fancy" />
+        </div>
+      </section>
+    </>
   );
 }

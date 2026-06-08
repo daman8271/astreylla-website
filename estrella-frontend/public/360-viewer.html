@@ -261,6 +261,7 @@
         this.frameCount = FRAME_COUNT;
         this.currentFrame = 0;
         this.isDragging = false;
+        this.isHovering = false;
         this.lastX = null;
         this.sensitivity = 1.2;
         this.autoRotate = getParam('autoplay', 'true').toLowerCase() !== 'false';
@@ -371,9 +372,10 @@
 
       setupEvents() {
         const wrap = this.container;
+        wrap.addEventListener('mouseenter', () => { this.isHovering = true; });
+        wrap.addEventListener('mouseleave', () => { this.isHovering = false; this.onMouseUp(); });
         wrap.addEventListener('mousedown', (e) => this.onMouseDown(e));
         wrap.addEventListener('mouseup', () => this.onMouseUp());
-        wrap.addEventListener('mouseleave', () => this.onMouseUp());
         wrap.addEventListener('mousemove', (e) => this.onMouseMove(e));
         wrap.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
         wrap.addEventListener('touchend', () => this.onTouchEnd());
@@ -483,7 +485,7 @@
         const delta = (time - this.lastTimestamp) / 1000;
         this.lastTimestamp = time;
 
-        if (this.hasLoaded && this.autoRotate) {
+        if (this.hasLoaded && this.autoRotate && !this.isHovering && !this.isDragging) {
           this.accumulatedTime += delta;
           const frameDuration = 1 / 36;
           while (this.accumulatedTime >= frameDuration) {
@@ -561,6 +563,14 @@
     window.addEventListener('resize', () => {
       applySizeFromParams();
       viewer.onResize();
+    });
+
+    window.addEventListener('message', (e) => {
+      if (e.data === 'pauseAutoplay') {
+        viewer.isHovering = true;
+      } else if (e.data === 'resumeAutoplay') {
+        viewer.isHovering = false;
+      }
     });
 
     getAndPersistType();

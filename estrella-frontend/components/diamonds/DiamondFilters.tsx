@@ -27,6 +27,13 @@ export type FilterState = {
   clarityRange: [number, number];
   cutRange: [number, number];
   price: [number, number];
+  // --- Advanced filters ---
+  table: [number, number];
+  ratio: [number, number];
+  polishRange: [number, number];
+  symmetryRange: [number, number];
+  fluorescenceRange: [number, number];
+  certificate: string[];
 };
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -37,15 +44,26 @@ export const DEFAULT_FILTERS: FilterState = {
   clarityRange: [0, CLARITIES.length - 1],
   cutRange: [0, CUTS.length - 1],
   price: [PRICE_MIN, PRICE_MAX],
+  // --- Advanced filters ---
+  table: [0, 100],
+  ratio: [0.8, 3.0],
+  polishRange: [0, 2],
+  symmetryRange: [0, 2],
+  fluorescenceRange: [0, 4],
+  certificate: [],
 };
 
 type Props = {
   value: FilterState;
   onChange: (next: FilterState) => void;
+  mode?: "default" | "ring-studio" | "fancy";
+  onModeChange?: (m: "default" | "fancy") => void;
 };
 
-export function DiamondFilters({ value, onChange }: Props) {
+export function DiamondFilters({ value, onChange, mode, onModeChange }: Props) {
+  const isFancy = mode === "fancy";
   const [showMoreShapes, setShowMoreShapes] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const set = <K extends keyof FilterState>(k: K, v: FilterState[K]) =>
     onChange({ ...value, [k]: v });
@@ -58,8 +76,34 @@ export function DiamondFilters({ value, onChange }: Props) {
   const clarityLabels = CLARITIES.slice(); // VS2 → FL
   const cutLabels = CUTS.slice(); // Very Good → Ideal
 
+  const polishLabels = ["Good", "Very Good", "Excellent"];
+  const symmetryLabels = ["Good", "Very Good", "Excellent"];
+  const fluorescenceLabels = ["None", "Faint", "Medium", "Strong", "Very Strong"];
+
+  // Tab used to switch between colorless / fancy modes inline
+  const TABS = [
+    { id: "colorless", label: "Colourless" },
+    { id: "fancy",     label: "✦ Fancy Colour" },
+  ] as const;
+  const activeTab = isFancy ? "fancy" : "colorless";
+
   return (
     <section className="ds-filters" aria-label="Filter diamonds">
+      {/* ── Category Tabs ─────────────────────────────────── */}
+      {onModeChange && (
+        <div className="ds-tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={`ds-tab${activeTab === t.id ? " ds-tab--active" : ""}`}
+              onClick={() => onModeChange(t.id === "fancy" ? "fancy" : "default")}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="ds-filters__grid">
         {/* LEFT COLUMN */}
         <div className="ds-filters__col">
@@ -103,22 +147,59 @@ export function DiamondFilters({ value, onChange }: Props) {
             </button>
           </div>
 
-          <div className="ds-field">
-            <label className="ds-field__label">Colour</label>
-            <RangeSlider
-              min={0}
-              max={4}
-              step={1}
-              value={value.colorRange}
-              onChange={(v) => set("colorRange", v)}
-              label="Colour"
-            />
-            <div className="ds-scale">
-              {colorLabels.map((l) => (
-                <span key={l}>{l}</span>
-              ))}
+          {!isFancy && (
+            <div className="ds-field">
+              <label className="ds-field__label">Colour</label>
+              <RangeSlider
+                min={0}
+                max={4}
+                step={1}
+                value={value.colorRange}
+                onChange={(v) => set("colorRange", v)}
+                label="Colour"
+              />
+              <div className="ds-scale">
+                {colorLabels.map((l) => (
+                  <span key={l}>{l}</span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+          {isFancy && (
+            <div className="ds-field">
+              <label className="ds-field__label">Fancy Colour</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+                {[
+                  { label: "Yellow", from: "#fadf66", to: "#e8c044" },
+                  { label: "Blue",   from: "#729fcf", to: "#2f5fb5" },
+                  { label: "Pink",   from: "#ffccd5", to: "#ec97b3" },
+                  { label: "Green",  from: "#7fc06d", to: "#3f8a4a" },
+                  { label: "Purple", from: "#a07cc8", to: "#6c4ba0" },
+                  { label: "Red",    from: "#e74c4c", to: "#a82a2a" },
+                ].map(({ label, from, to }) => (
+                  <span
+                    key={label}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      fontSize: 12,
+                      fontFamily: "var(--font-sans)",
+                      color: "var(--brand-text-secondary)",
+                    }}
+                  >
+                    <span style={{
+                      width: 12, height: 12,
+                      borderRadius: "50%",
+                      background: `linear-gradient(135deg,${from},${to})`,
+                      display: "inline-block",
+                    }} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="ds-field">
             <label className="ds-field__label">Cut</label>
@@ -250,7 +331,205 @@ export function DiamondFilters({ value, onChange }: Props) {
         </div>
       </div>
 
+      {/* COLLAPSIBLE ADVANCED FILTERS SECTION */}
+      <div className="ds-filters__advanced-trigger">
+        <button
+          type="button"
+          className="ds-advanced-toggle"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          aria-expanded={showAdvanced}
+        >
+          <span>Advanced Filters</span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            style={{ transform: showAdvanced ? "rotate(180deg)" : "none", transition: "transform 150ms ease" }}
+            aria-hidden
+          >
+            <path d="M6 9 L12 15 L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
 
+      {showAdvanced && (
+        <div className="ds-filters__grid ds-filters__advanced-grid">
+          {/* LEFT COLUMN */}
+          <div className="ds-filters__col">
+            {/* Table Slider */}
+            <div className="ds-field">
+              <label className="ds-field__label">Table</label>
+              <RangeSlider
+                min={0}
+                max={100}
+                step={1}
+                value={value.table}
+                onChange={(v) => set("table", v)}
+                label="Table"
+              />
+              <div className="ds-input-row">
+                <div className="ds-input-suffix">
+                  <input
+                    type="number"
+                    min={0}
+                    max={value.table[1]}
+                    value={value.table[0]}
+                    onChange={(e) =>
+                      set("table", [
+                        Math.max(0, Math.min(Number(e.target.value), value.table[1])),
+                        value.table[1],
+                      ])
+                    }
+                  />
+                  <span className="ds-input-suffix__unit">%</span>
+                </div>
+                <span className="ds-input-row__sep" aria-hidden>—</span>
+                <div className="ds-input-suffix">
+                  <input
+                    type="number"
+                    min={value.table[0]}
+                    max={100}
+                    value={value.table[1]}
+                    onChange={(e) =>
+                      set("table", [
+                        value.table[0],
+                        Math.min(100, Math.max(Number(e.target.value), value.table[0])),
+                      ])
+                    }
+                  />
+                  <span className="ds-input-suffix__unit">%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Polish Slider */}
+            <div className="ds-field">
+              <label className="ds-field__label">Polish</label>
+              <RangeSlider
+                min={0}
+                max={2}
+                step={1}
+                value={value.polishRange}
+                onChange={(v) => set("polishRange", v)}
+                label="Polish"
+              />
+              <div className="ds-scale ds-scale--3">
+                {polishLabels.map((l) => (
+                  <span key={l}>{l}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Fluorescence Slider */}
+            <div className="ds-field">
+              <label className="ds-field__label">Fluorescence</label>
+              <RangeSlider
+                min={0}
+                max={4}
+                step={1}
+                value={value.fluorescenceRange}
+                onChange={(v) => set("fluorescenceRange", v)}
+                label="Fluorescence"
+              />
+              <div className="ds-scale ds-scale--5">
+                {fluorescenceLabels.map((l) => (
+                  <span key={l}>{l}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="ds-filters__col">
+            {/* Ratio Slider */}
+            <div className="ds-field">
+              <label className="ds-field__label">Ratio</label>
+              <RangeSlider
+                min={0.8}
+                max={3.0}
+                step={0.1}
+                value={value.ratio}
+                onChange={(v) => set("ratio", v)}
+                label="Ratio"
+              />
+              <div className="ds-input-row">
+                <input
+                  type="number"
+                  step="0.1"
+                  min={0.8}
+                  max={value.ratio[1]}
+                  value={value.ratio[0]}
+                  onChange={(e) =>
+                    set("ratio", [
+                      Math.max(0.8, Math.min(Number(e.target.value), value.ratio[1])),
+                      value.ratio[1],
+                    ])
+                  }
+                />
+                <span className="ds-input-row__sep" aria-hidden>—</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min={value.ratio[0]}
+                  max={3.0}
+                  value={value.ratio[1]}
+                  onChange={(e) =>
+                    set("ratio", [
+                      value.ratio[0],
+                      Math.min(3.0, Math.max(Number(e.target.value), value.ratio[0])),
+                    ])
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Symmetry Slider */}
+            <div className="ds-field">
+              <label className="ds-field__label">Symmetry</label>
+              <RangeSlider
+                min={0}
+                max={2}
+                step={1}
+                value={value.symmetryRange}
+                onChange={(v) => set("symmetryRange", v)}
+                label="Symmetry"
+              />
+              <div className="ds-scale ds-scale--3">
+                {symmetryLabels.map((l) => (
+                  <span key={l}>{l}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Certificate Toggles */}
+            <div className="ds-field">
+              <label className="ds-field__label">Certificate</label>
+              <div className="ds-cert-toggle-row">
+                {["GIA", "IGI"].map((cert) => {
+                  const active = value.certificate.includes(cert);
+                  return (
+                    <button
+                      key={cert}
+                      type="button"
+                      className={`ds-cert-toggle-btn ${active ? "ds-cert-toggle-btn--active" : ""}`}
+                      onClick={() => {
+                        if (active) {
+                          set("certificate", value.certificate.filter((c) => c !== cert));
+                        } else {
+                          set("certificate", [...value.certificate, cert]);
+                        }
+                      }}
+                    >
+                      {cert}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
