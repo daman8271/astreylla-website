@@ -171,6 +171,43 @@ app.use((err, req, res, next) => {
   return next(err);
 });
 
+// Bot-probe filter: silently reject well-known scanner/exploit paths before
+// they reach React Router. Without this, React Router logs a verbose
+// ErrorResponseImpl stack trace for every automated security probe
+// (e.g. /login.jsp, /parameters.yml, /wp-admin, etc.).
+// Patterns are tested as exact matches or prefix matches — never regexes
+// sourced from user input, so no ReDoS risk.
+const BOT_PROBE_EXACT = new Set([
+  "/login.jsp",
+  "/parameters.yml",
+  "/parameters.yml.dist",
+  "/app/config/parameters.yml",
+  "/app/config/parameters.yml.dist",
+  "/wp-login.php",
+  "/wp-admin",
+  "/admin.php",
+  "/.env",
+  "/.git/config",
+  "/config.php",
+  "/phpinfo.php",
+  "/server-status",
+  "/actuator/health",
+  "/actuator/env",
+]);
+
+const BOT_PROBE_SUFFIXES = [".jsp", ".php", ".asp", ".aspx", ".cgi"];
+
+app.use((req, res, next) => {
+  const path = req.path.toLowerCase();
+  if (
+    BOT_PROBE_EXACT.has(path) ||
+    BOT_PROBE_SUFFIXES.some((s) => path.endsWith(s))
+  ) {
+    return res.status(404).end();
+  }
+  return next();
+});
+
 // Remix React Router catch-all — MUST be last. The adapter reads the request
 // body from the Express req stream, which is intact thanks to the path-scoped
 // parsers above.
