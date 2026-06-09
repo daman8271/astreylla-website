@@ -91,6 +91,7 @@ export function DiamondDetailView({
     diamond?.id ? "resolver" : "placeholder"
   );
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [connectOpen, setConnectOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -102,8 +103,23 @@ export function DiamondDetailView({
   useEffect(() => {
     setImgStage(localDiamond?.id ? "resolver" : "placeholder");
     setViewerOpen(false);
+    setConnectOpen(false);
     setActiveTab(0);
   }, [localDiamond?.id]);
+
+  useEffect(() => {
+    if (!connectOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setConnectOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [connectOpen]);
 
   useEffect(() => {
     if (localDiamond || !diamondId || !shop) return;
@@ -476,9 +492,13 @@ export function DiamondDetailView({
             </button>
           )}
 
-          <a className="ds-detail__cta ds-detail__cta--ghost" href={expertHref}>
-            Talk to an expert
-          </a>
+          <button
+            type="button"
+            className="ds-detail__cta ds-detail__cta--ghost"
+            onClick={() => setConnectOpen(true)}
+          >
+            Connect with us
+          </button>
 
           <div className="ds-detail__specs">
             <button
@@ -530,6 +550,58 @@ export function DiamondDetailView({
         open={viewerOpen}
         onClose={() => setViewerOpen(false)}
       />
+
+      {connectOpen && (
+        <div
+          className="ds-viewer-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Connect with us"
+          onClick={() => setConnectOpen(false)}
+        >
+          <div
+            className="ds-viewer-modal__panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "min(480px, 100%)", padding: "32px 24px 28px" }}
+          >
+            <button
+              type="button"
+              className="ds-viewer-modal__close"
+              onClick={() => setConnectOpen(false)}
+              aria-label="Close modal"
+              style={{ top: "16px", right: "16px" }}
+            >
+              ×
+            </button>
+            <h3 style={{ fontSize: "24px", fontWeight: "600", marginBottom: "20px", fontFamily: "var(--font-sans)", color: "var(--brand-text-primary)" }}>Connect with us</h3>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "var(--font-sans)" }}>
+              <div>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", textTransform: "uppercase", color: "var(--brand-accent-gold)", letterSpacing: "0.05em", marginBottom: "8px" }}>Phone</h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "15px", color: "var(--brand-text-primary)" }}>
+                  <div>India: <a href="tel:+918645322956" style={{ textDecoration: "none", color: "inherit", fontWeight: "500" }}>+91 86453 22956</a></div>
+                  <div>USA: <a href="tel:+16463860289" style={{ textDecoration: "none", color: "inherit", fontWeight: "500" }}>+1 646 386 0289</a></div>
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", textTransform: "uppercase", color: "var(--brand-accent-gold)", letterSpacing: "0.05em", marginBottom: "8px" }}>Email</h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "15px", color: "var(--brand-text-primary)" }}>
+                  <div><a href="mailto:platform.support@augmont.com" style={{ textDecoration: "none", color: "inherit", fontWeight: "500" }}>platform.support@augmont.com</a></div>
+                  <div><a href="mailto:platform.sales@augmont.com" style={{ textDecoration: "none", color: "inherit", fontWeight: "500" }}>platform.sales@augmont.com</a></div>
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", textTransform: "uppercase", color: "var(--brand-accent-gold)", letterSpacing: "0.05em", marginBottom: "8px" }}>Office Hours</h4>
+                <div style={{ fontSize: "15px", color: "var(--brand-text-primary)", fontWeight: "500" }}>
+                  Mon - Sat, 10 AM to 7 PM
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
