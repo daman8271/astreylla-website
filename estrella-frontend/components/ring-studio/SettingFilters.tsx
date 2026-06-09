@@ -5,6 +5,14 @@ import type { SettingStyle, SettingKarat, SettingColor } from "./setting-types";
 import { SETTING_STYLES } from "./setting-types";
 import { RangeSlider } from "@/components/diamonds/RangeSlider";
 import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyleMaskIcon";
+import { ShapeMaskIcon, type ShapeName } from "@/components/nav/ShapeMaskIcon";
+
+const ALL_SHAPES = [
+  "Round", "Princess", "Cushion", "Oval", "Pear",
+  "Emerald", "Marquise", "Heart", "Asscher", "Radiant",
+] as const;
+const PRIMARY_SHAPES = ALL_SHAPES.slice(0, 5);
+const MORE_SHAPES = ALL_SHAPES.slice(5);
 
 export type SettingFilterState = {
   styles: Set<SettingStyle>;
@@ -60,6 +68,7 @@ type Props = {
 export function SettingFilters({ value, onChange, lockedShape, hidden, onToggleHide, onClearAll, activeCount }: Props) {
   const [moreStyles, setMoreStyles] = useState(false);
   const [moreMetals, setMoreMetals] = useState(false);
+  const [moreShapes, setMoreShapes] = useState(false);
 
   const set = <K extends keyof SettingFilterState>(k: K, v: SettingFilterState[K]) =>
     onChange({ ...value, [k]: v });
@@ -77,6 +86,15 @@ export function SettingFilters({ value, onChange, lockedShape, hidden, onToggleH
     else next.add(key);
     set("metalKeys", next);
   };
+
+  const toggleShape = (shape: string) => {
+    const next = new Set(value.shapes);
+    if (next.has(shape)) next.delete(shape);
+    else next.add(shape);
+    set("shapes", next);
+  };
+
+  const shapesShown = moreShapes ? ALL_SHAPES : PRIMARY_SHAPES;
 
   const stylesShown: SettingStyle[] = moreStyles
     ? SETTING_STYLES
@@ -97,8 +115,38 @@ export function SettingFilters({ value, onChange, lockedShape, hidden, onToggleH
 
       {hidden ? null : (
         <div className="rs-filters__grid">
-          {/* LEFT COLUMN: Style & Price */}
+          {/* LEFT COLUMN: Shape, Style & Price */}
           <div className="rs-filters__col">
+            {!lockedShape && (
+              <div className="rs-field">
+                <label className="rs-field__label">Shape</label>
+                <div className="ds-shape-row">
+                  {shapesShown.map((shape) => {
+                    const active = value.shapes.has(shape);
+                    return (
+                      <button
+                        key={shape}
+                        type="button"
+                        className={`ds-shape ${active ? "ds-shape--active" : ""}`}
+                        onClick={() => toggleShape(shape)}
+                        aria-pressed={active}
+                      >
+                        <span className="ds-shape__icon">
+                          <ShapeMaskIcon name={shape.toLowerCase() as ShapeName} size={28} />
+                        </span>
+                        <span className="ds-shape__label">{shape}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button type="button" className="ds-more-shapes" onClick={() => setMoreShapes((s) => !s)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d={moreShapes ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>{moreShapes ? "Less Shapes" : "More Shapes"}</span>
+                </button>
+              </div>
+            )}
             <div className="rs-field">
               <label className="rs-field__label">Style</label>
               <div className="rs-style-row">

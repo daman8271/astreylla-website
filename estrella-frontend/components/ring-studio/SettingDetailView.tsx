@@ -7,6 +7,7 @@ import { metalKey, metalLabel } from "./setting-types";
 import { useCurrency } from "@/components/currency/CurrencyContext";
 import { RingSpinner } from "./RingSpinner";
 import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyleMaskIcon";
+import { ShapeMaskIcon, type ShapeName } from "@/components/nav/ShapeMaskIcon";
 
 type Props = {
   setting: Setting;
@@ -181,7 +182,7 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
                     aria-pressed={isActive}
                     onClick={() => enabled && setChosenShape(s)}
                   >
-                    <span className="rs-shape-cell__icon">{SHAPE_ICONS[s] || null}</span>
+                    <span className="rs-shape-cell__icon"><ShapeMaskIcon name={s.toLowerCase() as ShapeName} size={22} /></span>
                     <span className="rs-shape-cell__label">{s}</span>
                   </button>
                 );

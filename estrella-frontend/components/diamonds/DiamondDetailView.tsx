@@ -50,10 +50,15 @@ function getCertLogo(lab: string | undefined | null) {
   }
   if (l === "IGI") {
     return (
-      <svg width="36" height="18" viewBox="0 0 76 30" fill="none" className="ds-cert-badge ds-cert-badge--igi" style={{ flexShrink: 0, verticalAlign: "middle" }}>
-        <rect width="76" height="30" rx="4" fill="#a48e68" />
-        <text x="50%" y="18" dominantBaseline="middle" textAnchor="middle" fill="#ffffff" fontSize="13" fontFamily="system-ui, sans-serif" fontWeight="800" letterSpacing="2">IGI</text>
-      </svg>
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src="/logo/igi-badge.svg"
+        alt="IGI Certified"
+        width={36}
+        height={36}
+        className="ds-cert-badge ds-cert-badge--igi"
+        style={{ flexShrink: 0, verticalAlign: "middle", borderRadius: "50%" }}
+      />
     );
   }
   if (l === "HRD") {
@@ -218,7 +223,7 @@ export function DiamondDetailView({
 
   const handleCopyStock = () => {
     if (!d.stockNum) return;
-    navigator.clipboard?.writeText(d.stockNum).catch(() => {});
+    navigator.clipboard?.writeText(d.stockNum).catch(() => { });
   };
 
   // Full diamond spec list, mirroring the app's "Diamond details" table.
@@ -433,7 +438,7 @@ export function DiamondDetailView({
             </div>
           ) : null}
 
-          <div className="ds-detail__row">Ships in 5-7 business days</div>
+          {/* <div className="ds-detail__row">Ships in 5-7 business days</div> */}
 
           {cert ? (
             <div className="ds-detail__cert">

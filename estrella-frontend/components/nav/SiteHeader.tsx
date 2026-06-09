@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, Moon, Sun, Search, ChevronDown } from "lucide-react";
 import { MegaMenu, type MegaMenuConfig, type MegaMenuItem } from "./MegaMenu";
@@ -452,12 +452,33 @@ const DARK_HERO_PATHS = new Set<string>(["/"]);
 export function SiteHeader() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [expandedMobileItem, setExpandedMobileItem] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const closeTimerRef = useRef<number | null>(null);
+
+  const openSearch = () => {
+    setSearchOpen(true);
+    setOpenMenu(null);
+    setTimeout(() => searchInputRef.current?.focus(), 60);
+  };
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    closeSearch();
+    router.push(`/diamonds?q=${encodeURIComponent(q)}`);
+  };
 
   // Hover-to-open with a small grace delay so moving the cursor across the
   // gap between the nav link and the panel doesn't snap-close the menu.
@@ -663,10 +684,10 @@ export function SiteHeader() {
               )}
             </button>
 
-            {/* Mock search — placeholder, not wired */}
             <button
               type="button"
-              aria-label="Search (coming soon)"
+              aria-label="Search"
+              onClick={openSearch}
               className="hover:opacity-70 transition-opacity"
               style={{
                 background: "transparent",
@@ -750,6 +771,72 @@ export function SiteHeader() {
             })()
           : null}
       </header>
+
+      {/* Search overlay */}
+      {searchOpen && (
+        <>
+          <div
+            aria-hidden
+            onClick={closeSearch}
+            className="fixed inset-0 z-[60]"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+          />
+          <div
+            role="dialog"
+            aria-label="Search"
+            className="fixed top-0 left-0 right-0 z-[70]"
+            style={{ background: "var(--brand-bg)", borderBottom: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.08))", padding: "24px 32px 20px" }}
+          >
+            <form onSubmit={submitSearch} style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: 700, margin: "0 auto" }}>
+              <Search size={20} strokeWidth={1.5} style={{ color: "var(--brand-text-muted, #888)", flexShrink: 0 }} />
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search diamonds, shapes, styles…"
+                style={{
+                  flex: 1,
+                  background: "transparent",
+                  border: 0,
+                  borderBottom: "1px solid var(--brand-border-subtle, rgba(0,0,0,0.15))",
+                  padding: "8px 0",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 18,
+                  color: "var(--brand-text-primary)",
+                  outline: "none",
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  background: "var(--brand-text-primary)",
+                  color: "var(--brand-bg)",
+                  border: 0,
+                  padding: "8px 20px",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                onClick={closeSearch}
+                aria-label="Close search"
+                style={{ background: "transparent", border: 0, color: "var(--brand-text-muted, #888)", cursor: "pointer", padding: 4, flexShrink: 0 }}
+              >
+                <X size={20} strokeWidth={1.5} />
+              </button>
+            </form>
+          </div>
+        </>
+      )}
 
       {/* Backdrop dim under the open mega-menu — clicking it closes. */}
       {openMenu ? (

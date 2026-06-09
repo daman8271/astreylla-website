@@ -7,7 +7,7 @@ import { RingGallery } from "./RingGallery";
 import { RingSummaryCard } from "./RingSummaryCard";
 import { FingerSizeSelector } from "./FingerSizeSelector";
 import { OrderTotal } from "./OrderTotal";
-import { buildRingQuotePayload, saveRingQuoteLocally, submitRingQuote } from "@/lib/ringQuote";
+import { buildRingQuotePayload, saveRingQuoteLocally } from "@/lib/ringQuote";
 import { metalLabel } from "./setting-types";
 import type { RegionCode } from "@/lib/ringSizes";
 
@@ -47,7 +47,6 @@ export function StageComplete() {
   })();
 
   const [busy, setBusy] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Bounce back if missing context (Setting → Diamond order).
   useEffect(() => {
@@ -68,7 +67,7 @@ export function StageComplete() {
 
   const totalUsd = (diamond.price || 0) + metal.priceUsd;
   const canSubmit = !!region && !!size;
-  const ctaLabel = !region ? "Select region" : !size ? "Select ring size" : "Request quote";
+  const ctaLabel = !region ? "Select region" : !size ? "Select ring size" : "Review & Request Quote";
 
   const onPrimary = async () => {
     if (!region || !size) return;
@@ -83,18 +82,10 @@ export function StageComplete() {
         size,
       });
       saveRingQuoteLocally(payload);
-      const res = await submitRingQuote(payload);
-      const id = res.id || `local_${Date.now().toString(36)}`;
-      setSuccessMessage(
-        `Saved! Quote ${id} — we'll email a final price within 24 hours. (No payment taken.)`
-      );
+      router.push("/ring-studio/review");
     } finally {
       setBusy(false);
     }
-  };
-
-  const onWishlist = () => {
-    setSuccessMessage("Saved to your wishlist.");
   };
 
   // Removing the setting (Step 1) invalidates the build — start over at Step 1.
@@ -146,9 +137,7 @@ export function StageComplete() {
             ctaDisabled={!canSubmit}
             ctaIcon={RulerIcon}
             onPrimary={onPrimary}
-            onWishlist={onWishlist}
             busy={busy}
-            successMessage={successMessage}
           />
         </div>
       </div>

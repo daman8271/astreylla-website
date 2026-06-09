@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- outer ring -->
+  <circle cx="60" cy="60" r="58" fill="#b8944a" stroke="#7a5c1e" stroke-width="1.5"/>
+  <circle cx="60" cy="60" r="52" fill="none" stroke="#f5e0a0" stroke-width="1"/>
+  <circle cx="60" cy="60" r="50" fill="#c8a040" stroke="none"/>
+  <circle cx="60" cy="60" r="46" fill="#a07828" stroke="#f5e0a0" stroke-width="0.8"/>
+  <circle cx="60" cy="60" r="43" fill="#c8a040" stroke="none"/>
+
+  <!-- curved text path top -->
+  <defs>
+    <path id="top-arc" d="M 14,60 A 46,46 0 0,1 106,60" />
+    <path id="bot-arc" d="M 20,70 A 42,42 0 0,0 100,70" />
+  </defs>
+
+  <!-- diamond icon in centre -->
+  <g transform="translate(60,52)">
+    <polygon points="0,-14 12,-4 8,12 -8,12 -12,-4" fill="none" stroke="#f5e0a0" stroke-width="1.8" stroke-linejoin="round"/>
+    <line x1="-12" y1="-4" x2="12" y2="-4" stroke="#f5e0a0" stroke-width="1"/>
+    <line x1="-8" y1="-4" x2="0" y2="-14" stroke="#f5e0a0" stroke-width="0.8"/>
+    <line x1="8" y1="-4" x2="0" y2="-14" stroke="#f5e0a0" stroke-width="0.8"/>
+    <line x1="-12" y1="-4" x2="-8" y2="12" stroke="#f5e0a0" stroke-width="0.8"/>
+    <line x1="12" y1="-4" x2="8" y2="12" stroke="#f5e0a0" stroke-width="0.8"/>
+    <line x1="-8" y1="12" x2="0" y2="-2" stroke="#f5e0a0" stroke-width="0.8"/>
+    <line x1="8" y1="12" x2="0" y2="-2" stroke="#f5e0a0" stroke-width="0.8"/>
+  </g>
+
+  <!-- IGI text -->
+  <text x="60" y="80" text-anchor="middle" fill="#f5e0a0" font-family="Georgia, serif" font-size="13" font-weight="bold" letter-spacing="3">IGI</text>
+
+  <!-- top arc text -->
+  <text font-family="Arial, sans-serif" font-size="6.2" fill="#f5e0a0" letter-spacing="1.2">
+    <textPath href="#top-arc" startOffset="50%" text-anchor="middle">INTERNATIONAL GEMOLOGICAL INSTITUTE</textPath>
+  </text>
+
+  <!-- bottom arc text -->
+  <text font-family="Arial, sans-serif" font-size="6.5" fill="#f5e0a0" letter-spacing="1.5">
+    <textPath href="#bot-arc" startOffset="50%" text-anchor="middle">EST. 1975</textPath>
+  </text>
+</svg>
