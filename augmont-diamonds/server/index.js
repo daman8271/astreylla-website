@@ -82,6 +82,68 @@ app.set("trust proxy", 1);
 app.use(requestId);
 app.use(cors({ origin: corsOriginCheck }));
 
+// Strict path whitelist filter: immediately reject any request that does not
+// match a valid Express API, Shopify webhook, static asset, or React Router app
+// route. This blocks scanner probes (e.g. /etc/passwd, /wp-admin, /api/Image/...,
+// /login.action, etc.) early, saving CPU/memory and keeping logs clean.
+const ALLOWED_ROOT_PATHS = new Set(["/", "/favicon.ico", "/payal-logo.jpg"]);
+
+const ALLOWED_PREFIXES = [
+  "/app/",
+  "/auth/",
+  "/health/",
+  "/assets/"
+];
+
+const ALLOWED_API_PREFIXES = [
+  "/api/public/diamonds",
+  "/api/public/enquiry",
+  "/api/public/cart",
+  "/api/public/order/create",
+  "/api/diamonds",
+  "/api/orders",
+  "/api/admin"
+];
+
+const ALLOWED_WEBHOOK_PREFIXES = [
+  "/webhooks/customers/",
+  "/webhooks/shop/",
+  "/webhooks/billing",
+  "/webhooks/app/"
+];
+
+app.use((req, res, next) => {
+  const p = req.path.toLowerCase();
+
+  // Allow root paths
+  if (ALLOWED_ROOT_PATHS.has(p)) {
+    return next();
+  }
+
+  // Allow exact matches for base routing directories
+  if (p === "/app" || p === "/auth" || p === "/health" || p === "/webhooks" || p === "/api") {
+    return next();
+  }
+
+  // Check top level prefixes
+  for (const prefix of ALLOWED_PREFIXES) {
+    if (p.startsWith(prefix)) return next();
+  }
+
+  // Check API prefixes
+  for (const prefix of ALLOWED_API_PREFIXES) {
+    if (p === prefix || p.startsWith(prefix + "/")) return next();
+  }
+
+  // Check Webhook prefixes
+  for (const prefix of ALLOWED_WEBHOOK_PREFIXES) {
+    if (p === prefix || p.startsWith(prefix + "/")) return next();
+  }
+
+  // Block everything else as a bot probe / invalid request
+  return res.status(404).end();
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const CLIENT_BUILD_DIR = resolve(__dirname, "..", "build", "client");
@@ -169,43 +231,6 @@ app.use((err, req, res, next) => {
     return errorHandler(err, req, res, next);
   }
   return next(err);
-});
-
-// Bot-probe filter: silently reject well-known scanner/exploit paths before
-// they reach React Router. Without this, React Router logs a verbose
-// ErrorResponseImpl stack trace for every automated security probe
-// (e.g. /login.jsp, /parameters.yml, /wp-admin, etc.).
-// Patterns are tested as exact matches or prefix matches — never regexes
-// sourced from user input, so no ReDoS risk.
-const BOT_PROBE_EXACT = new Set([
-  "/login.jsp",
-  "/parameters.yml",
-  "/parameters.yml.dist",
-  "/app/config/parameters.yml",
-  "/app/config/parameters.yml.dist",
-  "/wp-login.php",
-  "/wp-admin",
-  "/admin.php",
-  "/.env",
-  "/.git/config",
-  "/config.php",
-  "/phpinfo.php",
-  "/server-status",
-  "/actuator/health",
-  "/actuator/env",
-]);
-
-const BOT_PROBE_SUFFIXES = [".jsp", ".php", ".asp", ".aspx", ".cgi"];
-
-app.use((req, res, next) => {
-  const path = req.path.toLowerCase();
-  if (
-    BOT_PROBE_EXACT.has(path) ||
-    BOT_PROBE_SUFFIXES.some((s) => path.endsWith(s))
-  ) {
-    return res.status(404).end();
-  }
-  return next();
 });
 
 // Remix React Router catch-all — MUST be last. The adapter reads the request
