@@ -436,7 +436,8 @@ export default function CartPage() {
                   textAlign: "center",
                   lineHeight: 1.4,
                   marginTop: 16,
-                  marginHorizontal: 0,
+                  marginLeft: 0,
+                  marginRight: 0,
                 }}
               >
                 Secure checkout is processed via Shopify. All prices are inclusive of duties &amp; local VAT.
