@@ -15,19 +15,23 @@ function stageFromPath(p: string): Stage {
 export function RingStudioShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/ring-studio/setting";
   const stage = stageFromPath(pathname);
+  const isReview = pathname.endsWith("/review");
+
   return (
     <RingStudioProvider>
       <Suspense fallback={null}>
         <RingStudioHydrator />
       </Suspense>
       <div className="rs-shell">
-        <header className="rs-pagehead">
-          <h1 className="rs-pagehead__title">
-            <span style={{ fontStyle: "italic" }}>Ring Studio</span>
-          </h1>
-        </header>
+        {!isReview && (
+          <header className="rs-pagehead">
+            <h1 className="rs-pagehead__title">
+              <span style={{ fontStyle: "italic" }}>Ring Studio</span>
+            </h1>
+          </header>
+        )}
 
-        <RingStudioStepper current={stage} />
+        {!isReview && <RingStudioStepper current={stage} />}
 
         <div className="rs-stage">{children}</div>
       </div>

@@ -9,7 +9,6 @@ import "./globals.css";
 import { SiteHeader } from "@/components/nav/SiteHeader";
 import { SiteFooter } from "@/components/footer/SiteFooter";
 import { CartProvider } from "@/components/cart/CartProvider";
-import { CartDrawer } from "@/components/cart/CartDrawer";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { CurrencyProvider } from "@/components/currency/CurrencyContext";
 import { getCartAction } from "@/lib/cart-actions";
@@ -83,7 +82,6 @@ export default async function RootLayout({
                 {children}
               </main>
               <SiteFooter />
-              <CartDrawer />
             </CartProvider>
           </CurrencyProvider>
         </ThemeProvider>

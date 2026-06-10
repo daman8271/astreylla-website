@@ -9,6 +9,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { useRouter } from "next/navigation";
 import type { Cart } from "@/lib/shopify";
 import {
   addToCartAction,
@@ -41,23 +42,29 @@ export function CartProvider({
   const [cart, setCart] = useState<Cart | null>(initialCart);
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const refresh = useCallback(async () => {
     const next = await getCartAction();
     setCart(next);
   }, []);
 
-  const openCart = useCallback(() => setIsOpen(true), []);
+  const openCart = useCallback(() => {
+    router.push("/cart");
+  }, [router]);
+
   const closeCart = useCallback(() => setIsOpen(false), []);
 
   const addToCart = useCallback(
     async (merchandiseId: string, quantity = 1): Promise<string | null> => {
       const result = await addToCartAction(merchandiseId, quantity);
       if (result.cart) setCart(result.cart);
-      if (!result.error) setIsOpen(true);
+      if (!result.error) {
+        router.push("/cart");
+      }
       return result.error ?? null;
     },
-    []
+    [router]
   );
 
   const updateLine = useCallback(
@@ -79,10 +86,12 @@ export function CartProvider({
   );
 
   useEffect(() => {
-    const onOpen = () => setIsOpen(true);
+    const onOpen = () => {
+      router.push("/cart");
+    };
     window.addEventListener("estrella:open-cart", onOpen);
     return () => window.removeEventListener("estrella:open-cart", onOpen);
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

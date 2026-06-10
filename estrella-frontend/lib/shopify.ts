@@ -256,3 +256,144 @@ export function formatMoney(money: Money | null | undefined): string {
     return `${money.currencyCode} ${amount.toFixed(2)}`;
   }
 }
+
+export const SEARCH_VARIANTS_QUERY = `#graphql
+  query SearchVariants($query: String!) {
+    products(first: 10, query: $query) {
+      edges {
+        node {
+          id
+          title
+          handle
+          variants(first: 100) {
+            edges {
+              node {
+                id
+                title
+                sku
+                selectedOptions {
+                  name
+                  value
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export async function searchShopifyVariant(
+  sku: string,
+  name: string,
+  options: { color?: string; karat?: string; shape?: string }
+): Promise<string | null> {
+  try {
+    const client = getClient();
+    // 1. Try search by SKU first
+    let res = await client.request(SEARCH_VARIANTS_QUERY, {
+      variables: { query: `sku:${sku}` }
+    }) as any;
+
+    let variant = findMatchingVariant(res.data?.products?.edges || [], sku, options);
+    if (variant) return variant.id;
+
+    // 2. Try search by product title
+    res = await client.request(SEARCH_VARIANTS_QUERY, {
+      variables: { query: `title:'${name}'` }
+    }) as any;
+
+    variant = findMatchingVariant(res.data?.products?.edges || [], sku, options);
+    if (variant) return variant.id;
+
+    // 3. Try search by short SKU (first part before dash)
+    const shortSku = sku.split("-")[0];
+    if (shortSku && shortSku !== sku) {
+      res = await client.request(SEARCH_VARIANTS_QUERY, {
+        variables: { query: `sku:${shortSku}` }
+      }) as any;
+      variant = findMatchingVariant(res.data?.products?.edges || [], sku, options);
+      if (variant) return variant.id;
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Failed to search Shopify variant for:", { sku, name, options }, err);
+    return null;
+  }
+}
+
+export async function searchShopifyDiamondVariant(stockNum: string): Promise<string | null> {
+  try {
+    const client = getClient();
+    const res = await client.request(SEARCH_VARIANTS_QUERY, {
+      variables: { query: `sku:${stockNum} OR title:'${stockNum}'` }
+    }) as any;
+
+    const edges = res.data?.products?.edges || [];
+    if (edges.length > 0) {
+      // Return the first variant of the first matched product
+      const firstProduct = edges[0].node;
+      const variants = firstProduct.variants.edges;
+      if (variants.length > 0) {
+        return variants[0].node.id;
+      }
+    }
+    return null;
+  } catch (err) {
+    console.error("Failed to search Shopify diamond variant for:", stockNum, err);
+    return null;
+  }
+}
+
+function findMatchingVariant(
+  edges: any[],
+  sku: string,
+  options: { color?: string; karat?: string; shape?: string }
+): { id: string } | null {
+  for (const edge of edges) {
+    const product = edge.node;
+    const variants = product.variants.edges.map((e: any) => e.node);
+    
+    // Attempt 1: Exact SKU match
+    const exactSkuMatch = variants.find((v: any) => v.sku?.toLowerCase() === sku.toLowerCase());
+    if (exactSkuMatch) return exactSkuMatch;
+
+    // Attempt 2: Option-based match (karat/color/shape)
+    for (const v of variants) {
+      let isMatch = true;
+      const selOpts = v.selectedOptions || [];
+
+      for (const opt of selOpts) {
+        const name = opt.name.toLowerCase();
+        const val = opt.value.toLowerCase();
+
+        if (name.includes("karat") || name.includes("metal") || name.includes("material")) {
+          if (options.karat && !val.includes(options.karat.toLowerCase())) {
+            isMatch = false;
+            break;
+          }
+          if (options.color && !val.includes(options.color.toLowerCase())) {
+            isMatch = false;
+            break;
+          }
+        } else if (name.includes("color") || name.includes("colour")) {
+          if (options.color && !val.includes(options.color.toLowerCase())) {
+            isMatch = false;
+            break;
+          }
+        } else if (name.includes("shape") || name.includes("stone") || name.includes("diamond")) {
+          if (options.shape && !val.includes(options.shape.toLowerCase())) {
+            isMatch = false;
+            break;
+          }
+        }
+      }
+
+      if (isMatch) return v;
+    }
+  }
+  return null;
+}
+

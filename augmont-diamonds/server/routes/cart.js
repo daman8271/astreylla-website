@@ -246,11 +246,11 @@ router.delete("/:id", async (req, res, next) => {
 });
 
 // POST /api/public/order/create
-// Body: { shop, sessionId, customerEmail, customerName, orderNote }
+// Body: { shop, sessionId, customerEmail, customerName, customerPhone, shippingAddress, settingDetails, cardDetails, totalAmount, orderNote }
 // Exported separately so server/index.js can mount it at the spec path.
 export async function handlePublicOrderCreate(req, res, next) {
   try {
-    const { shop, sessionId, customerEmail, customerName, orderNote } = req.body || {};
+    const { shop, sessionId, customerEmail, customerName, customerPhone, shippingAddress, settingDetails, cardDetails, totalAmount, orderNote } = req.body || {};
     if (!validateSessionId(sessionId)) {
       return res.status(400).json({ error: "valid sessionId is required" });
     }
@@ -283,31 +283,31 @@ export async function handlePublicOrderCreate(req, res, next) {
       .filter((i) => i.augmontCartItemId)
       .map((i) => ({ id: i.augmontCartItemId, productId: i.diamondId }));
 
-    let result;
-    try {
-      result = await createOrder(cartItemsForAugmont, {
-        orderNote: orderNote || "",
-        customerReference: customerEmail,
-      });
-    } catch (err) {
-      if (err instanceof AugmontError) {
-        if (err.code === "UPSTREAM_TIMEOUT") {
-          return res.status(503).json({
-            error: "Checkout is temporarily unavailable. Please try again in a moment.",
-          });
-        }
-        if (err.status === 403) {
-          return res.status(503).json({
-            error: "Online checkout is not yet enabled. Please contact the store to complete your order.",
-          });
-        }
-        if (err.status === 400) {
-          return res.status(400).json({
-            error: err.body?.message || "Order rejected by Augmont. A default delivery address may be missing.",
-          });
+    // For bespoke Ring Studio orders (identified by settingDetails in body),
+    // skip the Augmont order API entirely — these are tracked in our own DB.
+    // For regular diamond orders with Augmont cart items, attempt Augmont API
+    // but always fall back to saving as "pending" on any failure.
+    let augmontResult = null;
+    let orderStatus = "pending";
+    const isBespokeOrder = !!(settingDetails && settingDetails.sku);
+
+    if (!isBespokeOrder && cartItemsForAugmont.length > 0) {
+      try {
+        augmontResult = await createOrder(cartItemsForAugmont, {
+          orderNote: orderNote || "",
+          customerReference: customerEmail,
+        });
+        orderStatus = "confirmed";
+      } catch (err) {
+        if (err instanceof AugmontError) {
+          // Any Augmont error (400, 403, timeout) → save as pending for admin review
+          console.warn(`[order/create] Augmont error (status=${err.status}), saving as pending: ${err.body?.message || err.message}`);
+        } else {
+          throw err;
         }
       }
-      throw err;
+    } else if (isBespokeOrder) {
+      console.log(`[order/create] Bespoke ring order — skipping Augmont, saving directly as pending`);
     }
 
     const order = await prisma.order.create({
@@ -315,13 +315,18 @@ export async function handlePublicOrderCreate(req, res, next) {
         shop,
         customerEmail,
         customerName,
+        customerPhone: customerPhone || null,
+        shippingAddress: shippingAddress || null,
+        settingDetails: settingDetails || null,
+        cardDetails: cardDetails || null,
+        totalAmount: totalAmount ? Number(totalAmount) : null,
         diamondId: items.map((i) => i.diamondId).join(","),
         diamondDetails: items.map((i) => i.diamondDetails),
         cartItemIds: items.map((i) => i.id),
         orderNote: orderNote || null,
-        augmontInvoiceNumber: result.invoiceNumber ? String(result.invoiceNumber) : null,
-        augmontOrderId: result.orderId ? String(result.orderId) : null,
-        status: "confirmed",
+        augmontInvoiceNumber: augmontResult?.invoiceNumber ? String(augmontResult.invoiceNumber) : null,
+        augmontOrderId: augmontResult?.orderId ? String(augmontResult.orderId) : null,
+        status: orderStatus,
       },
     });
 

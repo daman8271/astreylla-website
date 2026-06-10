@@ -73,6 +73,28 @@ export function StageComplete() {
     if (!region || !size) return;
     setBusy(true);
     try {
+      // 1. Add to backend Express cart database
+      const sessionId =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("estrella_session_id") ||
+            (() => {
+              const s = `s_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+              window.localStorage.setItem("estrella_session_id", s);
+              return s;
+            })()
+          : "";
+      const shop = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN || "trial-shop-sqxnl71f.myshopify.com";
+      try {
+        await fetch(`/api/widget/api/public/cart/add`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ shop, sessionId, productId: diamond.id }),
+        });
+      } catch (err) {
+        console.error("Failed to add diamond to backend cart", err);
+      }
+
+      // 2. Save quote locally and open bespoke cart drawer
       const payload = buildRingQuotePayload({
         diamond,
         setting,

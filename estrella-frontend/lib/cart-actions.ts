@@ -155,3 +155,30 @@ export async function removeCartLineAction(
     return { cart: null, error: (err as Error).message };
   }
 }
+
+export async function addBespokeRingToCartAction(
+  settingVariantId: string,
+  diamondVariantId: string
+): Promise<{ cart: Cart | null; error?: string }> {
+  try {
+    const cart = await ensureCart();
+    const lines = [
+      { merchandiseId: settingVariantId, quantity: 1 },
+      { merchandiseId: diamondVariantId, quantity: 1 }
+    ];
+    const data = await call<{ cartLinesAdd: MutationResult }>(
+      CART_LINES_ADD_MUTATION,
+      { cartId: cart.id, lines }
+    );
+    if (data.cartLinesAdd.userErrors.length) {
+      return {
+        cart: data.cartLinesAdd.cart,
+        error: data.cartLinesAdd.userErrors[0].message,
+      };
+    }
+    return { cart: data.cartLinesAdd.cart };
+  } catch (err) {
+    return { cart: null, error: (err as Error).message };
+  }
+}
+

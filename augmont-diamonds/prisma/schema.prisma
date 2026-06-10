@@ -61,6 +61,11 @@ model Order {
   shop                 String
   customerEmail        String
   customerName         String?
+  customerPhone        String?
+  shippingAddress      String?
+  settingDetails       Json?
+  cardDetails          Json?
+  totalAmount          Float?
   diamondId            String
   diamondDetails       Json
   status               String    @default("pending")

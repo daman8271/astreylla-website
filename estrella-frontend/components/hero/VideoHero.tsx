@@ -63,35 +63,37 @@ export function VideoHero() {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 14,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              color: "#ffffff",
-              marginBottom: 8,
-              fontWeight: 400,
-              lineHeight: 1.4,
-            }}
-          >
-            Your destination for eternal shine
-          </p>
           <h1
             style={{
               fontFamily: "var(--font-display)",
               fontStyle: "italic",
               fontWeight: 400,
-              fontSize: "clamp(26px, 6vw, 34px)",
+              fontSize: "clamp(24px, 4.5vw, 48px)",
               lineHeight: 1.2,
               letterSpacing: 0,
               color: "#ffffff",
               margin: 0,
-              maxWidth: "min(90vw, 16ch)",
+              maxWidth: "none",
+              whiteSpace: "nowrap",
             }}
           >
-            Design the ring you have always imagined.
+            Where Your Love Story Sparkles
           </h1>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "clamp(13px, 2.5vw, 16px)",
+              letterSpacing: "0.02em",
+              color: "#f0f0f0",
+              marginTop: 12,
+              marginBottom: 0,
+              fontWeight: 400,
+              lineHeight: 1.5,
+              maxWidth: "600px",
+            }}
+          >
+            Discover exquisite diamonds and handcrafted jewelry designed to celebrate every milestone.
+          </p>
           <Link
             href="/ring-studio/setting"
             style={{

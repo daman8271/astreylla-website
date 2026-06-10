@@ -12,6 +12,7 @@ import gdprRouter from "./routes/gdpr.js";
 import cartRouter, { handlePublicOrderCreate } from "./routes/cart.js";
 import billingRouter from "./routes/billing.js";
 import adminRouter from "./routes/admin.js";
+import prisma from "./services/prismaClient.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { requestId } from "./middleware/requestId.js";
 import { publicRateLimit, publicRateLimitPerShop } from "./middleware/rateLimit.js";
@@ -200,6 +201,41 @@ app.use("/api/orders", ordersRouter);
 // gate at this prefix in case future read-only admin endpoints want
 // different auth.
 app.use("/api/admin", adminRouter);
+
+app.get("/api/admin/orders-list", async (req, res, next) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const expected = `Bearer ${process.env.ADMIN_PASSWORD || "admin123"}`;
+    if (authHeader !== expected) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    res.json({ orders });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/admin/orders/:id/status", async (req, res, next) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const expected = `Bearer ${process.env.ADMIN_PASSWORD || "admin123"}`;
+    if (authHeader !== expected) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const { id } = req.params;
+    const { status } = req.body;
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status },
+    });
+    res.json({ success: true, order });
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.use("/webhooks", gdprRouter);
 // Phase F7: billing routes scaffolding. The router applies billingGate
