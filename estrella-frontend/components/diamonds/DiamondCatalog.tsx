@@ -399,16 +399,40 @@ export function DiamondCatalog({
     const shape = searchParams.get("shape") || "";
     const treatment = searchParams.get("treatment") || "";
     const maxFinalPrice = searchParams.get("maxFinalPrice");
+    const color = searchParams.get("color") || "";
+    const fancyColor = searchParams.get("fancyColor") || "";
 
     setFilters((f) => {
       const nextShape = shape;
       const nextTreatment = (treatment === "lab-grown" || treatment === "natural" ? treatment : "") as FilterState["treatment"];
       const nextMaxPrice = maxFinalPrice ? Number(maxFinalPrice) : PRICE_MAX;
 
+      let nextFancyColor = f.fancyColor;
+      if (fancyColor) {
+        nextFancyColor = fancyColor.split(",");
+      } else if (color) {
+        const mapped: string[] = [];
+        const codes = color.toUpperCase().split(",");
+        if (codes.some(c => ["FVY", "FIY", "FLY", "FY"].includes(c))) mapped.push("Yellow");
+        if (codes.some(c => ["FVR", "FIR", "FLR", "FR"].includes(c))) mapped.push("Red");
+        if (codes.some(c => ["FVB", "FIB", "FLB", "FB"].includes(c))) mapped.push("Blue");
+        if (codes.some(c => ["FVP", "FIP", "FLP", "FDP", "FIBP", "FP"].includes(c))) mapped.push("Pink");
+        if (codes.some(c => ["FVG", "FIG", "FLG", "FG"].includes(c))) mapped.push("Green");
+        if (codes.some(c => ["FVPURPLE", "FIPURPLE", "FLPURPLE", "FPURPLE"].includes(c))) mapped.push("Purple");
+        nextFancyColor = mapped;
+      } else {
+        if (searchParams.has("color") || searchParams.has("fancyColor")) {
+          nextFancyColor = [];
+        } else if (paramsStr === "") {
+          nextFancyColor = [];
+        }
+      }
+
       if (
         f.shape === nextShape &&
         f.treatment === nextTreatment &&
-        f.price[1] === nextMaxPrice
+        f.price[1] === nextMaxPrice &&
+        JSON.stringify(f.fancyColor) === JSON.stringify(nextFancyColor)
       ) {
         return f;
       }
@@ -418,6 +442,7 @@ export function DiamondCatalog({
         shape: nextShape,
         treatment: nextTreatment,
         price: [f.price[0], nextMaxPrice],
+        fancyColor: nextFancyColor,
       };
     });
   }, [searchParams]);

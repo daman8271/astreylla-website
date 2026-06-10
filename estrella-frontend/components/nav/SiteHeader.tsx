@@ -14,6 +14,7 @@ type NavItem = {
   href: string;
   label: string;
   menu?: MegaMenuConfig;
+  clickable?: boolean;
 };
 
 // Detailed cropped diamond-cut PNGs rendered via CSS mask so they pick up
@@ -141,21 +142,21 @@ const DIAMONDS_MENU: MegaMenuConfig = {
 
 // ── FANCY DIAMONDS MEGA-MENU ─────────────────────────────────────────────
 const COLORED_SHAPES: MegaMenuItem[] = [
-  SHAPE_ITEM("Round", "round", "/color-diamonds"),
-  SHAPE_ITEM("Princess", "princess", "/color-diamonds"),
-  SHAPE_ITEM("Oval", "oval", "/color-diamonds"),
-  SHAPE_ITEM("Radiant", "radiant", "/color-diamonds"),
-  SHAPE_ITEM("Pear", "pear", "/color-diamonds"),
-  SHAPE_ITEM("Heart", "heart", "/color-diamonds"),
+  SHAPE_ITEM("Round", "round", "/color-diamonds?shape=Round"),
+  SHAPE_ITEM("Princess", "princess", "/color-diamonds?shape=Princess"),
+  SHAPE_ITEM("Oval", "oval", "/color-diamonds?shape=Oval"),
+  SHAPE_ITEM("Radiant", "radiant", "/color-diamonds?shape=Radiant"),
+  SHAPE_ITEM("Pear", "pear", "/color-diamonds?shape=Pear"),
+  SHAPE_ITEM("Heart", "heart", "/color-diamonds?shape=Heart"),
 ];
 
 const COLORED_COLORS: MegaMenuItem[] = [
-  { label: "Yellow diamonds", href: "/color-diamonds", icon: <ColorPie from="#fadf66" to="#e8c044" /> },
-  { label: "Red diamonds", href: "/color-diamonds", icon: <ColorPie from="#e74c4c" to="#a82a2a" /> },
-  { label: "Blue diamonds", href: "/color-diamonds", icon: <ColorPie from="#5a86d6" to="#2f5fb5" /> },
-  { label: "Pink diamonds", href: "/color-diamonds", icon: <ColorPie from="#f7c4d2" to="#ec97b3" /> },
-  { label: "Green diamonds", href: "/color-diamonds", icon: <ColorPie from="#7fc06d" to="#3f8a4a" /> },
-  { label: "Purple diamonds", href: "/color-diamonds", icon: <ColorPie from="#a07cc8" to="#6c4ba0" /> },
+  { label: "Yellow diamonds", href: "/color-diamonds?color=FVY,FIY,FLY,FY", icon: <ColorPie from="#fadf66" to="#e8c044" /> },
+  { label: "Red diamonds", href: "/color-diamonds?color=FVR,FIR,FLR,FR", icon: <ColorPie from="#e74c4c" to="#a82a2a" /> },
+  { label: "Blue diamonds", href: "/color-diamonds?color=FVB,FIB,FLB,FB", icon: <ColorPie from="#5a86d6" to="#2f5fb5" /> },
+  { label: "Pink diamonds", href: "/color-diamonds?color=FVP,FIP,FLP,FDP,FIBP,FP", icon: <ColorPie from="#f7c4d2" to="#ec97b3" /> },
+  { label: "Green diamonds", href: "/color-diamonds?color=FVG,FIG,FLG,FG", icon: <ColorPie from="#7fc06d" to="#3f8a4a" /> },
+  { label: "Purple diamonds", href: "/color-diamonds?color=FVPurple,FIPurple,FLPurple,FPurple", icon: <ColorPie from="#a07cc8" to="#6c4ba0" /> },
 ];
 
 const COLORED_MENU: MegaMenuConfig = {
@@ -171,27 +172,43 @@ const COLORED_MENU: MegaMenuConfig = {
               icon: <RingStyleMaskIcon name="solitaire" size={22} />,
             },
             {
-              label: "Start with a fancy diamond",
+              label: "Start with a colored diamond",
               href: "/color-diamonds",
               icon: <ShapeIcon name="round" />,
+            },
+          ],
+        },
+        {
+          heading: "Colored diamond types",
+          items: [
+            {
+              label: "Natural Colored Diamonds",
+              href: "/color-diamonds?treatment=natural",
+              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
+            },
+            {
+              label: "Lab-grown Colored Diamonds",
+              href: "/color-diamonds?treatment=lab-grown",
+              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
             },
           ],
         },
       ],
     },
     {
-      heading: "Fancy diamonds",
+      heading: "Colored diamonds",
       items: COLORED_SHAPES,
-      more: { label: "Browse all shapes", href: "/color-diamonds" },
+      more: { label: "Browse all shapes →", href: "/color-diamonds" },
     },
     {
-      heading: "Fancy diamonds",
+      heading: "Colored diamonds",
       items: COLORED_COLORS,
-      more: { label: "Browse all colors", href: "/color-diamonds" },
+      more: { label: "Browse all colors →", href: "/color-diamonds" },
     },
   ],
   promos: [
     {
+      image: "/promo-diamond.png",
       eyebrow: "FANCY DIAMONDS",
       cta: { label: "Shop now", href: "/color-diamonds" },
     },
@@ -442,8 +459,8 @@ const RINGS_MENU: MegaMenuConfig = {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/diamonds", label: "Diamonds", menu: DIAMONDS_MENU },
-  { href: "/color-diamonds", label: "Fancy Diamonds" },
-  { href: "/gemstones", label: "Gemstones", menu: GEMSTONES_MENU },
+  { href: "/color-diamonds", label: "Fancy Diamonds", menu: COLORED_MENU },
+  { href: "/gemstones", label: "Gemstones", clickable: false },
   { href: "/ring-studio/setting", label: "Rings", menu: RINGS_MENU },
 ];
 
@@ -625,40 +642,62 @@ export function SiteHeader() {
           >
             {NAV_ITEMS.map((l) => (
               <div
-                key={l.href}
+                key={l.label}
                 onMouseEnter={l.menu ? () => openMenuFor(l.label) : undefined}
                 onMouseLeave={l.menu ? scheduleClose : undefined}
                 style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
               >
-                <Link
-                  href={l.href}
-                  onClick={() => closeMenu()}
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    color: fg,
-                    textShadow: onDarkHero ? "0 1px 8px rgba(0,0,0,0.35)" : "none",
-                    transition: "color 200ms ease",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    height: 75,
-                  }}
-                  className="hover:opacity-70 transition-opacity"
-                  aria-haspopup={l.menu ? "true" : undefined}
-                  aria-expanded={l.menu ? openMenu === l.label : undefined}
-                >
-                  {l.label}
-                  {l.menu ? <ChevronDown size={14} strokeWidth={1.5} /> : null}
-                </Link>
+                {l.clickable === false ? (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: fg,
+                      textShadow: onDarkHero ? "0 1px 8px rgba(0,0,0,0.35)" : "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      height: 75,
+                      cursor: "default",
+                    }}
+                  >
+                    {l.label}
+                  </span>
+                ) : (
+                  <Link
+                    href={l.href}
+                    onClick={() => closeMenu()}
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: fg,
+                      textShadow: onDarkHero ? "0 1px 8px rgba(0,0,0,0.35)" : "none",
+                      transition: "color 200ms ease",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      height: 75,
+                    }}
+                    className="hover:opacity-70 transition-opacity"
+                    aria-haspopup={l.menu ? "true" : undefined}
+                    aria-expanded={l.menu ? openMenu === l.label : undefined}
+                  >
+                    {l.label}
+                    {l.menu ? <ChevronDown size={14} strokeWidth={1.5} /> : null}
+                  </Link>
+                )}
               </div>
             ))}
           </nav>
 
           <div className="hidden md:flex items-center" style={{ gap: 20 }}>
+            {/* Dark Mode Toggle Commented Out
             <button
               type="button"
               aria-label={
@@ -683,6 +722,7 @@ export function SiteHeader() {
                 <Moon size={18} strokeWidth={1.5} />
               )}
             </button>
+            */}
 
             <button
               type="button"
@@ -869,7 +909,7 @@ export function SiteHeader() {
             <nav aria-label="Mobile" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {NAV_ITEMS.map((l) => (
                 <div
-                  key={l.href}
+                  key={l.label}
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -877,7 +917,29 @@ export function SiteHeader() {
                     paddingBottom: "16px",
                   }}
                 >
-                  {!l.menu ? (
+                  {l.clickable === false ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        padding: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          fontSize: 26,
+                          letterSpacing: "0.02em",
+                          color: "var(--brand-text-primary)",
+                          opacity: 0.6,
+                        }}
+                      >
+                        {l.label}
+                      </span>
+                    </div>
+                  ) : !l.menu ? (
                     <Link
                       href={l.href}
                       onClick={() => setMobileOpen(false)}
@@ -1261,6 +1323,7 @@ export function SiteHeader() {
               </div>
 
               {/* Theme Settings */}
+              {/* Theme Settings Commented Out
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <span
                   style={{
@@ -1325,6 +1388,7 @@ export function SiteHeader() {
                   </button>
                 </div>
               </div>
+              */}
 
               {/* Quick Shortcuts */}
               <div style={{ display: "flex", gap: "10px" }}>
