@@ -16,6 +16,9 @@ export type Diamond = {
   video_url?: string;
   available?: boolean;
   title?: string; // server-formatted display title
+  fancyColor?: string;
+  fancyColorIntensity?: string;
+  fancyColorOvertone?: string;
 };
 
 export type DiamondsResponse = {

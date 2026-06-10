@@ -34,6 +34,10 @@ export type FilterState = {
   symmetryRange: [number, number];
   fluorescenceRange: [number, number];
   certificate: string[];
+  // --- Fancy Color filters ---
+  fancyColor: string[];
+  fancyColorIntensity: string[];
+  fancyColorOvertone: string[];
 };
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -51,6 +55,10 @@ export const DEFAULT_FILTERS: FilterState = {
   symmetryRange: [0, 2],
   fluorescenceRange: [0, 4],
   certificate: [],
+  // --- Fancy Color filters ---
+  fancyColor: [],
+  fancyColorIntensity: [],
+  fancyColorOvertone: [],
 };
 
 type Props = {
@@ -80,30 +88,36 @@ export function DiamondFilters({ value, onChange, mode, onModeChange }: Props) {
   const symmetryLabels = ["Good", "Very Good", "Excellent"];
   const fluorescenceLabels = ["None", "Faint", "Medium", "Strong", "Very Strong"];
 
-  // Tab used to switch between colorless / fancy modes inline
-  const TABS = [
-    { id: "colorless", label: "Colourless" },
-    { id: "fancy",     label: "✦ Fancy Colour" },
-  ] as const;
-  const activeTab = isFancy ? "fancy" : "colorless";
+const FANCY_COLORS = [
+  { label: "Yellow",     from: "#fadf66", to: "#e8c044" },
+  { label: "Pink",       from: "#ffccd5", to: "#ec97b3" },
+  { label: "Blue",       from: "#729fcf", to: "#2f5fb5" },
+  { label: "Red",        from: "#e74c4c", to: "#a82a2a" },
+  { label: "Green",      from: "#7fc06d", to: "#3f8a4a" },
+  { label: "Purple",     from: "#a07cc8", to: "#6c4ba0" },
+  { label: "Orange",     from: "#ff9f43", to: "#ee5253" },
+  { label: "Violet",     from: "#b28dff", to: "#8a2be2" },
+  { label: "Gray",       from: "#a9a9a9", to: "#808080" },
+  { label: "Black",      from: "#2b2b2b", to: "#000000" },
+  { label: "Brown",      from: "#a0522d", to: "#8b4513" },
+  { label: "Champagne",  from: "#fad09e", to: "#e8a75e" },
+  { label: "Cognac",     from: "#c46210", to: "#96300a" },
+  { label: "Chameleon",  from: "#8fbc8f", to: "#556b2f" },
+  { label: "White",      from: "#ffffff", to: "#e0e0e0" },
+  { label: "S & P",      from: "#c0c0c0", to: "#708090" },
+  { label: "Other",      from: "#dfd2c0", to: "#b3a290" },
+];
+
+const OVERTONES = [
+  "None", "Yellow", "Yellowish", "Pink", "Pinkish", "Blue", "Blueish", "Red", "Reddish", "Green", "Greenish", "Purple"
+];
+
+const INTENSITIES = [
+  "Fancy Deep", "Fancy Vivid", "Fancy Intense", "Fancy Dark", "Fancy", "Fancy Light", "Light", "Very Light", "Faint"
+];
 
   return (
     <section className="ds-filters" aria-label="Filter diamonds">
-      {/* ── Category Tabs ─────────────────────────────────── */}
-      {onModeChange && (
-        <div className="ds-tabs">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={`ds-tab${activeTab === t.id ? " ds-tab--active" : ""}`}
-              onClick={() => onModeChange(t.id === "fancy" ? "fancy" : "default")}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      )}
       <div className="ds-filters__grid">
         {/* LEFT COLUMN */}
         <div className="ds-filters__col">
@@ -166,39 +180,87 @@ export function DiamondFilters({ value, onChange, mode, onModeChange }: Props) {
             </div>
           )}
           {isFancy && (
-            <div className="ds-field">
-              <label className="ds-field__label">Fancy Colour</label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
-                {[
-                  { label: "Yellow", from: "#fadf66", to: "#e8c044" },
-                  { label: "Blue",   from: "#729fcf", to: "#2f5fb5" },
-                  { label: "Pink",   from: "#ffccd5", to: "#ec97b3" },
-                  { label: "Green",  from: "#7fc06d", to: "#3f8a4a" },
-                  { label: "Purple", from: "#a07cc8", to: "#6c4ba0" },
-                  { label: "Red",    from: "#e74c4c", to: "#a82a2a" },
-                ].map(({ label, from, to }) => (
-                  <span
-                    key={label}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      fontSize: 12,
-                      fontFamily: "var(--font-sans)",
-                      color: "var(--brand-text-secondary)",
-                    }}
-                  >
-                    <span style={{
-                      width: 12, height: 12,
-                      borderRadius: "50%",
-                      background: `linear-gradient(135deg,${from},${to})`,
-                      display: "inline-block",
-                    }} />
-                    {label}
-                  </span>
-                ))}
+            <>
+              <div className="ds-field">
+                <label className="ds-field__label">Fancy Colour</label>
+                <div className="ds-fancy-colors-grid">
+                  {FANCY_COLORS.map((c) => {
+                    const active = value.fancyColor.includes(c.label);
+                    return (
+                      <button
+                        key={c.label}
+                        type="button"
+                        className={`ds-fancy-color-btn ${active ? "ds-fancy-color-btn--active" : ""}`}
+                        onClick={() => {
+                          if (active) {
+                            set("fancyColor", value.fancyColor.filter((x) => x !== c.label));
+                          } else {
+                            set("fancyColor", [...value.fancyColor, c.label]);
+                          }
+                        }}
+                        title={c.label}
+                      >
+                        <span
+                          className="ds-fancy-color-circle"
+                          style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}
+                        />
+                        <span className="ds-fancy-color-label">{c.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+
+              <div className="ds-field" style={{ marginTop: "8px" }}>
+                <label className="ds-field__label">Overtone</label>
+                <div className="ds-fancy-overtones-grid">
+                  {OVERTONES.map((o) => {
+                    const active = value.fancyColorOvertone.includes(o);
+                    return (
+                      <button
+                        key={o}
+                        type="button"
+                        className={`ds-fancy-chip ${active ? "ds-fancy-chip--active" : ""}`}
+                        onClick={() => {
+                          if (active) {
+                            set("fancyColorOvertone", value.fancyColorOvertone.filter((x) => x !== o));
+                          } else {
+                            set("fancyColorOvertone", [...value.fancyColorOvertone, o]);
+                          }
+                        }}
+                      >
+                        {o}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="ds-field" style={{ marginTop: "8px" }}>
+                <label className="ds-field__label">Intensity</label>
+                <div className="ds-fancy-intensities-grid">
+                  {INTENSITIES.map((i) => {
+                    const active = value.fancyColorIntensity.includes(i);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`ds-fancy-chip ${active ? "ds-fancy-chip--active" : ""}`}
+                        onClick={() => {
+                          if (active) {
+                            set("fancyColorIntensity", value.fancyColorIntensity.filter((x) => x !== i));
+                          } else {
+                            set("fancyColorIntensity", [...value.fancyColorIntensity, i]);
+                          }
+                        }}
+                      >
+                        {i}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
           )}
 
           <div className="ds-field">

@@ -241,6 +241,9 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
               <strong>{formatPrice(metal.priceUsd)} {currency}</strong>
             </span>
             <span className="rs-detail__price-note">Price only for Setting</span>
+            <span className="rs-detail__price-note" style={{ display: "block", marginTop: "4px", fontStyle: "italic" }}>
+              All rings shown in the ring studio have a 1.5ct diamond centre stone.
+            </span>
           </div>
 
           <button

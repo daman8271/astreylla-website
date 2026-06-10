@@ -40,6 +40,88 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "carat-asc", label: "Carat: low to high" },
 ];
 
+function parseFancyColorCode(code: string) {
+  if (!code || code === "—") return { fancyColor: null, intensity: null, overtone: null };
+  const c = code.toUpperCase();
+  let intensity = "";
+  let remaining = c;
+  
+  if (c.startsWith("FV")) {
+    intensity = "Fancy Vivid";
+    remaining = c.slice(2);
+  } else if (c.startsWith("FI")) {
+    intensity = "Fancy Intense";
+    remaining = c.slice(2);
+  } else if (c.startsWith("FL")) {
+    intensity = "Fancy Light";
+    remaining = c.slice(2);
+  } else if (c.startsWith("FD")) {
+    intensity = "Fancy Deep";
+    remaining = c.slice(2);
+  } else if (c.startsWith("VL")) {
+    intensity = "Very Light";
+    remaining = c.slice(2);
+  } else if (c.startsWith("L")) {
+    intensity = "Light";
+    remaining = c.slice(1);
+  } else if (c.startsWith("FA")) {
+    intensity = "Faint";
+    remaining = c.slice(2);
+  } else if (c.startsWith("F")) {
+    intensity = "Fancy";
+    remaining = c.slice(1);
+  } else if (c.startsWith("D")) {
+    intensity = "Fancy Deep";
+    remaining = c.slice(1);
+  }
+  
+  let overtone: string | null = null;
+  let colorChar = remaining;
+  
+  if (remaining.length >= 2) {
+    const ovChar = remaining[0];
+    colorChar = remaining.slice(1);
+    
+    if (ovChar === "Y") overtone = "Yellowish";
+    else if (ovChar === "P") overtone = "Pinkish";
+    else if (ovChar === "G") overtone = "Greenish";
+    else if (ovChar === "B") overtone = "Blueish";
+    else if (ovChar === "R") overtone = "Reddish";
+  }
+  
+  let fancyColor = "";
+  if (colorChar === "Y") fancyColor = "Yellow";
+  else if (colorChar === "P") fancyColor = "Pink";
+  else if (colorChar === "B") fancyColor = "Blue";
+  else if (colorChar === "G") fancyColor = "Green";
+  else if (colorChar === "O") fancyColor = "Orange";
+  else if (colorChar === "R") fancyColor = "Red";
+  else if (colorChar === "V") fancyColor = "Violet";
+  else if (colorChar === "GR") fancyColor = "Gray";
+  else if (colorChar === "BL") fancyColor = "Black";
+  
+  if (colorChar === "B") {
+    if (overtone === "Pinkish" || overtone === "Yellowish") {
+      fancyColor = "Brown";
+    } else {
+      fancyColor = "Blue";
+    }
+  }
+
+  if (!fancyColor) {
+    if (colorChar === "GY") fancyColor = "Yellow";
+    if (colorChar === "YG") fancyColor = "Green";
+  }
+
+  if (c === "FYG") fancyColor = "Grey";
+
+  return {
+    fancyColor: fancyColor || null,
+    intensity: intensity || null,
+    overtone: overtone || "None",
+  };
+}
+
 function buildQuery(
   shop: string,
   filters: FilterState,
@@ -64,15 +146,29 @@ function buildQuery(
   // Colour: slider thumb 0..4 maps onto COLORS[0..4] = D..H. Send only when
   // the slider is narrowed (full range = no filter).
   if (mode === "fancy") {
-    const fancyColors = [
-      "FVY", "FIY", "FLY", "FY",
-      "FVB", "FIB", "FLB", "FB",
-      "FVP", "FIP", "FLP", "FDP", "FIBP", "FP",
-      "FVG", "FIG", "FLG", "FG",
-      "FVPurple", "FIPurple", "FLPurple", "FPurple",
-      "FVR", "FIR", "FLR", "FR"
-    ];
-    p.set("color", fancyColors.join(","));
+    if (filters.fancyColor && filters.fancyColor.length > 0) {
+      p.set("fancyColor", filters.fancyColor.join(","));
+    } else {
+      const fancyColors = [
+        "FVY", "FIY", "FLY", "FY",
+        "FVB", "FIB", "FLB", "FB",
+        "FVP", "FIP", "FLP", "FDP", "FIBP", "FP",
+        "FVG", "FIG", "FLG", "FG",
+        "FVPurple", "FIPurple", "FLPurple", "FPurple",
+        "FVR", "FIR", "FLR", "FR"
+      ];
+      p.set("color", fancyColors.join(","));
+    }
+
+    if (filters.fancyColorIntensity && filters.fancyColorIntensity.length > 0) {
+      p.set("fancyColorIntensity", filters.fancyColorIntensity.join(","));
+    }
+
+    if (filters.fancyColorOvertone && filters.fancyColorOvertone.length > 0) {
+      if (!filters.fancyColorOvertone.includes("None")) {
+        p.set("fancyColorOvertone", filters.fancyColorOvertone.join(","));
+      }
+    }
   } else {
     const [cMin, cMax] = filters.colorRange;
     if (cMin > 0 || cMax < 4) {
@@ -221,7 +317,29 @@ export function DiamondCatalog({
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           const data = (await r.json()) as DiamondsResponse;
           if (myReq !== seq.current) return; // superseded by a newer request
-          const rows = (data.diamonds || data.data || []) as Diamond[];
+          let rows = (data.diamonds || data.data || []) as Diamond[];
+
+          if (activeMode === "fancy") {
+            rows = rows.map((r) => {
+              if (r.fancyColor && r.fancyColorIntensity && r.fancyColorOvertone) {
+                return r;
+              }
+              const parsed = parseFancyColorCode(r.color || "");
+              return {
+                ...r,
+                fancyColor: r.fancyColor || parsed.fancyColor || undefined,
+                fancyColorIntensity: r.fancyColorIntensity || parsed.intensity || undefined,
+                fancyColorOvertone: r.fancyColorOvertone || parsed.overtone || undefined,
+              };
+            });
+
+            if (filters.fancyColorOvertone && filters.fancyColorOvertone.length > 0) {
+              rows = rows.filter((r) => {
+                const ov = r.fancyColorOvertone || "None";
+                return filters.fancyColorOvertone.includes(ov);
+              });
+            }
+          }
           if (resetPage) {
             setDiamonds(rows);
             setPagination(newPage);

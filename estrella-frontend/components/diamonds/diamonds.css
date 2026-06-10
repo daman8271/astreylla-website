@@ -301,7 +301,7 @@
   overflow: visible;
   white-space: nowrap;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: #7c776b;
   letter-spacing: 0.05em;
@@ -611,7 +611,7 @@
   line-height: 1.1;
 }
 .ds-spec__k {
-  font-size: 9.5px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -638,7 +638,7 @@
   letter-spacing: -0.01em;
 }
 .ds-card__currency {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--brand-text-muted);
 }
@@ -648,7 +648,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.02em;
   color: var(--brand-accent-gold);
@@ -1486,4 +1486,115 @@
   background: var(--brand-text-primary);
   color: var(--brand-bg);
   border-color: var(--brand-text-primary);
+}
+
+/* ─── Fancy Colors Filter Styling ─── */
+.ds-fancy-colors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+@media (max-width: 600px) {
+  .ds-fancy-colors-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ds-fancy-color-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  border: 1px solid var(--brand-border-subtle);
+  border-radius: 8px;
+  background: var(--brand-bg);
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  padding: 0 12px;
+  text-align: left;
+}
+.ds-fancy-color-btn:hover {
+  border-color: #292929;
+}
+.ds-fancy-color-btn--active {
+  border-color: #292929;
+  box-shadow: inset 0 0 0 1px #292929;
+}
+
+.ds-fancy-color-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.ds-fancy-color-label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: #292929;
+}
+
+/* Fancy Chips (Overtone, Intensity) */
+.ds-fancy-overtones-grid,
+.ds-fancy-intensities-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ds-fancy-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: 1px solid var(--brand-border-subtle);
+  border-radius: 20px;
+  background: var(--brand-bg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: #292929;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.ds-fancy-chip:hover {
+  border-color: #292929;
+}
+.ds-fancy-chip--active {
+  border-color: #292929;
+  background: #292929;
+  color: var(--brand-bg, #ffffff);
+}
+
+/* Dark theme overrides for fancy filters */
+[data-theme="dark"] .ds-fancy-color-btn {
+  background: var(--brand-bg);
+  border-color: var(--brand-border-subtle);
+}
+[data-theme="dark"] .ds-fancy-color-btn:hover {
+  border-color: var(--brand-text-primary);
+}
+[data-theme="dark"] .ds-fancy-color-btn--active {
+  border-color: var(--brand-text-primary);
+  box-shadow: inset 0 0 0 1px var(--brand-text-primary);
+}
+[data-theme="dark"] .ds-fancy-color-label {
+  color: var(--brand-text-primary);
+}
+[data-theme="dark"] .ds-fancy-chip {
+  background: var(--brand-bg);
+  border-color: var(--brand-border-subtle);
+  color: var(--brand-text-primary);
+}
+[data-theme="dark"] .ds-fancy-chip:hover {
+  border-color: var(--brand-text-primary);
+}
+[data-theme="dark"] .ds-fancy-chip--active {
+  border-color: var(--brand-text-primary);
+  background: var(--brand-text-primary);
+  color: var(--brand-bg);
 }

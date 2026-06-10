@@ -28,14 +28,14 @@ export default function FancyDiamondsPage() {
           <p
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 12,
+              fontSize: 13,
               letterSpacing: "0.16em",
               textTransform: "uppercase",
               color: "var(--brand-text-muted)",
               marginBottom: 12,
             }}
           >
-            A spectrum of rare beauty
+            Where Color Meets Brilliance
           </p>
           <h1
             id="fancy-heading"
@@ -47,7 +47,7 @@ export default function FancyDiamondsPage() {
               marginBottom: 16,
             }}
           >
-            Fancy Diamonds
+            Fancy Colour Diamonds
           </h1>
           <p
             style={{
@@ -59,8 +59,7 @@ export default function FancyDiamondsPage() {
               marginInline: "auto",
             }}
           >
-            Vivid yellows, royal blues, blushing pinks, forest greens — every
-            colour certified, every stone lab-grown and jeweller-direct.
+            Experience the extraordinary allure of Fancy Colour Diamonds. Carefully selected for their remarkable color, rarity, and sparkle, these diamonds transform every piece into a statement of elegance and distinction.
           </p>
 
           {/* colour swatch strip */}

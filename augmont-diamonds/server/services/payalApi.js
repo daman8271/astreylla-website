@@ -229,6 +229,9 @@ function normalizeDiamond(p) {
     video_url: p.diamondVideo ?? null,
     title:     p.title ?? null,
     available: Boolean(available),
+    fancyColor: p.fancyColor ?? null,
+    fancyColorIntensity: p.fancyColorIntensity ?? null,
+    fancyColorOvertone: p.fancyColorOvertone ?? null,
   };
 }
 
