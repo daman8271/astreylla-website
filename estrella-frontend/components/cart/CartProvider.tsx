@@ -18,8 +18,18 @@ import {
   updateCartLineAction,
 } from "@/lib/cart-actions";
 
+type DbCartItem = {
+  id: string;
+  augmontCartItemId: string;
+  diamondId: string;
+  diamond: any;
+  addedAt: string;
+};
+
 type CartCtx = {
   cart: Cart | null;
+  dbCartItems: DbCartItem[];
+  dbCartTotal: number;
   isOpen: boolean;
   isLoading: boolean;
   openCart: () => void;
@@ -27,6 +37,7 @@ type CartCtx = {
   addToCart: (merchandiseId: string, quantity?: number) => Promise<string | null>;
   updateLine: (lineId: string, quantity: number) => Promise<string | null>;
   removeLine: (lineId: string) => Promise<string | null>;
+  removeDbLine: (id: string) => Promise<string | null>;
   refresh: () => Promise<void>;
 };
 
@@ -40,14 +51,38 @@ export function CartProvider({
   children: React.ReactNode;
 }) {
   const [cart, setCart] = useState<Cart | null>(initialCart);
+  const [dbCartItems, setDbCartItems] = useState<DbCartItem[]>([]);
+  const [dbCartTotal, setDbCartTotal] = useState<number>(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  const refreshDbCart = useCallback(async () => {
+    if (typeof window === "undefined") return;
+    const sessionId = window.localStorage.getItem("estrella_session_id");
+    if (!sessionId) {
+      setDbCartItems([]);
+      setDbCartTotal(0);
+      return;
+    }
+    const shop = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN || "trial-shop-sqxnl71f.myshopify.com";
+    try {
+      const res = await fetch(`/api/widget/api/public/cart?shop=${encodeURIComponent(shop)}&sessionId=${encodeURIComponent(sessionId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDbCartItems(data.items || []);
+        setDbCartTotal(data.total || 0);
+      }
+    } catch (err) {
+      console.error("Error loading database cart:", err);
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
     const next = await getCartAction();
     setCart(next);
-  }, []);
+    await refreshDbCart();
+  }, [refreshDbCart]);
 
   const openCart = useCallback(() => {
     router.push("/cart");
@@ -85,6 +120,38 @@ export function CartProvider({
     []
   );
 
+  const removeDbLine = useCallback(
+    async (id: string): Promise<string | null> => {
+      if (typeof window === "undefined") return "No window";
+      const sessionId = window.localStorage.getItem("estrella_session_id");
+      if (!sessionId) return "No session ID";
+      const shop = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN || "trial-shop-sqxnl71f.myshopify.com";
+      try {
+        const res = await fetch(`/api/widget/api/public/cart/${id}?shop=${encodeURIComponent(shop)}&sessionId=${encodeURIComponent(sessionId)}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          await refreshDbCart();
+          window.dispatchEvent(new CustomEvent("estrella-cart-changed"));
+          return null;
+        }
+        return "Delete failed";
+      } catch (err) {
+        return (err as Error).message;
+      }
+    },
+    [refreshDbCart]
+  );
+
+  useEffect(() => {
+    refreshDbCart();
+    const handleChanged = () => {
+      refreshDbCart();
+    };
+    window.addEventListener("estrella-cart-changed", handleChanged);
+    return () => window.removeEventListener("estrella-cart-changed", handleChanged);
+  }, [refreshDbCart]);
+
   useEffect(() => {
     const onOpen = () => {
       router.push("/cart");
@@ -95,11 +162,12 @@ export function CartProvider({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const count = (cart?.totalQuantity ?? 0) + dbCartItems.length;
     const evt = new CustomEvent("estrella:cart-count", {
-      detail: { count: cart?.totalQuantity ?? 0 },
+      detail: { count },
     });
     window.dispatchEvent(evt);
-  }, [cart?.totalQuantity]);
+  }, [cart?.totalQuantity, dbCartItems.length]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -117,6 +185,8 @@ export function CartProvider({
   const value = useMemo<CartCtx>(
     () => ({
       cart,
+      dbCartItems,
+      dbCartTotal,
       isOpen,
       isLoading: isPending,
       openCart,
@@ -139,6 +209,12 @@ export function CartProvider({
             resolve(await removeLine(id));
           });
         }),
+      removeDbLine: (id) =>
+        new Promise<string | null>((resolve) => {
+          startTransition(async () => {
+            resolve(await removeDbLine(id));
+          });
+        }),
       refresh: () =>
         new Promise<void>((resolve) => {
           startTransition(async () => {
@@ -147,7 +223,7 @@ export function CartProvider({
           });
         }),
     }),
-    [cart, isOpen, isPending, openCart, closeCart, addToCart, updateLine, removeLine, refresh]
+    [cart, dbCartItems, dbCartTotal, isOpen, isPending, openCart, closeCart, addToCart, updateLine, removeLine, removeDbLine, refresh]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

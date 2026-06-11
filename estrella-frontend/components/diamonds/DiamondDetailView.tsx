@@ -54,10 +54,10 @@ function getCertLogo(lab: string | undefined | null) {
       <img
         src="/logo/igi-badge.svg"
         alt="IGI Certified"
-        width={36}
-        height={36}
+        width={64}
+        height={64}
         className="ds-cert-badge ds-cert-badge--igi"
-        style={{ flexShrink: 0, verticalAlign: "middle", borderRadius: "50%" }}
+        style={{ flexShrink: 0, verticalAlign: "middle", objectFit: "contain" }}
       />
     );
   }

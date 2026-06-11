@@ -135,7 +135,7 @@ const INTENSITIES = [
                     aria-pressed={active}
                   >
                     <span className="ds-shape__icon">
-                      <ShapeMaskIcon name={shape.toLowerCase() as ShapeName} size={28} />
+                      <ShapeMaskIcon name={shape.toLowerCase() as ShapeName} size={36} />
                     </span>
                     <span className="ds-shape__label">{shape}</span>
                   </button>
@@ -236,49 +236,27 @@ const INTENSITIES = [
                 </div>
               </div>
 
-              <div className="ds-field" style={{ marginTop: "8px" }}>
-                <label className="ds-field__label">Intensity</label>
-                <div className="ds-fancy-intensities-grid">
-                  {INTENSITIES.map((i) => {
-                    const active = value.fancyColorIntensity.includes(i);
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        className={`ds-fancy-chip ${active ? "ds-fancy-chip--active" : ""}`}
-                        onClick={() => {
-                          if (active) {
-                            set("fancyColorIntensity", value.fancyColorIntensity.filter((x) => x !== i));
-                          } else {
-                            set("fancyColorIntensity", [...value.fancyColorIntensity, i]);
-                          }
-                        }}
-                      >
-                        {i}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </>
           )}
 
-          <div className="ds-field">
-            <label className="ds-field__label">Cut</label>
-            <RangeSlider
-              min={0}
-              max={cutLabels.length - 1}
-              step={1}
-              value={value.cutRange}
-              onChange={(v) => set("cutRange", v)}
-              label="Cut"
-            />
-            <div className="ds-scale ds-scale--3">
-              {cutLabels.map((l) => (
-                <span key={l}>{l}</span>
-              ))}
+          {!isFancy && (
+            <div className="ds-field">
+              <label className="ds-field__label">Cut</label>
+              <RangeSlider
+                min={0}
+                max={cutLabels.length - 1}
+                step={1}
+                value={value.cutRange}
+                onChange={(v) => set("cutRange", v)}
+                label="Cut"
+              />
+              <div className="ds-scale ds-scale--3">
+                {cutLabels.map((l) => (
+                  <span key={l}>{l}</span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN */}
@@ -390,6 +368,53 @@ const INTENSITIES = [
               </div>
             </div>
           </div>
+
+          {/* Intensity + Cut — fancy mode only, rendered in right col below Price */}
+          {isFancy && (
+            <>
+              <div className="ds-field">
+                <label className="ds-field__label">Intensity</label>
+                <div className="ds-fancy-intensities-grid">
+                  {INTENSITIES.map((i) => {
+                    const active = value.fancyColorIntensity.includes(i);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`ds-fancy-chip ${active ? "ds-fancy-chip--active" : ""}`}
+                        onClick={() => {
+                          if (active) {
+                            set("fancyColorIntensity", value.fancyColorIntensity.filter((x) => x !== i));
+                          } else {
+                            set("fancyColorIntensity", [...value.fancyColorIntensity, i]);
+                          }
+                        }}
+                      >
+                        {i}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="ds-field">
+                <label className="ds-field__label">Cut</label>
+                <RangeSlider
+                  min={0}
+                  max={cutLabels.length - 1}
+                  step={1}
+                  value={value.cutRange}
+                  onChange={(v) => set("cutRange", v)}
+                  label="Cut"
+                />
+                <div className="ds-scale ds-scale--3">
+                  {cutLabels.map((l) => (
+                    <span key={l}>{l}</span>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

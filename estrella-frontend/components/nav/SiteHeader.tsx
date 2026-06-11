@@ -179,13 +179,8 @@ const COLORED_MENU: MegaMenuConfig = {
           ],
         },
         {
-          heading: "Colored diamond types",
+          heading: "Lab Grown",
           items: [
-            {
-              label: "Natural Colored Diamonds",
-              href: "/color-diamonds?treatment=natural",
-              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
-            },
             {
               label: "Lab-grown Colored Diamonds",
               href: "/color-diamonds?treatment=lab-grown",

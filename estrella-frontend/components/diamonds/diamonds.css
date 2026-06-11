@@ -105,7 +105,7 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  height: 76px;
+  height: 92px;
   border: 1px solid var(--brand-border-subtle);
   border-radius: 8px;
   background: var(--brand-bg);
@@ -125,7 +125,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
+  height: 44px;
   color: #292929;
 }
 .ds-shape__label {
