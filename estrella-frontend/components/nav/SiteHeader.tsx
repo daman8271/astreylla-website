@@ -130,13 +130,8 @@ const DIAMONDS_MENU: MegaMenuConfig = {
   footer: {
     heading: "Education",
     items: [
-      { label: "Diamond buying guide", href: "/diamonds" },
-      { label: "The 4 Cs", href: "/diamonds" },
-      { label: "Cut grades", href: "/diamonds" },
-      { label: "Clarity scale", href: "/diamonds" },
-      { label: "Color guide", href: "/diamonds" },
+      { label: "Diamond buying guide", href: "/diamond-buying-guide" },
     ],
-    more: { label: "All guides", href: "/diamonds" },
   },
 };
 
@@ -208,16 +203,6 @@ const COLORED_MENU: MegaMenuConfig = {
       cta: { label: "Shop now", href: "/color-diamonds" },
     },
   ],
-  footer: {
-    heading: "Education",
-    items: [
-      { label: "Why fancy diamonds?", href: "/color-diamonds" },
-      { label: "Color rarity", href: "/color-diamonds" },
-      { label: "Intensity grading", href: "/color-diamonds" },
-      { label: "Investment grade", href: "/color-diamonds" },
-    ],
-    more: { label: "All fancy diamond guides", href: "/color-diamonds" },
-  },
 };
 
 // ── GEMSTONES MEGA-MENU ──────────────────────────────────────────────────
@@ -440,16 +425,6 @@ const RINGS_MENU: MegaMenuConfig = {
       cta: { label: "Shop now", href: "/ring-studio/setting" },
     },
   ],
-  footer: {
-    heading: "Education",
-    items: [
-      { label: "Ring guide", href: "/ring-studio/setting" },
-      { label: "Ring sizing", href: "/ring-studio/setting" },
-      { label: "Choosing a setting", href: "/ring-studio/setting" },
-      { label: "Metal guide", href: "/ring-studio/setting" },
-    ],
-    more: { label: "All ring guides", href: "/ring-studio/setting" },
-  },
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -692,7 +667,6 @@ export function SiteHeader() {
           </nav>
 
           <div className="hidden md:flex items-center" style={{ gap: 20 }}>
-            {/* Dark Mode Toggle Commented Out
             <button
               type="button"
               aria-label={
@@ -717,7 +691,6 @@ export function SiteHeader() {
                 <Moon size={18} strokeWidth={1.5} />
               )}
             </button>
-            */}
 
             <button
               type="button"
@@ -1318,7 +1291,6 @@ export function SiteHeader() {
               </div>
 
               {/* Theme Settings */}
-              {/* Theme Settings Commented Out
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <span
                   style={{
@@ -1383,7 +1355,6 @@ export function SiteHeader() {
                   </button>
                 </div>
               </div>
-              */}
 
               {/* Quick Shortcuts */}
               <div style={{ display: "flex", gap: "10px" }}>

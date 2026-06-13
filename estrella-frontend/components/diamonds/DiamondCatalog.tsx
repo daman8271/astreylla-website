@@ -582,8 +582,9 @@ export function DiamondCatalog({
         value={filters}
         onChange={setFilters}
         mode={activeMode}
+        isRingStudio={isRingStudio}
         onModeChange={(m) => {
-          setActiveMode(m);
+          setActiveMode(m === "default" && isRingStudio ? "ring-studio" : m);
           // Reset filters when switching categories
           setFilters({ ...DEFAULT_FILTERS, ...(initialFilters || {}) });
         }}

@@ -8,7 +8,7 @@ export function VideoHero() {
       style={{
         position: "relative",
         width: "100%",
-        height: "85vh",
+        height: "100vh",
         minHeight: 560,
         overflow: "hidden",
         background: "#0d0d0d",

@@ -316,7 +316,7 @@ export function StageReview() {
             <div style={{ minWidth: 320 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                 <strong style={{ fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--brand-text-primary)" }}>
-                  Subtotal: {formatPrice(totalUsd)} {currency}
+                  Subtotal: {formatPrice(totalUsd)}
                 </strong>
               </div>
               <p style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--brand-text-secondary, #6b6b6b)", marginBottom: 16 }}>

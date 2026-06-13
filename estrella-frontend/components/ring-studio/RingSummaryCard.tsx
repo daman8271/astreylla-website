@@ -21,7 +21,7 @@ export function RingSummaryCard({ icon, title, meta, priceUsd, onView, onRemove 
       <div className="rs-summary-card__body">
         <div className="rs-summary-card__title-row">
           <span className="rs-summary-card__title">{title}</span>
-          <span className="rs-summary-card__price">{formatPrice(priceUsd)} {currency}</span>
+          <span className="rs-summary-card__price">{formatPrice(priceUsd)}</span>
         </div>
         <div className="rs-summary-card__meta">{meta}</div>
         <div className="rs-summary-card__actions">

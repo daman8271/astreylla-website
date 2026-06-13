@@ -12,10 +12,9 @@ export function ExpressDiamondsBand() {
             loop
             playsInline
             preload="metadata"
-            poster="/express-diamonds-poster.jpg"
             aria-hidden="true"
           >
-            <source src="/express-diamonds.mp4" type="video/mp4" />
+            <source src="/diamond.mp4" type="video/mp4" />
           </video>
         </div>
 

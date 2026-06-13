@@ -7,7 +7,8 @@ export type SettingStyle =
   | "Pave"
   | "Side Stone"
   | "Three-Stone"
-  | "Nature";
+  | "Nature"
+  | "Vintage";
 
 export const SETTING_STYLES: SettingStyle[] = [
   "Halo",
@@ -17,6 +18,7 @@ export const SETTING_STYLES: SettingStyle[] = [
   "Side Stone",
   "Solitaire",
   "Three-Stone",
+  "Vintage",
 ];
 
 export type SettingKarat = "9K" | "14K" | "18K" | "PT";

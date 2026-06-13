@@ -62,6 +62,19 @@ export function RingStudioStepper({ current }: Props) {
       })()
     : "/ring-studio/setting";
 
+  // Step 3 (Complete) URL, carrying setting & diamond context
+  const completeStepUrl = setting && diamond
+    ? (() => {
+        const sp = new URLSearchParams();
+        sp.set("settingSku", setting.sku);
+        if (metalKey) sp.set("metal", metalKey);
+        const sh = shape || diamond.shape;
+        if (sh) sp.set("shape", sh);
+        if (diamond.id) sp.set("diamondId", diamond.id);
+        return `/ring-studio/complete?${sp.toString()}`;
+      })()
+    : "/ring-studio/setting";
+
   const removeSetting = (e: React.MouseEvent) => {
     e.preventDefault();
     setSetting(null);
@@ -149,7 +162,7 @@ export function RingStudioStepper({ current }: Props) {
       {/* Slot 3: Complete */}
       <li className={`rs-step ${current === "complete" ? "rs-step--active" : ""} ${diamond && setting ? "rs-step--filled" : ""}`} aria-current={current === "complete" ? "step" : undefined}>
         {diamond && setting ? (
-          <span className="rs-step__chip rs-step__chip--total">
+          <Link href={completeStepUrl} className="rs-step__chip rs-step__chip--total">
             <span className="rs-step__chip-thumb">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={metal?.imageUrl || setting.defaultThumbnail} alt="" />
@@ -160,7 +173,7 @@ export function RingStudioStepper({ current }: Props) {
                 <strong>{formatPrice(total)}</strong>
               </span>
             </span>
-          </span>
+          </Link>
         ) : (
           <span className="rs-step__label rs-step__label--disabled">
             <StepNumber n={3} active={current === "complete"} />

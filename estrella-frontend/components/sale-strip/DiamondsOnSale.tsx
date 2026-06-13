@@ -29,7 +29,8 @@ export function DiamondsOnSale() {
       style={{
         background:
           "linear-gradient(180deg, var(--sale-strip-bg-start) 0%, var(--sale-strip-bg-end) 100%)",
-        paddingBlock: "clamp(64px, 8vw, 120px)",
+        paddingTop: "clamp(28px, 3vw, 48px)",
+        paddingBottom: "clamp(64px, 8vw, 120px)",
       }}
       aria-labelledby="on-sale-heading"
     >

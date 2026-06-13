@@ -138,7 +138,7 @@ export function SettingCard({
           );
         })}
       </div>
-      <div className="rs-setting-card__price">{formatPrice(setting.basePriceUsd)} {currency}</div>
+      <div className="rs-setting-card__price">{formatPrice(setting.basePriceUsd)}</div>
     </article>
   );
 }

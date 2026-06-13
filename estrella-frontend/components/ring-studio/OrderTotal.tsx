@@ -18,7 +18,7 @@ export function OrderTotal({ totalUsd, ctaLabel, ctaDisabled, ctaIcon, onPrimary
     <div className="rs-order">
       <div className="rs-order__total">
         <span>Total</span>
-        <strong>{formatPrice(totalUsd)} {currency}</strong>
+        <strong>{formatPrice(totalUsd)}</strong>
       </div>
       <button
         type="button"

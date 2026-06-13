@@ -238,7 +238,7 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
           <div className="rs-detail__price">
             <span className="rs-detail__price-row">
               <span className="rs-detail__price-key">Price</span>
-              <strong>{formatPrice(metal.priceUsd)} {currency}</strong>
+              <strong>{formatPrice(metal.priceUsd)}</strong>
             </span>
             <span className="rs-detail__price-note">Price only for Setting</span>
             <span className="rs-detail__price-note" style={{ display: "block", marginTop: "4px", fontStyle: "italic" }}>

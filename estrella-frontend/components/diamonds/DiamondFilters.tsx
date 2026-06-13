@@ -66,9 +66,10 @@ type Props = {
   onChange: (next: FilterState) => void;
   mode?: "default" | "ring-studio" | "fancy";
   onModeChange?: (m: "default" | "fancy") => void;
+  isRingStudio?: boolean;
 };
 
-export function DiamondFilters({ value, onChange, mode, onModeChange }: Props) {
+export function DiamondFilters({ value, onChange, mode, onModeChange, isRingStudio }: Props) {
   const isFancy = mode === "fancy";
   const [showMoreShapes, setShowMoreShapes] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -76,9 +77,11 @@ export function DiamondFilters({ value, onChange, mode, onModeChange }: Props) {
   const set = <K extends keyof FilterState>(k: K, v: FilterState[K]) =>
     onChange({ ...value, [k]: v });
 
-  const allShapes = showMoreShapes
-    ? [...SHAPES_PRIMARY, ...SHAPES_MORE]
-    : SHAPES_PRIMARY;
+  const allShapes = (isRingStudio && value.shape)
+    ? [value.shape]
+    : showMoreShapes
+      ? [...SHAPES_PRIMARY, ...SHAPES_MORE]
+      : SHAPES_PRIMARY;
 
   const colorLabels = COLORS.slice(0, 5).slice().reverse(); // H G F E D under track
   const clarityLabels = CLARITIES.slice(); // VS2 → FL
@@ -131,7 +134,12 @@ const INTENSITIES = [
                     key={shape}
                     type="button"
                     className={`ds-shape ${active ? "ds-shape--active" : ""}`}
-                    onClick={() => set("shape", active ? "" : shape)}
+                    onClick={() => {
+                      if (isRingStudio && value.shape) {
+                        return; // Lock shape in Ring Studio
+                      }
+                      set("shape", active ? "" : shape);
+                    }}
                     aria-pressed={active}
                   >
                     <span className="ds-shape__icon">
@@ -142,28 +150,48 @@ const INTENSITIES = [
                 );
               })}
             </div>
-            <button
-              type="button"
-              className="ds-more-shapes"
-              onClick={() => setShowMoreShapes((s) => !s)}
-              aria-expanded={showMoreShapes}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path
-                  d={showMoreShapes ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"}
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>{showMoreShapes ? "Less Shapes" : "More Shapes"}</span>
-            </button>
+            {!(isRingStudio && value.shape) && (
+              <button
+                type="button"
+                className="ds-more-shapes"
+                onClick={() => setShowMoreShapes((s) => !s)}
+                aria-expanded={showMoreShapes}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d={showMoreShapes ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{showMoreShapes ? "Less Shapes" : "More Shapes"}</span>
+              </button>
+            )}
           </div>
 
           {!isFancy && (
             <div className="ds-field">
-              <label className="ds-field__label">Colour</label>
+              <div className="ds-field__head">
+                <label className="ds-field__label">Colour</label>
+                <div className="ds-type-toggle">
+                  <button
+                    type="button"
+                    className={`ds-type-toggle__btn ${!isFancy ? "ds-type-toggle__btn--active" : ""}`}
+                    onClick={() => onModeChange?.("default")}
+                  >
+                    White
+                  </button>
+                  <button
+                    type="button"
+                    className={`ds-type-toggle__btn ${isFancy ? "ds-type-toggle__btn--active" : ""}`}
+                    onClick={() => onModeChange?.("fancy")}
+                  >
+                    Fancy
+                  </button>
+                </div>
+              </div>
               <RangeSlider
                 min={0}
                 max={4}
@@ -182,8 +210,26 @@ const INTENSITIES = [
           {isFancy && (
             <>
               <div className="ds-field">
-                <label className="ds-field__label">Fancy Colour</label>
-                <div className="ds-fancy-colors-grid">
+                <div className="ds-field__head">
+                  <label className="ds-field__label">Colour</label>
+                  <div className="ds-type-toggle">
+                    <button
+                      type="button"
+                      className={`ds-type-toggle__btn ${!isFancy ? "ds-type-toggle__btn--active" : ""}`}
+                      onClick={() => onModeChange?.("default")}
+                    >
+                      White
+                    </button>
+                    <button
+                      type="button"
+                      className={`ds-type-toggle__btn ${isFancy ? "ds-type-toggle__btn--active" : ""}`}
+                      onClick={() => onModeChange?.("fancy")}
+                    >
+                      Fancy
+                    </button>
+                  </div>
+                </div>
+                <div className="ds-fancy-colors-grid" style={{ marginTop: "6px" }}>
                   {FANCY_COLORS.map((c) => {
                     const active = value.fancyColor.includes(c.label);
                     return (
@@ -235,7 +281,6 @@ const INTENSITIES = [
                   })}
                 </div>
               </div>
-
             </>
           )}
 

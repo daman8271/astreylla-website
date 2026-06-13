@@ -4,6 +4,8 @@ type Props = {
   /** Full-screen overlay (route loading) vs. inline block (in-page sections). */
   variant?: "overlay" | "inline";
   label?: string;
+  /** Render the ASTREYLLA wordmark beneath the emblem. Off on e.g. cart. */
+  wordmark?: boolean;
 };
 
 /**
@@ -12,7 +14,7 @@ type Props = {
  * Next.js `loading.tsx` segments and used inline by data-fetching sections.
  * The logo is theme-aware via CSS (no JS), so it works in server components.
  */
-export function RoyalLoader({ variant = "overlay", label = "Loading" }: Props) {
+export function RoyalLoader({ variant = "overlay", label = "Loading", wordmark = true }: Props) {
   return (
     <div
       className={`royal-loader royal-loader--${variant}`}
@@ -37,9 +39,11 @@ export function RoyalLoader({ variant = "overlay", label = "Loading" }: Props) {
           />
         </span>
       </div>
-      <span className="royal-loader__wordmark" aria-hidden>
-        ASTREYLLA
-      </span>
+      {wordmark ? (
+        <span className="royal-loader__wordmark" aria-hidden>
+          ASTREYLLA
+        </span>
+      ) : null}
       <span className="royal-loader__sr">{label}…</span>
     </div>
   );

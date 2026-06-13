@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CountrySelector } from "../nav/CountrySelector";
 
 const COL_LEARN = [
   { href: "#", label: "Email Us" },
@@ -20,11 +21,9 @@ const COL_BRIDAL = [
 ];
 
 const COL_HELP = [
-  { href: "#", label: "Diamond Buying Guide" },
-  { href: "#", label: "Gemstones Guide" },
-  { href: "#", label: "Emerald Gemstones" },
-  { href: "#", label: "Sapphire Gemstones" },
-  { href: "#", label: "Ruby Gemstones" },
+  { href: "/color-diamonds", label: "Emerald Gemstones" },
+  { href: "/color-diamonds", label: "Sapphire Gemstones" },
+  { href: "/color-diamonds", label: "Ruby Gemstones" },
 ];
 
 function InstagramIcon() {
@@ -84,7 +83,7 @@ export function SiteFooter() {
         <FooterCol title="LEARN & GROW" links={COL_LEARN} />
         <FooterCol title="DIAMONDS & GEMSTONES" links={COL_DIAMONDS} />
         <FooterCol title="BRIDAL & RINGS" links={COL_BRIDAL} />
-        <FooterCol title="HELP & GUIDE" links={COL_HELP} />
+        <FooterCol title="GEMSTONES" links={COL_HELP} />
       </div>
 
       <div
@@ -107,7 +106,7 @@ export function SiteFooter() {
           }}
         >
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-            <span>USD $</span>
+            <CountrySelector fg="var(--brand-text-primary)" align="left" direction="up" />
             <a
               href="mailto:platform.support@augmont.com"
               style={{ color: "var(--brand-text-primary)" }}

@@ -39,7 +39,7 @@
 
   --section-pad-y: clamp(48px, 8vw, 96px);
   --section-pad-x: clamp(20px, 5vw, 80px);
-  --max-content-width: 1440px;
+  --max-content-width: 1680px;
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -136,6 +136,15 @@ img, svg, video { display: block; max-width: 100%; }
   max-width: var(--max-content-width);
   margin-inline: auto;
   padding-inline: var(--section-pad-x);
+}
+
+/* Large/4K displays: widen the content cap so grids and sections use the
+   available width instead of stranding huge empty side margins. */
+@media (min-width: 1920px) {
+  :root { --max-content-width: 1880px; }
+}
+@media (min-width: 2560px) {
+  :root { --max-content-width: 2440px; }
 }
 
 .estrella-section { padding-block: var(--section-pad-y); }

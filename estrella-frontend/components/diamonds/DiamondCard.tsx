@@ -61,7 +61,7 @@ function shapeLabel(d: Diamond) {
 function cardTitle(d: Diamond) {
   const shape = shapeLabel(d);
   const ct = d.carat ? `${Number(d.carat).toFixed(2)} ct` : "";
-  return ct ? `${shape} · ${ct}` : shape;
+  return ct ? `${shape} - ${ct}` : shape;
 }
 
 function certBadge(lab: string | undefined) {
@@ -74,11 +74,6 @@ type ImgStage = "resolver" | "placeholder";
 
 export function DiamondCard({ diamond, onAddToCart, onOpen, busy, mode = "default", onSelect }: Props) {
   const { formatPrice, currency: activeCurrency } = useCurrency();
-  // Image source: the diamond's still photo loaded straight from the Bunny CDN
-  // (built from diamond.id via diamondImageUrl — no Augmont resolver hop). On a
-  // genuinely-missing asset, onError fires and we fall through to the SVG
-  // placeholder. The Augmont diamond.image_url is intentionally NOT used as
-  // <img src> (it's an HTML viewer page); it remains the 360 modal's source.
   const [imgStage, setImgStage] = useState<ImgStage>(
     diamond.id ? "resolver" : "placeholder"
   );
@@ -132,6 +127,7 @@ export function DiamondCard({ diamond, onAddToCart, onOpen, busy, mode = "defaul
             </svg>
           </div>
         )}
+
         {diamond.stockNum ? (
           <button
             type="button"
@@ -145,40 +141,36 @@ export function DiamondCard({ diamond, onAddToCart, onOpen, busy, mode = "defaul
       </div>
 
       <div className="ds-card__body">
-        <h3 className="ds-card__title">{cardTitle(diamond)}</h3>
+        <h3 className="ds-card__title">{formatTitle(diamond)}</h3>
 
         <div className="ds-card__specs">
-          {diamond.color ? (
-            <span className="ds-spec">
-              <span className="ds-spec__v">{diamond.color}</span>
-              <span className="ds-spec__k">Colour</span>
+          {diamond.color && (
+            <span>
+              Colour: <strong>{diamond.color}</strong>
             </span>
-          ) : null}
-          {diamond.clarity ? (
-            <span className="ds-spec">
-              <span className="ds-spec__v">{diamond.clarity}</span>
-              <span className="ds-spec__k">Clarity</span>
+          )}
+          {diamond.color && diamond.clarity && <span>, </span>}
+          {diamond.clarity && (
+            <span>
+              Clarity: <strong>{diamond.clarity}</strong>
             </span>
-          ) : null}
-          {diamond.cut ? (
-            <span className="ds-spec">
-              <span className="ds-spec__v">{cutShort(diamond.cut)}</span>
-              <span className="ds-spec__k">Cut</span>
-            </span>
-          ) : null}
+          )}
         </div>
 
         <div className="ds-card__price-row">
-          <div className="ds-card__price">
-            <strong>{formatPrice(diamond.price || 0)}</strong>
-            <span className="ds-card__currency">{activeCurrency}</span>
+          <div className="ds-card__price-col">
+            <div className="ds-card__price">
+              <strong>{formatPrice(diamond.price || 0)}</strong>
+              <span className="ds-card__currency">{activeCurrency}</span>
+            </div>
           </div>
+
           <div className="ds-card__cert">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
                 d="M6 3 L18 3 L21 9 L12 21 L3 9 Z"
                 stroke="currentColor"
-                strokeWidth="1.4"
+                strokeWidth="1.6"
               />
             </svg>
             <span>{certBadge(diamond.lab)}</span>
@@ -199,7 +191,7 @@ export function DiamondCard({ diamond, onAddToCart, onOpen, busy, mode = "defaul
         ) : (
           <button
             type="button"
-            className="ds-card__cta"
+            className="ds-card__cta ds-card__cta--outline"
             onClick={(e) => {
               e.stopPropagation();
               onAddToCart?.(diamond);

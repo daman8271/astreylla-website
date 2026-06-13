@@ -52,7 +52,7 @@ function getCertLogo(lab: string | undefined | null) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src="/logo/igi-badge.svg"
+        src="/logo/igi-badge.png"
         alt="IGI Certified"
         width={64}
         height={64}
@@ -95,6 +95,43 @@ export function DiamondDetailView({
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  const sizes = useMemo(() => [
+    "0.25", "0.50", "0.75", "1.00", "1.25",
+    "1.50", "1.75", "2.00", "2.50", "3.00",
+    "3.50", "4.00", "4.50", "5.00", "6.00",
+    "7.00", "8.00", "9.00", "10.00"
+  ], []);
+
+  const [selectedCarat, setSelectedCarat] = useState("1.00");
+  const [originalNearest, setOriginalNearest] = useState("1.00");
+  const selectorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (localDiamond?.carat) {
+      const target = localDiamond.carat;
+      let best = sizes[0];
+      let minDiff = Math.abs(target - parseFloat(best));
+      for (const s of sizes) {
+        const diff = Math.abs(target - parseFloat(s));
+        if (diff < minDiff) {
+          minDiff = diff;
+          best = s;
+        }
+      }
+      setSelectedCarat(best);
+      setOriginalNearest(best);
+    }
+  }, [localDiamond?.id, localDiamond?.carat, sizes]);
+
+  useEffect(() => {
+    if (selectorRef.current) {
+      const activeEl = selectorRef.current.querySelector(".ds-carat-sim__chip--active");
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      }
+    }
+  }, [selectedCarat]);
 
   useEffect(() => {
     setLocalDiamond(diamond);
@@ -347,7 +384,7 @@ export function DiamondDetailView({
 
           {/* Thumbnail row below main viewer */}
           {galleryItems.length > 1 && (
-            <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "4px 0" }} className="ds-detail__thumbnails">
+            <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "4px 0" }} className="ds-detail__thumbnails">
               {galleryItems.map((item, idx) => {
                 const isActive = idx === activeTab;
                 return (
@@ -356,9 +393,9 @@ export function DiamondDetailView({
                     type="button"
                     onClick={() => setActiveTab(idx)}
                     style={{
-                      width: 68,
-                      height: 68,
-                      borderRadius: 6,
+                      width: 104,
+                      height: 104,
+                      borderRadius: 8,
                       overflow: "hidden",
                       border: isActive ? "2px solid #c9a961" : "1px solid rgba(0,0,0,0.08)",
                       background: "#ffffff",
@@ -533,14 +570,56 @@ export function DiamondDetailView({
                 {specs.map(([k, v]) => (
                   <div className="ds-detail__spec-row" key={k}>
                     <dt>{k}</dt>
-                    <dd style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      {k === "Certificate" && getCertLogo(d.lab)}
+                    <dd>
                       <span>{v}</span>
                     </dd>
                   </div>
                 ))}
               </dl>
             ) : null}
+          </div>
+
+          {/* Carat Weight Visualizer */}
+          <div className="ds-carat-sim">
+            <div className="ds-carat-sim__header">
+              <span className="ds-carat-sim__subtitle">CARAT WEIGHT</span>
+              <h3 className="ds-carat-sim__title">{selectedCarat} ct</h3>
+            </div>
+
+            <div className="ds-carat-sim__card">
+              <div className="ds-carat-sim__image-wrapper">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/carat-images/${selectedCarat}ct.png`}
+                  alt={`${selectedCarat} ct diamond size comparison on hand`}
+                  className="ds-carat-sim__image"
+                />
+              </div>
+
+              <div className="ds-carat-sim__selector-container">
+                <div className="ds-carat-sim__selector" ref={selectorRef}>
+                  {sizes.map((sz) => {
+                    const isActive = sz === selectedCarat;
+                    return (
+                      <button
+                        key={sz}
+                        type="button"
+                        className={`ds-carat-sim__chip ${isActive ? "ds-carat-sim__chip--active" : ""}`}
+                        onClick={() => setSelectedCarat(sz)}
+                      >
+                        {sz}
+                        {isActive && <span className="ds-carat-sim__chip-arrow">▲</span>}
+                        {!isActive && sz === originalNearest && <span className="ds-carat-sim__chip-dot">•</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="ds-carat-sim__caption">
+                {selectedCarat} carat
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -574,7 +653,7 @@ export function DiamondDetailView({
               ×
             </button>
             <h3 style={{ fontSize: "24px", fontWeight: "600", marginBottom: "20px", fontFamily: "var(--font-sans)", color: "var(--brand-text-primary)" }}>Connect with us</h3>
-            
+
             <div style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "var(--font-sans)" }}>
               <div>
                 <h4 style={{ fontSize: "14px", fontWeight: "600", textTransform: "uppercase", color: "var(--brand-accent-gold)", letterSpacing: "0.05em", marginBottom: "8px" }}>Phone</h4>

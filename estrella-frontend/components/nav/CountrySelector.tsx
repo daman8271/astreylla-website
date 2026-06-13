@@ -8,7 +8,15 @@ function flagUrl(code: string, size: 80 | 160 = 80) {
   return `https://flagcdn.com/w${size}/${code}.png`;
 }
 
-export function CountrySelector({ fg, align = "right" }: { fg: string; align?: "left" | "right" }) {
+export function CountrySelector({
+  fg,
+  align = "right",
+  direction = "down",
+}: {
+  fg: string;
+  align?: "left" | "right";
+  direction?: "up" | "down";
+}) {
   const [open, setOpen] = useState(false);
   const { country: selected, setCountryCode } = useCurrency();
   const [query, setQuery] = useState("");
@@ -110,7 +118,8 @@ export function CountrySelector({ fg, align = "right" }: { fg: string; align?: "
           className="ds-country-panel"
           style={{
             position: "absolute",
-            top: "calc(100% + 8px)",
+            bottom: direction === "up" ? "calc(100% + 8px)" : undefined,
+            top: direction === "down" ? "calc(100% + 8px)" : undefined,
             left: align === "left" ? 0 : undefined,
             right: align === "right" ? 0 : undefined,
             width: "min(360px, calc(100vw - 48px))",

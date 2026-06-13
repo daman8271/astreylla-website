@@ -11,7 +11,7 @@ const TILES = [
     objectPosition: "center",
   },
   {
-    href: "/ring-studio/setting",
+    href: "/diamonds",
     label: "Start with a",
     italicLabel: "diamond",
     image: "/ring-studio/start-with-diamond.jpg",
