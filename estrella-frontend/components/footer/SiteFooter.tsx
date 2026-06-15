@@ -47,30 +47,6 @@ export function SiteFooter() {
       }}
     >
       <div
-        style={{
-          padding: "40px 32px 0",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderBottom: "1px solid var(--brand-border-subtle)",
-        }}
-      >
-        <Link
-          href="/"
-          aria-label="Astreylla — home"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 22,
-            letterSpacing: "0.15em",
-            color: "var(--brand-text-primary)",
-            paddingBlock: 24,
-          }}
-        >
-          ASTREYLLA
-        </Link>
-      </div>
-
-      <div
         className="estrella-container"
         style={{
           paddingTop: 56,

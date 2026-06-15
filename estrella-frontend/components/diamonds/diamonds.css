@@ -598,14 +598,6 @@
   gap: 8px;
   padding-top: 12px;
 }
-.ds-card--clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-  border-color: #cbd5e1;
-}
-.ds-card--clickable:hover .ds-card__media img {
-  transform: scale(1.03);
-}
 .ds-card__placeholder {
   display: flex;
   align-items: center;
