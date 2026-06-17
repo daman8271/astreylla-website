@@ -8,8 +8,8 @@ import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyl
 import { ShapeMaskIcon, type ShapeName } from "@/components/nav/ShapeMaskIcon";
 
 const ALL_SHAPES = [
-  "Asscher", "Cushion", "Emerald", "Heart", "Marquise",
-  "Oval", "Pear", "Princess", "Radiant", "Round",
+  "Round", "Pear", "Radiant", "Oval", "Princess",
+  "Cushion", "Emerald", "Marquise", "Heart", "Asscher",
 ] as const;
 const PRIMARY_SHAPES = ALL_SHAPES.slice(0, 8);
 

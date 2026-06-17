@@ -78,10 +78,10 @@ const SHAPE_ITEM = (
 
 const DIAMOND_SHAPES_LAB: MegaMenuItem[] = [
   SHAPE_ITEM("Round", "round", "/diamonds?shape=Round&treatment=lab-grown"),
-  SHAPE_ITEM("Princess", "princess", "/diamonds?shape=Princess&treatment=lab-grown"),
-  SHAPE_ITEM("Oval", "oval", "/diamonds?shape=Oval&treatment=lab-grown"),
-  SHAPE_ITEM("Radiant", "radiant", "/diamonds?shape=Radiant&treatment=lab-grown"),
   SHAPE_ITEM("Pear", "pear", "/diamonds?shape=Pear&treatment=lab-grown"),
+  SHAPE_ITEM("Radiant", "radiant", "/diamonds?shape=Radiant&treatment=lab-grown"),
+  SHAPE_ITEM("Oval", "oval", "/diamonds?shape=Oval&treatment=lab-grown"),
+  SHAPE_ITEM("Princess", "princess", "/diamonds?shape=Princess&treatment=lab-grown"),
   SHAPE_ITEM("Heart", "heart", "/diamonds?shape=Heart&treatment=lab-grown"),
   SHAPE_ITEM("Marquise", "marquise", "/diamonds?shape=Marquise&treatment=lab-grown"),
 ];
@@ -138,10 +138,10 @@ const DIAMONDS_MENU: MegaMenuConfig = {
 // ── FANCY DIAMONDS MEGA-MENU ─────────────────────────────────────────────
 const COLORED_SHAPES: MegaMenuItem[] = [
   SHAPE_ITEM("Round", "round", "/color-diamonds?shape=Round"),
-  SHAPE_ITEM("Princess", "princess", "/color-diamonds?shape=Princess"),
-  SHAPE_ITEM("Oval", "oval", "/color-diamonds?shape=Oval"),
-  SHAPE_ITEM("Radiant", "radiant", "/color-diamonds?shape=Radiant"),
   SHAPE_ITEM("Pear", "pear", "/color-diamonds?shape=Pear"),
+  SHAPE_ITEM("Radiant", "radiant", "/color-diamonds?shape=Radiant"),
+  SHAPE_ITEM("Oval", "oval", "/color-diamonds?shape=Oval"),
+  SHAPE_ITEM("Princess", "princess", "/color-diamonds?shape=Princess"),
   SHAPE_ITEM("Heart", "heart", "/color-diamonds?shape=Heart"),
 ];
 
@@ -167,7 +167,7 @@ const COLORED_MENU: MegaMenuConfig = {
               icon: <RingStyleMaskIcon name="solitaire" size={22} />,
             },
             {
-              label: "Start with a colored diamond",
+              label: "Start with a diamond",
               href: "/color-diamonds",
               icon: <ShapeIcon name="round" />,
             },
@@ -273,10 +273,10 @@ const GEMSTONES_MENU: MegaMenuConfig = {
 // ── RINGS MEGA-MENU ──────────────────────────────────────────────────────
 const RING_SHAPES: MegaMenuItem[] = [
   SHAPE_ITEM("Round", "round", "/ring-studio/setting?shapes=Round"),
-  SHAPE_ITEM("Princess", "princess", "/ring-studio/setting?shapes=Princess"),
-  SHAPE_ITEM("Oval", "oval", "/ring-studio/setting?shapes=Oval"),
-  SHAPE_ITEM("Radiant", "radiant", "/ring-studio/setting?shapes=Radiant"),
   SHAPE_ITEM("Pear", "pear", "/ring-studio/setting?shapes=Pear"),
+  SHAPE_ITEM("Radiant", "radiant", "/ring-studio/setting?shapes=Radiant"),
+  SHAPE_ITEM("Oval", "oval", "/ring-studio/setting?shapes=Oval"),
+  SHAPE_ITEM("Princess", "princess", "/ring-studio/setting?shapes=Princess"),
   SHAPE_ITEM("Heart", "heart", "/ring-studio/setting?shapes=Heart"),
 ];
 

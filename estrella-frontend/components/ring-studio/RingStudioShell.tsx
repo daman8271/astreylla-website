@@ -36,6 +36,7 @@ export function RingStudioShell({ children }: { children: React.ReactNode }) {
               letterSpacing: "0.02em",
               textAlign: "center",
               maxWidth: "600px",
+              fontWeight: "bold",
             }}>
               All rings shown in the ring studio have a 1.5ct diamond centre stone.
             </p>

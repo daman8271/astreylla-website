@@ -28,11 +28,18 @@ export function StageDiamond({ shop }: Props) {
     (d: Diamond) => {
       setDiamond(d);
       const sp = new URLSearchParams();
-      if (settingSku) sp.set("settingSku", settingSku);
-      if (metal) sp.set("metal", metal);
-      if (shape) sp.set("shape", shape);
-      sp.set("diamondId", d.stockNum || d.id);
-      router.push(`/ring-studio/complete?${sp.toString()}`);
+      if (settingSku) {
+        sp.set("settingSku", settingSku);
+        if (metal) sp.set("metal", metal);
+        const sh = shape || d.shape;
+        if (sh) sp.set("shape", sh);
+        sp.set("diamondId", d.stockNum || d.id);
+        router.push(`/ring-studio/complete?${sp.toString()}`);
+      } else {
+        if (d.shape) sp.set("shape", d.shape);
+        sp.set("diamondId", d.stockNum || d.id);
+        router.push(`/ring-studio/setting?${sp.toString()}`);
+      }
     },
     [router, setDiamond, settingSku, metal, shape]
   );

@@ -14,6 +14,7 @@ export type RingStudioState = {
   shape: string | null;
   region: RegionCode | null;
   size: { label: string; value: string } | null;
+  flowOrder: "setting-first" | "diamond-first";
 };
 
 const EMPTY: RingStudioState = {
@@ -23,6 +24,7 @@ const EMPTY: RingStudioState = {
   shape: null,
   region: null,
   size: null,
+  flowOrder: "setting-first",
 };
 
 type Ctx = {
@@ -33,6 +35,7 @@ type Ctx = {
   setShape: (s: string | null) => void;
   setRegion: (r: RegionCode | null) => void;
   setSize: (s: { label: string; value: string } | null) => void;
+  setFlowOrder: (order: "setting-first" | "diamond-first") => void;
   reset: () => void;
 };
 
@@ -71,33 +74,43 @@ export function RingStudioProvider({ children }: { children: React.ReactNode }) 
     writeStorage(state);
   }, [state]);
 
-  // Diamond is the LAST pick in the Setting → Diamond → Complete flow, so it
-  // never clears the upstream setting. Selecting a diamond only sets/updates it;
-  // clearing it (null) leaves the chosen setting intact.
   const setDiamond = useCallback((d: Diamond | null) => {
-    setState((prev) => ({ ...prev, diamond: d }));
+    setState((prev) => {
+      const nextFlowOrder = d && !prev.setting ? "diamond-first" : prev.flowOrder;
+      return {
+        ...prev,
+        diamond: d,
+        flowOrder: d === null && !prev.setting ? "setting-first" : nextFlowOrder,
+      };
+    });
   }, []);
 
   const setSetting = useCallback(
     (s: Setting | null, metal?: SettingMetal | null, shape?: string | null) => {
       setState((prev) => {
         if (!s) {
-          // Removing the setting (Step 1) invalidates the whole build.
+          // Removing the setting invalidates the whole build.
           return { ...EMPTY };
         }
         const nextMetal = metal ?? s.metals[0];
         const nextShape = shape ?? prev.shape ?? prev.diamond?.shape ?? null;
-        // Setting is now Step 1: a new setting or a changed shape invalidates a
-        // previously shape-matched diamond. Preserve the diamond only on an
-        // identical re-selection / re-hydration (same sku AND same shape) so a
-        // reload of the Complete page doesn't wipe the restored diamond.
         const unchanged = prev.setting?.sku === s.sku && prev.shape === nextShape;
+        const nextFlowOrder = !prev.diamond ? "setting-first" : prev.flowOrder;
+        // In diamond-first flow, always keep the diamond — it was selected first
+        // and picking a setting is Step 2, not Step 1.
+        const keepDiamond =
+          prev.flowOrder === "diamond-first"
+            ? prev.diamond
+            : unchanged
+            ? prev.diamond
+            : null;
         return {
           ...prev,
           setting: s,
           metalKey: nextMetal ? `${nextMetal.karat}-${nextMetal.color}` : null,
           shape: nextShape,
-          diamond: unchanged ? prev.diamond : null,
+          diamond: keepDiamond,
+          flowOrder: nextFlowOrder,
         };
       });
     },
@@ -120,6 +133,10 @@ export function RingStudioProvider({ children }: { children: React.ReactNode }) 
     setState((prev) => ({ ...prev, size: s }));
   }, []);
 
+  const setFlowOrder = useCallback((order: "setting-first" | "diamond-first") => {
+    setState((prev) => ({ ...prev, flowOrder: order }));
+  }, []);
+
   const reset = useCallback(() => {
     setState(EMPTY);
     if (typeof window !== "undefined") {
@@ -132,8 +149,8 @@ export function RingStudioProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const value = useMemo<Ctx>(
-    () => ({ state, setDiamond, setSetting, setMetalKey, setShape, setRegion, setSize, reset }),
-    [state, setDiamond, setSetting, setMetalKey, setShape, setRegion, setSize, reset]
+    () => ({ state, setDiamond, setSetting, setMetalKey, setShape, setRegion, setSize, setFlowOrder, reset }),
+    [state, setDiamond, setSetting, setMetalKey, setShape, setRegion, setSize, setFlowOrder, reset]
   );
 
   return <RingStudioContext.Provider value={value}>{children}</RingStudioContext.Provider>;

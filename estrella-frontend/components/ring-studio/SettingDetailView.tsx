@@ -5,6 +5,7 @@ import { SHAPES_PRIMARY } from "@/components/diamonds/types";
 import type { Setting, SettingMetal, SettingColor, SettingKarat } from "./setting-types";
 import { metalKey, metalLabel } from "./setting-types";
 import { useCurrency } from "@/components/currency/CurrencyContext";
+import { useRingStudio } from "./RingStudioContext";
 import { RingSpinner } from "./RingSpinner";
 import { RingStyleMaskIcon, normalizeRingStyle } from "@/components/nav/RingStyleMaskIcon";
 import { ShapeMaskIcon, type ShapeName } from "@/components/nav/ShapeMaskIcon";
@@ -60,6 +61,7 @@ const SHAPE_ICONS: Record<string, JSX.Element> = {
 
 export function SettingDetailView({ setting, lockedShape, defaultShape, initialMetalKey, onBack, onSelect }: Props) {
   const { formatPrice, currency } = useCurrency();
+  const { state } = useRingStudio();
   const [chosenMetalKey, setChosenMetalKey] = useState<string>(
     initialMetalKey || metalKey(setting.metals[0])
   );
@@ -67,6 +69,8 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
   const [specsOpen, setSpecsOpen] = useState(true);
   // Which still the gallery is showing; null = the default 360° spin video.
   const [activeStill, setActiveStill] = useState<string | null>(null);
+  const [moreMetals, setMoreMetals] = useState(false);
+  const [moreShapes, setMoreShapes] = useState(false);
 
   const metal: SettingMetal =
     setting.metals.find((m) => metalKey(m) === chosenMetalKey) || setting.metals[0];
@@ -83,8 +87,9 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
     if (activeShape && setting.availableShapes.includes(activeShape as never)) {
       return [activeShape];
     }
-    return SHAPES_PRIMARY.filter((s) => setting.availableShapes.includes(s as never));
-  }, [setting, lockedShape, defaultShape]);
+    const baseList = moreShapes ? setting.availableShapes : SHAPES_PRIMARY;
+    return baseList.filter((s) => setting.availableShapes.includes(s as never));
+  }, [setting, lockedShape, defaultShape, moreShapes]);
 
   const initialShape = useMemo(() => {
     if (lockedShape && setting.availableShapes.includes(lockedShape as never)) {
@@ -188,12 +193,14 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
                 );
               })}
             </div>
-            <button type="button" className="rs-more">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M6 9 L12 15 L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>More Shapes</span>
-            </button>
+            {!lockedShape && (setting.availableShapes.length > shapesToShow.length || moreShapes) && (
+              <button type="button" className="rs-more" onClick={() => setMoreShapes((s) => !s)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d={moreShapes ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>{moreShapes ? "Less Shapes" : "More Shapes"}</span>
+              </button>
+            )}
           </div>
 
           <div className="rs-detail__section">
@@ -202,7 +209,7 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
               <span className="rs-detail__section-val">{metalLabel(metal)}</span>
             </div>
             <div className="rs-metal-row rs-metal-row--detail">
-              {setting.metals.slice(0, 5).map((m) => {
+              {(moreMetals ? setting.metals : setting.metals.slice(0, 5)).map((m) => {
                 const k = metalKey(m);
                 const active = k === chosenMetalKey;
                 return (
@@ -227,12 +234,14 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
                 );
               })}
             </div>
-            <button type="button" className="rs-more">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M6 9 L12 15 L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>More Metals</span>
-            </button>
+            {(setting.metals.length > 5 || moreMetals) && (
+              <button type="button" className="rs-more" onClick={() => setMoreMetals((s) => !s)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d={moreMetals ? "M6 15 L12 9 L18 15" : "M6 9 L12 15 L18 9"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>{moreMetals ? "Less Metals" : "More Metals"}</span>
+              </button>
+            )}
           </div>
 
           <div className="rs-detail__price">
@@ -241,7 +250,7 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
               <strong>{formatPrice(metal.priceUsd)}</strong>
             </span>
             <span className="rs-detail__price-note">Price only for Setting</span>
-            <span className="rs-detail__price-note" style={{ display: "block", marginTop: "4px", fontStyle: "italic" }}>
+            <span className="rs-detail__price-note" style={{ display: "block", marginTop: "4px", fontStyle: "italic", fontWeight: "bold" }}>
               All rings shown in the ring studio have a 1.5ct diamond centre stone.
             </span>
           </div>
@@ -251,7 +260,7 @@ export function SettingDetailView({ setting, lockedShape, defaultShape, initialM
             className="rs-cta rs-cta--primary"
             onClick={() => onSelect({ sku: setting.sku, metalKey: chosenMetalKey, shape: chosenShape })}
           >
-            Select Setting
+            {state.diamond ? "Complete Ring" : "Select Setting"}
           </button>
           <button type="button" className="rs-cta rs-cta--ghost" disabled title="Coming soon">
             Save for later

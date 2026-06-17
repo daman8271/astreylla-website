@@ -22,7 +22,10 @@ export function SettingCatalog({ shape, onOpenSetting, customSettings }: Props) 
   const searchParams = useSearchParams();
   const lastParamsRef = useRef<string>("");
 
-  // Sync URL search parameters to catalog filters
+  // Sync URL search parameters to catalog filters.
+  // NOTE: the `shape` / `shapes` URL param from diamond-first flow is the *locked*
+  // diamond shape — it's already applied via the `shape` prop to filterSettings,
+  // so we intentionally skip adding it to filters.shapes (which would double-filter).
   useEffect(() => {
     const paramsStr = searchParams.toString();
     if (paramsStr === lastParamsRef.current) return;
@@ -35,10 +38,12 @@ export function SettingCatalog({ shape, onOpenSetting, customSettings }: Props) 
       priceRange: [PRICE_FLOOR, PRICE_CEIL],
     };
 
+    // Only populate shapes filter from URL if it differs from the locked shape
+    // (i.e. the user explicitly chose a shape filter, not a diamond redirect).
     const shapesParam = searchParams.get("shapes") || searchParams.get("shape");
-    if (shapesParam) {
+    if (shapesParam && shapesParam !== shape) {
       shapesParam.split(",").forEach((s) => {
-        if (s) nextFilters.shapes.add(s);
+        if (s && s !== shape) nextFilters.shapes.add(s);
       });
     }
 
@@ -57,7 +62,7 @@ export function SettingCatalog({ shape, onOpenSetting, customSettings }: Props) 
     }
 
     setFilters(nextFilters);
-  }, [searchParams]);
+  }, [searchParams, shape]);
 
   const list = useMemo(() => {
     const base = filterSettings({

@@ -41,18 +41,18 @@ export type SortKey =
 
 export const SHAPES_PRIMARY = [
   "Round",
-  "Princess",
-  "Cushion",
-  "Oval",
   "Pear",
+  "Radiant",
+  "Oval",
+  "Princess",
 ] as const;
 
 export const SHAPES_MORE = [
+  "Cushion",
   "Emerald",
   "Marquise",
   "Heart",
   "Asscher",
-  "Radiant",
 ] as const;
 
 // Order used by the colour slider. Lower index = closer to D (best). Display

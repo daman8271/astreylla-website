@@ -21,7 +21,7 @@ export function VideoHero() {
         loop
         playsInline
         preload="metadata"
-        poster="/hero-poster.jpg"
+        poster="/hero-poster.jpg?v=3"
         aria-hidden="true"
         style={{
           position: "absolute",
@@ -33,7 +33,7 @@ export function VideoHero() {
           zIndex: 0,
         }}
       >
-        <source src="/hero.mp4" type="video/mp4" />
+        <source src="/hero.mp4?v=3" type="video/mp4" />
       </video>
       <div
         aria-hidden="true"

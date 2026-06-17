@@ -7,13 +7,5 @@ const SHOP =
   "trial-shop-sqxnl71f.myshopify.com";
 
 // Step 2 — requires a setting chosen in Step 1.
-export default function RingStudioDiamondPage({
-  searchParams,
-}: {
-  searchParams: { settingSku?: string };
-}) {
-  if (!searchParams.settingSku) {
-    redirect("/ring-studio/setting");
-  }
-  return <StageDiamond shop={SHOP} />;
-}
+export default function RingStudioDiamondPage() {
+  return <StageDiamond shop={SHOP} />;}

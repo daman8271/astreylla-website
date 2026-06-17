@@ -507,16 +507,6 @@
 .ds-grid--grid {
   grid-template-columns: repeat(4, 1fr);
 }
-@media (min-width: 1600px) {
-  .ds-grid--grid {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-@media (min-width: 2200px) {
-  .ds-grid--grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
-}
 @media (max-width: 1200px) {
   .ds-grid--grid {
     grid-template-columns: repeat(3, 1fr);
@@ -564,7 +554,7 @@
 .ds-card__media {
   position: relative;
   aspect-ratio: 1.55 / 1;
-  background: #b9cadf;
+  background: #c7cbcc;
   border-radius: 4px;
   overflow: hidden;
   display: flex;
@@ -883,7 +873,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: #fbf8f3;
+  background: #c7cbcc;
   border: 1px solid var(--brand-border-subtle, rgba(0,0,0,0.08));
   border-radius: 4px;
   overflow: hidden;

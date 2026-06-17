@@ -3,15 +3,16 @@
 import { useRouter } from "next/navigation";
 import { ShapeMaskIcon, type ShapeName } from "../nav/ShapeMaskIcon";
 
-type ShapeKey = "round" | "princess" | "cushion" | "oval" | "emerald" | "pear";
+type ShapeKey = "round" | "pear" | "radiant" | "oval" | "princess" | "cushion" | "emerald";
 
 const SHAPES: { key: ShapeKey; label: string }[] = [
   { key: "round", label: "Round" },
+  { key: "pear", label: "Pear" },
+  { key: "radiant", label: "Radiant" },
+  { key: "oval", label: "Oval" },
   { key: "princess", label: "Princess" },
   { key: "cushion", label: "Cushion" },
-  { key: "oval", label: "Oval" },
   { key: "emerald", label: "Emerald" },
-  { key: "pear", label: "Pear" },
 ];
 
 
