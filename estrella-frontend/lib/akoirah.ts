@@ -14,7 +14,7 @@ export type AkoMetal = {
   main: string | null; // MV — on-hand lifestyle shot
   video: string | null; // 360° spin .mp4
   stills: string[];
-  card: string | null; // best product shot (PV) for catalog cards
+  card: string | null; // PV — perspective/angled catalog shot (set by catalog generator)
   gallery: string[]; // ordered: product views first, lifestyle last
 };
 
@@ -82,7 +82,9 @@ function metalFor(product: AkoProduct, color: string): AkoMetal | null {
 }
 
 export type ResolvedMedia = {
-  card: string | null; // catalog-card / thumbnail image (absolute URL)
+  card: string | null; // PV — perspective/angled catalog card image (absolute URL)
+  topView: string | null; // TV — top-down/overhead diamond view (absolute URL)
+  frontView: string | null; // FV — front view of ring (absolute URL)
   hero: string | null; // detail hero still (absolute URL)
   lifestyle: string | null; // on-hand MV shot (absolute URL)
   video: string | null; // 360° spin video (absolute URL)
@@ -91,12 +93,17 @@ export type ResolvedMedia = {
 
 /** Resolve absolute CDN URLs for one product in one metal colour. */
 export function resolveMedia(product: AkoProduct | undefined, color: string): ResolvedMedia {
-  if (!product) return { card: null, hero: null, lifestyle: null, video: null, gallery: [] };
+  if (!product) return { card: null, topView: null, frontView: null, hero: null, lifestyle: null, video: null, gallery: [] };
   const m = metalFor(product, color);
-  if (!m) return { card: null, hero: null, lifestyle: null, video: null, gallery: [] };
+  if (!m) return { card: null, topView: null, frontView: null, hero: null, lifestyle: null, video: null, gallery: [] };
   const u = (f: string | null) => (f ? cdnUrl(product.assetBase, f) : null);
+  // Derive TV/FV from stills filenames (the catalog generator doesn't expose them as dedicated fields).
+  const tvFile = m.stills.find((f) => /-(TV|T2V)\./i.test(f)) ?? null;
+  const fvFile = m.stills.find((f) => /-FV\./i.test(f)) ?? null;
   return {
     card: u(m.card),
+    topView: u(tvFile),
+    frontView: u(fvFile),
     hero: u(m.card ?? m.main),
     lifestyle: u(m.main),
     video: u(m.video),

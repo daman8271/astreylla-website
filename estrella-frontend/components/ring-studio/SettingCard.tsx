@@ -21,7 +21,7 @@ export function SettingCard({
   selectedColors?: Set<string>;
   onClick: () => void;
 }) {
-  const { formatPrice, currency } = useCurrency();
+  const { formatPrice } = useCurrency();
   const [failedSrcs, setFailedSrcs] = useState<Set<string>>(new Set());
   const [overrideColor, setOverrideColor] = useState<string | null>(null);
 
@@ -55,17 +55,30 @@ export function SettingCard({
     [activeColor, setting.metals]
   );
 
-  const primarySrc = activeMetal?.imageUrl ?? setting.defaultThumbnail;
+  // Default image: prefer TV (top/overhead diamond view) → fall back to first thumbnail → then imageUrl
+  const primarySrc = useMemo(() => {
+    if (activeMetal) {
+      return activeMetal.topViewUrl ?? activeMetal.thumbnails?.[0] ?? activeMetal.imageUrl;
+    }
+    // No metal selected — use the top view if available, otherwise the PV default thumbnail
+    return setting.defaultTopView ?? setting.defaultThumbnail;
+  }, [activeMetal, setting]);
 
-  // Second-angle image revealed on hover. When a specific colour is shown, keep
-  // the hover image in that same colour so the colour doesn't flip on hover.
+  // Hover image: the PV (perspective/angled) imageUrl — the classic "beauty shot"
   const hoverSrc = useMemo(() => {
     if (activeMetal) {
+      const pv = activeMetal.imageUrl;
+      // Only show hover if it is actually different from what is displayed
+      if (pv && pv !== primarySrc) return pv;
+      // Fall back to any thumbnail that differs from the primary
       return activeMetal.thumbnails?.find((t) => t && t !== primarySrc) ?? null;
     }
+    // No active metal — try a White-gold PV from the metals list
     const white = setting.metals.find((m) => m.color === "White");
-    const angle = white?.thumbnails?.find((t) => t && t !== setting.defaultThumbnail);
-    if (angle) return angle;
+    if (white) {
+      const pv = white.imageUrl;
+      if (pv && pv !== setting.defaultThumbnail) return pv;
+    }
     const altMetal = setting.metals.find(
       (m) => m.imageUrl && m.imageUrl !== setting.defaultThumbnail
     );

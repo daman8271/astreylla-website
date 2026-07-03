@@ -202,7 +202,7 @@
 .rs-field__label {
   font-family: var(--font-sans, system-ui), sans-serif;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--brand-text-primary, #1a1a1a);
 }
 .rs-style-row,
@@ -236,14 +236,14 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 96px;
+  height: 100px;
   padding: 8px 4px;
-  border: 1px solid var(--brand-border-subtle, #e8e3da);
+  border: 1.5px solid #c8c4bc;
   background: #ffffff;
   border-radius: 8px;
   cursor: pointer;
   font-family: var(--font-sans, system-ui), sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--brand-text-primary, #1a1a1a);
   transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
@@ -255,6 +255,7 @@
 .rs-metal-btn:hover,
 .ds-shape:hover {
   border-color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .rs-style-btn--active,
@@ -291,7 +292,7 @@
 .rs-style-btn__label,
 .rs-metal-btn__label,
 .ds-shape__label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: #1a1a1a;
   line-height: 1.2;
@@ -436,7 +437,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 16px;
+  padding: 6px;
   display: block;
   filter: drop-shadow(0 6px 12px rgba(0,0,0,0.05)) contrast(1.04) brightness(1.02);
   transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.32, 0.72, 0.16, 1), filter 0.3s ease;
@@ -446,12 +447,12 @@
 .rs-setting-card:hover .rs-setting-card__img--primary { opacity: 0; }
 .rs-setting-card:hover .rs-setting-card__img--hover { opacity: 1; }
 .rs-setting-card:hover .rs-setting-card__img {
-  transform: scale(1.06);
+  transform: scale(1.10);
   filter: drop-shadow(0 10px 20px rgba(0,0,0,0.08)) contrast(1.06) brightness(1.04);
 }
 .rs-setting-card__title {
   font-family: var(--font-sans, system-ui), sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--brand-text-primary, #18181b);
   margin: 2px 0 0;

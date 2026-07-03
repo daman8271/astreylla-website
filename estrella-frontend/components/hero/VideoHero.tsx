@@ -1,8 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 export function VideoHero() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Force video to reload on every mount (fixes hard-refresh stale video bug)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.load();
+    video.play().catch(() => {
+      // Autoplay blocked — silently ignore (browser policy)
+    });
+  }, []);
+
   return (
     <section
       style={{
@@ -16,12 +29,13 @@ export function VideoHero() {
       aria-label="Astreylla — hero"
     >
       <video
+        ref={videoRef}
         autoPlay
         muted
         loop
         playsInline
-        preload="metadata"
-        poster="/hero-poster.jpg?v=3"
+        preload="auto"
+        poster="/hero-poster.jpg"
         aria-hidden="true"
         style={{
           position: "absolute",
@@ -33,7 +47,7 @@ export function VideoHero() {
           zIndex: 0,
         }}
       >
-        <source src="/hero.mp4?v=3" type="video/mp4" />
+        <source src="/hero.mp4" type="video/mp4" />
       </video>
       <div
         aria-hidden="true"

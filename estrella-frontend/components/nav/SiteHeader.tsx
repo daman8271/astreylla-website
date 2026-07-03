@@ -106,6 +106,16 @@ const DIAMONDS_MENU: MegaMenuConfig = {
           ],
         },
         {
+          heading: "Lab Grown",
+          items: [
+            {
+              label: "Lab Grown Diamonds",
+              href: "/diamonds?treatment=lab-grown",
+              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
+            },
+          ],
+        },
+        {
           heading: "Diamonds on sale",
           items: [
             { label: "Diamonds under $1,000", href: "/diamonds?maxFinalPrice=1000" },
@@ -344,61 +354,6 @@ const RINGS_MENU: MegaMenuConfig = {
               label: "Start with a diamond",
               href: "/diamonds?treatment=lab-grown",
               icon: <ShapeIcon name="round" />,
-            },
-          ],
-        },
-        {
-          heading: "Category",
-          items: [
-            {
-              label: "Engagement",
-              href: "/ring-studio/setting?category=engagement",
-              icon: <RingStyleMaskIcon name="halo" size={22} />,
-            },
-            {
-              label: "Everyday Rings",
-              href: "/ring-studio/setting?category=everyday",
-              icon: <RingStyleMaskIcon name="solitaire" size={22} />,
-            },
-            {
-              label: "Eternity Bands",
-              href: "/ring-studio/setting?category=eternity",
-              icon: <RingStyleMaskIcon name="pave" size={22} />,
-            },
-            {
-              label: "Solitaire Rings",
-              href: "/ring-studio/setting?category=solitaire",
-              icon: <RingStyleMaskIcon name="solitaire" size={22} />,
-            },
-            {
-              label: "Wedding Bands",
-              href: "/ring-studio/setting?category=wedding",
-              icon: <RingStyleMaskIcon name="vintage" size={22} />,
-            },
-            {
-              label: "Cocktail Rings",
-              href: "/ring-studio/setting?category=cocktail",
-              icon: <RingStyleMaskIcon name="halo" size={22} />,
-            },
-          ],
-        },
-        {
-          heading: "Collections",
-          items: [
-            {
-              label: "Trending Now",
-              href: "/ring-studio/setting?collection=trending",
-              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
-            },
-            {
-              label: "Newly Unveiled",
-              href: "/ring-studio/setting?collection=newly",
-              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
-            },
-            {
-              label: "Timeless Favourites",
-              href: "/ring-studio/setting?collection=timeless",
-              icon: <ColorDot color="var(--brand-accent-gold, #b59a6f)" />,
             },
           ],
         },

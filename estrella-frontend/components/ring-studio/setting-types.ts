@@ -30,7 +30,10 @@ export type SettingMetal = {
   karat: SettingKarat;
   color: SettingColor;
   priceUsd: number;
+  /** PV — perspective/angled image (current default card shot). Shown on hover. */
   imageUrl: string;
+  /** TV — top-down / overhead diamond view. Shown by default on catalog cards. Falls back to imageUrl if absent. */
+  topViewUrl?: string;
   thumbnails?: string[];
   gallery360?: string[];
   /** 360° spin video (Bunny CDN .mp4) for this metal, when available. */
@@ -45,7 +48,10 @@ export type Setting = {
   basePriceUsd: number;
   availableShapes: Shape[];
   metals: SettingMetal[];
+  /** PV — default angled card image (used when no metal selected). */
   defaultThumbnail: string;
+  /** TV — default top/overhead diamond view (used when no metal selected). Falls back to defaultThumbnail. */
+  defaultTopView?: string;
   videoUrl?: string;
   bandWidth?: string;
   sideStonesCount?: number | string;

@@ -171,6 +171,7 @@ function buildSetting(seed: SettingSeed, ring: AkoProduct | undefined): Setting 
       color: spec.color,
       priceUsd: seed.prices[spec.priceKey] ?? seed.basePriceUsd,
       imageUrl: media.card ?? mockImage(`${seed.name}\n${spec.karat} ${spec.color}`, spec.color),
+      topViewUrl: media.topView ?? undefined,
       thumbnails: media.gallery.length ? media.gallery : undefined,
       videoUrl: media.video ?? undefined,
     };
@@ -184,6 +185,7 @@ function buildSetting(seed: SettingSeed, ring: AkoProduct | undefined): Setting 
     basePriceUsd: seed.basePriceUsd,
     availableShapes: seed.availableShapes,
     defaultThumbnail: white.card ?? mockImage(seed.name, "White"),
+    defaultTopView: white.topView ?? undefined,
     metals,
   };
 }
@@ -331,6 +333,7 @@ export function mapCrmToSetting(crmItem: any, cdnProduct: AkoProduct): Setting {
         color: mc.color,
         priceUsd,
         imageUrl: media.card || media.lifestyle || "",
+        topViewUrl: media.topView ?? undefined,
         thumbnails: media.gallery.length ? media.gallery : undefined,
         videoUrl: media.video || undefined,
       });
@@ -344,6 +347,7 @@ export function mapCrmToSetting(crmItem: any, cdnProduct: AkoProduct): Setting {
       color: "White",
       priceUsd: basePriceUsd,
       imageUrl: media.card || media.lifestyle || "",
+      topViewUrl: media.topView ?? undefined,
       thumbnails: media.gallery.length ? media.gallery : undefined,
       videoUrl: media.video || undefined,
     });
@@ -400,6 +404,7 @@ export function mapCrmToSetting(crmItem: any, cdnProduct: AkoProduct): Setting {
     availableShapes,
     metals,
     defaultThumbnail,
+    defaultTopView: whiteMedia.topView ?? undefined,
     videoUrl: whiteMedia.video || undefined,
     bandWidth,
     sideStonesCount,
